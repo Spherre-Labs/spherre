@@ -1,0 +1,32 @@
+name: Code Formatting Check
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+env:
+  SCARB_VERSION: 2.8.5
+  SNFORGE_VERSION: 0.35.1
+  CAIRO_VERSION: 2.8.5
+
+jobs:  
+  format-check:
+    name: Contract Code Formatting Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Scarb
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v $SCARB_VERSION
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      - name: Format check
+        run: scarb fmt --check
