@@ -7,3 +7,11 @@ edition = "2024_07"
 
 [dependencies]
 starknet = "2.8.5"
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.35.1" }
+
+[[target.starknet-contract]]
+casm = true
+sierra = true
+
+[scripts]
+test = "snforge test"
