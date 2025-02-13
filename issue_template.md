@@ -3,7 +3,7 @@
 ## 📝 Description
 -
       
-## 🔢 Steps
+## 🔢 Execution Steps
 -
 
 ## ✅ Acceptance Criteria
