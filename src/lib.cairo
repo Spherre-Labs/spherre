@@ -21,7 +21,7 @@ pub mod components {
 }
 pub mod actions {
     pub mod change_threshold_tx;
-    pub mod member_permission;
+    pub mod member_permission_tx;
     pub mod member_tx;
     pub mod nft_tx;
     pub mod token_tx;
