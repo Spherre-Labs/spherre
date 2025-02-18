@@ -1,5 +1,5 @@
 #[starknet::component]
-pub mod MemberTransaction {
+pub mod MemberPermissionTransaction {
     #[storage]
     pub struct Storage {}
 }
