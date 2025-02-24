@@ -5,8 +5,8 @@ pub mod SpherreAccount {
         actions::{
             change_threshold_tx::ChangeThresholdTransaction,
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
-            nft_tx::NFTTransaction, token_tx::TokenTransaction
-        }
+            nft_tx::NFTTransaction, token_tx::TokenTransaction,
+        },
     };
     use starknet::ContractAddress;
 
@@ -14,13 +14,13 @@ pub mod SpherreAccount {
     component!(
         path: ChangeThresholdTransaction,
         storage: change_threshold_transaction,
-        event: ChangeThresholdEvent
+        event: ChangeThresholdEvent,
     );
     component!(path: MemberTransaction, storage: member_transaction, event: MemberTransactionEvent);
     component!(
         path: MemberPermissionTransaction,
         storage: member_permission_transaction,
-        event: MemberPermissionTransactionEvent
+        event: MemberPermissionTransactionEvent,
     );
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
