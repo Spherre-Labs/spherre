@@ -9,7 +9,10 @@ pub mod SpherreAccount {
         },
         {errors::Errors},
     };
-    use starknet::{{ContractAddress, contract_address_const}, {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}}};
+    use starknet::{
+        {ContractAddress, contract_address_const},
+        {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
+    };
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(
