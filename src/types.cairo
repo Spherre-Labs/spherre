@@ -19,16 +19,14 @@ pub enum TransactionType {
     TOKEN_SEND,
     NFT_SEND
 }
-
-#[derive(Drop, Copy)]
-pub enum PermissionEnum {
-    PROPOSER,
-    VOTER,
-    EXECUTOR
-}
-
-pub mod Permissions {
+/// Module defining permission constants
+pub mod permissions {
+    /// PROPOSER role identifier
     pub const PROPOSER: felt252 = selector!("PROPOSER");
+
+    /// VOTER role identifier
     pub const VOTER: felt252 = selector!("VOTER");
+
+    /// EXECUTOR role identifier
     pub const EXECUTOR: felt252 = selector!("EXECUTOR");
 }

@@ -93,7 +93,7 @@ Before submitting your changes, ensure:
    ```
    or
    ```bash
-   git push origin fix/issue-number
+   git push origin fix/issue-number 
    ```
 
 3. Open a Pull Request with:
