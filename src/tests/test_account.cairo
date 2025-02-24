@@ -108,5 +108,3 @@ fn test_description_is_set_correctly() {
 //     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
 //     contract_address
 // }
-
-
