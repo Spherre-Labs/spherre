@@ -7,8 +7,9 @@ pub mod SpherreAccount {
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
+        {errors::Errors},
     };
-    use starknet::ContractAddress;
+    use starknet::{{ContractAddress, contract_address_const}, {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}}};
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(
@@ -28,6 +29,8 @@ pub mod SpherreAccount {
     #[storage]
     struct Storage {
         deployer: ContractAddress,
+        name: ByteArray,
+        description: ByteArray,
         #[substorage(v0)]
         account_data: AccountData::Storage,
         #[substorage(v0)]
@@ -57,5 +60,33 @@ pub mod SpherreAccount {
         NFTTransactionEvent: NFTTransaction::Event,
         #[flat]
         TokenTransactionEvent: TokenTransaction::Event,
+    }
+
+    #[constructor]
+    pub fn constructor(
+        ref self: ContractState,
+        deployer: ContractAddress,
+        owner: ContractAddress,
+        name: ByteArray,
+        description: ByteArray,
+        members: Array<ContractAddress>,
+        threshold: u64,
+    ) {
+        assert(deployer != contract_address_const::<0>(), Errors::ERR_DEPLOYER_ZERO);
+        assert(owner != contract_address_const::<0>(), Errors::ERR_OWNER_ZERO);
+        assert((members.len()).into() >= threshold, Errors::ERR_INVALID_MEMBER_THRESHOLD);
+        self.name.write(name);
+        self.description.write(description);
+    }
+
+    #[generate_trait]
+    pub impl SpherreAccountImpl of ISpherreAccount {
+        fn get_name(self: @ContractState) -> ByteArray {
+            self.name.read()
+        }
+
+        fn get_description(self: @ContractState) -> ByteArray {
+            self.description.read()
+        }
     }
 }

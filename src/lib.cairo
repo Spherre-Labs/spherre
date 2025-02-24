@@ -29,5 +29,5 @@ pub mod actions {
 
 #[cfg(test)]
 pub mod tests {
-    pub mod test_spherre;
+    pub mod test_account;
 }
