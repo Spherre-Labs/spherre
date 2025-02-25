@@ -5,7 +5,7 @@ pub enum TransactionStatus {
     INITIATED,
     REJECTED,
     APPROVED,
-    EXECUTED
+    EXECUTED,
 }
 
 #[derive(Drop, Copy, starknet::Store)]
@@ -17,14 +17,14 @@ pub enum TransactionType {
     MEMBER_PERMISSION_EDIT,
     THRESHOLD_CHANGE,
     TOKEN_SEND,
-    NFT_SEND
+    NFT_SEND,
 }
 
 #[derive(Drop, Copy)]
 pub enum PermissionEnum {
     PROPOSER,
     VOTER,
-    EXECUTOR
+    EXECUTOR,
 }
 
 pub mod Permissions {
