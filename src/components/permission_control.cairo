@@ -1,10 +1,10 @@
 #[starknet::component]
 pub mod PermissionControl {
-    use starknet::{ContractAddress};
     use starknet::storage::{Map};
+    use starknet::{ContractAddress};
     #[storage]
     pub struct Storage {
-        member_permission: Map<(felt252, ContractAddress), bool>
+        member_permission: Map<(felt252, ContractAddress), bool>,
     }
 
     #[event]
@@ -14,12 +14,12 @@ pub mod PermissionControl {
     #[derive(Drop, starknet::Event)]
     pub struct PermissionGranted {
         pub permission: felt252,
-        pub member: ContractAddress
+        pub member: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct PermissionRevoked {
         pub permission: felt252,
-        pub account: ContractAddress
+        pub account: ContractAddress,
     }
 }

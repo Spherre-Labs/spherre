@@ -1,8 +1,8 @@
 #[starknet::component]
 pub mod AccountData {
-    use spherre::types::{TransactionType, TransactionStatus};
-    use starknet::{ContractAddress};
+    use spherre::types::{TransactionStatus, TransactionType};
     use starknet::storage::{Map};
+    use starknet::{ContractAddress};
     #[storage]
     pub struct Storage {
         transactions: Map<u256, Transaction>,
@@ -18,6 +18,6 @@ pub mod AccountData {
         tx_type: TransactionType,
         tx_status: TransactionStatus,
         date_created: u64,
-        date_executed: u64
+        date_executed: u64,
     }
 }
