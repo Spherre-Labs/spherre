@@ -1,5 +1,3 @@
-// components/permission_control.cairo
-
 #[starknet::component]
 pub mod PermissionControl {
     use starknet::ContractAddress;

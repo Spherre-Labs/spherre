@@ -1,8 +1,8 @@
-pub mod spherre;
 pub mod account;
 pub mod account_data;
-pub mod types;
 pub mod errors;
+pub mod spherre;
+pub mod types;
 pub mod interfaces {
     pub mod iaccount;
     pub mod iaccount_data;
@@ -25,4 +25,9 @@ pub mod actions {
     pub mod member_tx;
     pub mod nft_tx;
     pub mod token_tx;
+}
+
+#[cfg(test)]
+pub mod tests {
+    pub mod test_account;
 }
