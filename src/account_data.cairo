@@ -1,3 +1,4 @@
+
 #[starknet::component]
 pub mod AccountData {
     use spherre::types::{TransactionStatus, TransactionType};
@@ -21,3 +22,4 @@ pub mod AccountData {
         date_executed: u64,
     }
 }
+
