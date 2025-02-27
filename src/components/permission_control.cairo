@@ -8,9 +8,9 @@ pub mod PermissionControl {
 
     #[storage]
     pub struct Storage {
-        /// Mapping of (permission type, member) to a boolean indicating if they have the
-        /// permission.
+        /// Mapping of (permission type, member) to a boolean indicating if they have the permission.
         member_permission: Map<(felt252, ContractAddress), bool>,
+        /// Mapping of (admin permission, admin) if they have the permission
         admin_permission: Map<felt252, felt252>,
     }
 
@@ -52,7 +52,7 @@ pub mod PermissionControl {
         }
 
         /// Returns the admin role that controls `role`.
-        fn get_role_admin(self: @ComponentState<TContractState>, role: felt252) -> felt252 {
+        fn get_permission_admin(self: @ComponentState<TContractState>, role: felt252) -> felt252 {
             self.admin_permission.read(role)
         }
 
@@ -66,7 +66,7 @@ pub mod PermissionControl {
         fn revoke_permission(
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
-            let admin = Self::get_role_admin(@self, permission);
+            let admin = Self::get_permission_admin(@self, permission);
             self.assert_only_permission(admin);
             self._revoke_role(permission, member);
         }

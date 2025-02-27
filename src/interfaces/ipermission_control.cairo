@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts for Cairo v1.0.0 (access/src/accesscontrol/interface.cairo)
-
 use starknet::ContractAddress;
 
 pub const IACCESSCONTROL_ID: felt252 =
@@ -9,7 +6,7 @@ pub const IACCESSCONTROL_ID: felt252 =
 #[starknet::interface]
 pub trait IAccessControl<TState> {
     fn has_permission(self: @TState, permission: felt252, member: ContractAddress) -> bool;
-    fn get_role_admin(self: @TState, role: felt252) -> felt252;
+    fn get_permission_admin(self: @TState, role: felt252) -> felt252;
     // fn grant_role(ref self: TState, role: felt252, account: ContractAddress);
     fn revoke_permission(ref self: TState, permission: felt252, member: ContractAddress);
     // fn renounce_role(ref self: TState, role: felt252, account: ContractAddress);
