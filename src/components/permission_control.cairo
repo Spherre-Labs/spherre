@@ -101,7 +101,6 @@ pub mod PermissionControl {
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
             if AccessControl::has_permission(@self, permission, member) {
-                let caller: ContractAddress = get_caller_address();
                 self.member_permission.write((permission, member), false);
                 self.emit(PermissionRevoked { permission, member });
             }

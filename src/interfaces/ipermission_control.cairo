@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 pub const IACCESSCONTROL_ID: felt252 =
-    0x23700be02858dbe2ac4dc9c9f66d0b6b0ed81ec7f970ca6844500a56ff61751;
+    0x23700be02858dbe2ac4dc9c9f66d0b6b0ed81ec7f970ca6844500a56ff61751; // @note from OZ Lib
 
 #[starknet::interface]
 pub trait IAccessControl<TState> {
