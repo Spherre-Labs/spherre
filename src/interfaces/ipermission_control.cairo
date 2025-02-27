@@ -8,6 +8,8 @@ pub trait IAccessControl<TState> {
     fn has_permission(self: @TState, permission: felt252, member: ContractAddress) -> bool;
     fn get_permission_admin(self: @TState, role: felt252) -> felt252;
     // fn grant_role(ref self: TState, role: felt252, account: ContractAddress);
-    fn revoke_permission(ref self: TState, permission: felt252, member: ContractAddress);
+    fn _revoke_proposer_permission(ref self: TState, permission: felt252, member: ContractAddress);
+    fn _revoke_voter_permission(ref self: TState, permission: felt252, member: ContractAddress);
+    fn _revoke_executor_permission(ref self: TState, permission: felt252, member: ContractAddress);
     // fn renounce_role(ref self: TState, role: felt252, account: ContractAddress);
 }

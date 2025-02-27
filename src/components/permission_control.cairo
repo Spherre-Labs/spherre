@@ -1,10 +1,15 @@
 #[starknet::component]
 pub mod PermissionControl {
+    use ipermission_control::IAccessControl;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{ContractAddress, get_caller_address};
     use crate::interfaces::ipermission_control;
     use openzeppelin::introspection::src5::SRC5Component::InternalImpl as SRC5InternalImpl;
     use openzeppelin::introspection::src5::SRC5Component;
+
+    const PROPOSER: felt252 = selector!("PROPOSER");
+    const VOTER: felt252 = selector!("VOTER");
+    const EXECUTOR: felt252 = selector!("EXECUTOR");
 
     #[storage]
     pub struct Storage {
@@ -33,7 +38,7 @@ pub mod PermissionControl {
     }
 
     pub mod Errors {
-        // pub const INVALID_CALLER: felt252 = 'Can only renounce role for self';
+        pub const INVALID_CALLER: felt252 = 'Can only renounce role for self';
         pub const MISSING_ROLE: felt252 = 'Caller is missing role';
     }
 
@@ -56,19 +61,61 @@ pub mod PermissionControl {
             self.admin_permission.read(role)
         }
 
-        /// Revokes `permission` from `member`.
+        /// Revokes `proposer permission` from `member`.
         ///
         /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
         ///
         /// Requirements:
         ///
         /// - The caller must have `role`'s admin role.
-        fn revoke_permission(
+        fn _revoke_proposer_permission(
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
-            let admin = Self::get_permission_admin(@self, permission);
-            self.assert_only_permission(admin);
-            self._revoke_role(permission, member);
+            let permissioned = self.has_permission(PROPOSER, member);
+            if (permissioned) {
+                let admin = Self::get_permission_admin(@self, permission);
+                self.assert_only_permission(admin);
+                self._revoke_role(permission, member);
+            }
+            Errors::MISSING_ROLE;
+        }
+
+        /// Revokes `voter permission` from `member`.
+        ///
+        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller must have `role`'s admin role.
+        fn _revoke_voter_permission(
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        ) {
+            let permissioned = self.has_permission(VOTER, member);
+            if (permissioned) {
+                let admin = Self::get_permission_admin(@self, permission);
+                self.assert_only_permission(admin);
+                self._revoke_role(permission, member);
+            }
+            Errors::MISSING_ROLE;
+        } 
+
+        /// Revokes `executor permission` from `member`.
+        ///
+        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller must have `role`'s admin role.
+        fn _revoke_executor_permission(
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        ) {
+            let permissioned = self.has_permission(EXECUTOR, member);
+            if (permissioned) {
+                let admin = Self::get_permission_admin(@self, permission);
+                self.assert_only_permission(admin);
+                self._revoke_role(permission, member);
+            }
+            Errors::MISSING_ROLE;
         }
     }
 
@@ -89,7 +136,7 @@ pub mod PermissionControl {
         fn assert_only_permission(self: @ComponentState<TContractState>, permission: felt252) {
             let caller: ContractAddress = get_caller_address();
             let authorized = AccessControl::has_permission(self, permission, caller);
-            assert(authorized, Errors::MISSING_ROLE);
+            assert(authorized, Errors::INVALID_CALLER);
         }
 
         /// Attempts to revoke `permission` from `member`.
@@ -98,12 +145,10 @@ pub mod PermissionControl {
         ///
         /// May emit a `PermissionRevoked` event.
         fn _revoke_role(
-            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress
         ) {
-            if AccessControl::has_permission(@self, permission, member) {
-                self.member_permission.write((permission, member), false);
-                self.emit(PermissionRevoked { permission, member });
-            }
+            self.member_permission.write((permission, member), false);
+            self.emit(PermissionRevoked { permission, member });
         }
     }
 }
