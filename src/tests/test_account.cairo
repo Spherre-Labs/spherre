@@ -1,3 +1,12 @@
+
+fn deploy_spherre_account() -> ContractAddress {
+    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
+    let mut constructor_calldata = ArrayTrait::new();
+    let contract = declare("SpherreAccount").unwrap().contract_class();
+    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
+    contract_address
+}
+
 use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
 use starknet::contract_address_const;
 
@@ -101,3 +110,4 @@ fn test_description_is_set_correctly() {
     let actual_description: ByteArray = state.get_description();
     assert_eq!(actual_description, "John Does's Sphere");
 }
+
