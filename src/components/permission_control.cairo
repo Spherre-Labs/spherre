@@ -1,3 +1,4 @@
+
 #[starknet::component]
 pub mod PermissionControl {
     // Adjust these import paths as needed.
@@ -84,5 +85,31 @@ pub mod PermissionControl {
             self.member_permission.write((Permissions::EXECUTOR, member), true);
             self.emit(Event::PermissionGranted(PermissionGranted { permission: Permissions::EXECUTOR, member }));
         }
+    }
+}
+
+#[starknet::component]
+pub mod PermissionControl {
+    use starknet::storage::{Map};
+    use starknet::{ContractAddress};
+    #[storage]
+    pub struct Storage {
+        member_permission: Map<(felt252, ContractAddress), bool>,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {}
+
+    #[derive(Drop, starknet::Event)]
+    pub struct PermissionGranted {
+        pub permission: felt252,
+        pub member: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct PermissionRevoked {
+        pub permission: felt252,
+        pub account: ContractAddress,
     }
 }
