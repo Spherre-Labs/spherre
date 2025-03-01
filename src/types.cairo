@@ -20,7 +20,7 @@ pub enum TransactionType {
     NFT_SEND
 }
 /// Module defining permission constants
-pub mod permissions {
+pub mod Permissions {
     /// PROPOSER role identifier
     pub const PROPOSER: felt252 = selector!("PROPOSER");
 
