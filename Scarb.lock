@@ -3,13 +3,15 @@ version = 1
 
 [[package]]
 name = "snforge_scarb_plugin"
-version = "0.35.1"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.35.1#089de2c7a391372a7aaa54ec2706b117f955d06a"
+version = "0.37.0"
+source = "registry+https://scarbs.xyz/"
+checksum = "sha256:9dbb114f853decc27b2d6d53e2ddd207217ce63c2d24a47c5c48d5f475b0b9a5"
 
 [[package]]
 name = "snforge_std"
-version = "0.35.1"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.35.1#089de2c7a391372a7aaa54ec2706b117f955d06a"
+version = "0.37.0"
+source = "registry+https://scarbs.xyz/"
+checksum = "sha256:f5702c4a6d54e3563b4aa78c834de6ddcf18ef8ca8fd35dc1bceb7ece58e9571"
 dependencies = [
  "snforge_scarb_plugin",
 ]
@@ -18,5 +20,6 @@ dependencies = [
 name = "spherre"
 version = "0.1.0"
 dependencies = [
+ "snforge_scarb_plugin",
  "snforge_std",
 ]

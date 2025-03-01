@@ -5,13 +5,20 @@ edition = "2024_07"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
+
+
 [dependencies]
 starknet = "2.8.5"
+<<<<<<< HEAD
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.35.1" }
 assert_macros = "2.8.5"
 
 [tool.fmt]
 sort-module-level-items = true
+=======
+snforge_std = "0.37.0"
+snforge_scarb_plugin = "0.37.0"
+>>>>>>> 0a79ae7 (Added public function, private function, event, and tests)
 
 [[target.starknet-contract]]
 casm = true
