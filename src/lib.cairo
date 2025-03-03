@@ -3,6 +3,7 @@ pub mod account_data;
 pub mod errors;
 pub mod spherre;
 pub mod types;
+pub mod mock_account_data;
 pub mod interfaces {
     pub mod iaccount;
     pub mod iaccount_data;
@@ -30,4 +31,5 @@ pub mod actions {
 #[cfg(test)]
 pub mod tests {
     pub mod test_account;
+    pub mod test_account_data;
 }

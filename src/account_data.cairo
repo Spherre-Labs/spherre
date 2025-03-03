@@ -16,6 +16,17 @@ pub mod AccountData {
         members_count: u64 // the member length
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        AddedMember: AddedMember,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct AddedMember {
+        member: ContractAddress,
+    }
+
     #[starknet::storage_node]
     pub struct Transaction {
         id: u256,
@@ -26,7 +37,7 @@ pub mod AccountData {
     }
 
     #[embeddable_as(AccountDataComponent)]
-    impl AccountDataImpl<
+    pub impl AccountDataImpl<
         TContractState, +HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {
         fn get_account_members(self: @ComponentState<TContractState>) -> Array<ContractAddress> {
@@ -43,6 +54,14 @@ pub mod AccountData {
             };
 
             members_of_account
+        }
+
+        fn get_members_count(self: @ComponentState<TContractState>) -> u64 {
+            self.members_count.read()
+        }
+
+        fn add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
+            self._add_member(address);
         }
     }
 
