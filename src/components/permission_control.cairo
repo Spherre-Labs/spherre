@@ -6,10 +6,12 @@ use core::pedersen::pedersen; // Import the pedersen function
 
 #[starknet::component]
 pub mod PermissionControl {
+
     use super::*;
     #[storage]
     pub struct Storage {
         member_permission: Map<felt252, bool>, // Use felt252 as the key
+
     }
     /// Events emitted by this component.
     #[event]
@@ -29,6 +31,7 @@ pub mod PermissionControl {
     pub struct PermissionRevoked {
         pub permission: felt252,
         pub account: ContractAddress,
+
     }
 
     /// Helper function to hash a tuple into a single felt252 using Pedersen hash.
@@ -119,5 +122,6 @@ pub mod PermissionControl {
                 account: member 
             })); // Emit the PermissionRevoked event.
         }
+
     }
 }
