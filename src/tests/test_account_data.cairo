@@ -19,6 +19,10 @@ fn another_new_member() -> ContractAddress {
     contract_address_const::<'another_new_member'>()
 }
 
+fn third_member() -> ContractAddress {
+    contract_address_const::<'third_member'>()
+}
+
 fn member() -> ContractAddress {
     contract_address_const::<'member'>()
 }
@@ -65,6 +69,7 @@ fn test_add_member() {
 fn test_get_members() {
     let new_member = new_member();
     let another_new_member = another_new_member();
+    let third_member = third_member();
     let member = member();
     let contract_address = deploy_mock_contract();
 
@@ -72,13 +77,16 @@ fn test_get_members() {
     start_cheat_caller_address(contract_address, member);
     mock_contract_dispatcher.add_member(new_member);
     mock_contract_dispatcher.add_member(another_new_member);
+    mock_contract_dispatcher.add_member(third_member);
     stop_cheat_caller_address(contract_address);
 
     let count = mock_contract_dispatcher.get_members_count();
-    assert(count == 2, 'Member not added');
-    let members_from_contract_fn = mock_contract_dispatcher.get_account_members();
-    let member_1 = *members_from_contract_fn.at(0);
-    let member_2 = *members_from_contract_fn.at(1);
-    assert(member_1 == new_member, 'First addition unsuccessful');
-    assert(member_2 == another_new_member, 'First addition unsuccessful');
+    assert(count == 3, 'Members not added');
+    let members = mock_contract_dispatcher.get_account_members();
+    let member_0 = *members.at(0);
+    let member_1 = *members.at(1);
+    let member_2 = *members.at(2);
+    assert(member_0 == new_member, 'First addition unsuccessful');
+    assert(member_1 == another_new_member, 'second addition unsuccessful');
+    assert(member_2 == third_member, 'third addition unsuccessful');
 }

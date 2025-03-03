@@ -13,7 +13,7 @@ pub mod MockContract {
 
     #[storage]
     struct Storage {
-        counter: u64,
+        // counter: u64,
         #[substorage(v0)]
         account_data: AccountData::Storage,
     }
@@ -28,14 +28,12 @@ pub mod MockContract {
 
     #[constructor]
     fn constructor(ref self: ContractState) {
-        self.counter.write(0);
+        // self.counter.write(0);
     }
 
     #[abi(embed_v0)]
     fn add_member(ref self: ContractState, member: ContractAddress) {
         self.account_data._add_member(member);
-        let members_count = self.counter.read();
-        self.counter.write(members_count + 1);
     }
 
     fn get_members(self: @ContractState) -> Array<ContractAddress> {
@@ -44,6 +42,6 @@ pub mod MockContract {
     }
 
     fn get_members_count(self: @ContractState) -> u64 {
-        self.counter.read()
+        self.account_data.members_count.read()
     }
 }

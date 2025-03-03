@@ -9,11 +9,11 @@ pub mod AccountData {
     use starknet::ContractAddress;
     #[storage]
     pub struct Storage {
-        transactions: Map::<u256, Transaction>,
-        tx_count: u256, // the transaction length
-        threshold: u64, // the number of members required to approve a transaction for it to be executed
-        members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
-        members_count: u64 // the member length
+        pub transactions: Map::<u256, Transaction>,
+        pub tx_count: u256, // the transaction length
+        pub threshold: u64, // the number of members required to approve a transaction for it to be executed
+        pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
+        pub members_count: u64 // the member length
     }
 
     #[event]
@@ -44,9 +44,9 @@ pub mod AccountData {
             let mut members_of_account: Array<ContractAddress> = array![];
             let no_of_members = self.members_count.read();
 
-            let mut i = 1;
+            let mut i = 0;
 
-            while i < no_of_members + 1 {
+            while i <= no_of_members {
                 let current_member = self.members.entry(i).read();
                 members_of_account.append(current_member);
 
