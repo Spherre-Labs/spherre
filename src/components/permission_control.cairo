@@ -3,6 +3,7 @@ pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::Permissions; // Import permission constants
+    use spherre::errors::Errors;
     use starknet::ContractAddress;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
@@ -143,9 +144,9 @@ pub mod PermissionControl {
         fn _revoke_proposer_permission(
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
-            let permissioned = self.has_permission(PROPOSER, member);
+            let permissioned = self.has_permission(member, Permissions::PROPOSER);
             if (permissioned) {
-                revoke_permission(member, permission);
+                self.revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
         }
@@ -160,9 +161,9 @@ pub mod PermissionControl {
         fn _revoke_voter_permission(
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
-            let permissioned = self.has_permission(VOTER, member);
+            let permissioned = self.has_permission(member, Permissions::VOTER);
             if (permissioned) {
-                revoke_permission(member, permission);
+                self.revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
         } 
@@ -177,9 +178,9 @@ pub mod PermissionControl {
         fn _revoke_executor_permission(
             ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
         ) {
-            let permissioned = self.has_permission(EXECUTOR, member);
+            let permissioned = self.has_permission(member, Permissions::EXECUTOR);
             if (permissioned) {
-                revoke_permission(member, permission);
+                self.revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
         }
