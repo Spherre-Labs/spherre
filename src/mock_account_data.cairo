@@ -1,10 +1,9 @@
 #[starknet::contract]
 pub mod MockContract {
-    use starknet::storage::StoragePointerReadAccess;
     use AccountData::InternalTrait;
-    use starknet::storage::StoragePointerWriteAccess;
-    use starknet::ContractAddress;
     use spherre::account_data::AccountData;
+    use starknet::ContractAddress;
+    use starknet::storage::StoragePointerReadAccess;
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
 
@@ -27,8 +26,7 @@ pub mod MockContract {
     impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
     #[constructor]
-    fn constructor(ref self: ContractState) {
-        // self.counter.write(0);
+    fn constructor(ref self: ContractState) { // self.counter.write(0);
     }
 
     #[abi(embed_v0)]

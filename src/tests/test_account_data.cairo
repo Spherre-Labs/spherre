@@ -1,11 +1,11 @@
-use starknet::contract_address_const;
-use starknet::ContractAddress;
-
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait, DeclareResultTrait
+    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
+    DeclareResultTrait
 };
 
 use spherre::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
+use starknet::ContractAddress;
+use starknet::contract_address_const;
 
 fn zero_address() -> ContractAddress {
     contract_address_const::<0>()

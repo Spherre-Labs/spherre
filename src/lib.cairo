@@ -1,9 +1,9 @@
 pub mod account;
 pub mod account_data;
 pub mod errors;
+pub mod mock_account_data;
 pub mod spherre;
 pub mod types;
-pub mod mock_account_data;
 pub mod interfaces {
     pub mod iaccount;
     pub mod iaccount_data;
