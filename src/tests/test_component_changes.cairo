@@ -25,13 +25,13 @@ pub mod MockContract {
 
 
 pub mod test {
-    use super::MockContract;
-    use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+    use core::starknet::storage::StoragePointerWriteAccess;
     use crate::interfaces::iaccount_data::{
         IThresholdHandlerDispatcher, IThresholdHandlerDispatcherTrait,
     };
+    use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
     use spherre::account_data::AccountData::ThresholdSetterTrait;
-    use core::starknet::storage::StoragePointerWriteAccess;
+    use super::MockContract;
 
 
     fn contract_dispatch(name: ByteArray) -> IThresholdHandlerDispatcher {
