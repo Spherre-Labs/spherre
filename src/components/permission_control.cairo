@@ -1,64 +1,136 @@
 #[starknet::component]
 pub mod PermissionControl {
-    use ipermission_control::IAccessControl;
-    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
-    use starknet::{ContractAddress, get_caller_address};
-    use crate::interfaces::ipermission_control;
-    use openzeppelin::introspection::src5::SRC5Component::InternalImpl as SRC5InternalImpl;
-    use openzeppelin::introspection::src5::SRC5Component;
-
-    const PROPOSER: felt252 = selector!("PROPOSER");
-    const VOTER: felt252 = selector!("VOTER");
-    const EXECUTOR: felt252 = selector!("EXECUTOR");
+    use core::pedersen::pedersen; // Import the pedersen function
+    use spherre::interfaces::ipermission_control::IPermissionControl;
+    use spherre::types::Permissions; // Import permission constants
+    use starknet::ContractAddress;
+    use starknet::storage::{
+        StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
+    };
 
     #[storage]
     pub struct Storage {
-        /// Mapping of (permission type, member) to a boolean indicating if they have the permission.
-        member_permission: Map<(felt252, ContractAddress), bool>,
-        /// Mapping of (admin permission, admin) if they have the permission
-        admin_permission: Map<felt252, felt252>,
+        member_permission: Map<
+            (felt252, ContractAddress), bool
+        >, // (Permission, Member) => bool (has_permission)
     }
-
+    /// Events emitted by this component.
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        PermissionRevoked: PermissionRevoked
+        PermissionGranted: PermissionGranted,
+        PermissionRevoked: PermissionRevoked,
     }
-
+    /// Event emitted when a permission is granted.
     #[derive(Drop, starknet::Event)]
     pub struct PermissionGranted {
         pub permission: felt252,
         pub member: ContractAddress,
     }
-
+    /// Event emitted when a permission is revoked.
     #[derive(Drop, starknet::Event)]
     pub struct PermissionRevoked {
         pub permission: felt252,
-        pub member: ContractAddress,
+        pub account: ContractAddress,
     }
 
-    pub mod Errors {
-        pub const INVALID_CALLER: felt252 = 'Can only renounce role for self';
-        pub const MISSING_ROLE: felt252 = 'Caller is missing role';
+    /// Helper function to hash a tuple into a single felt252 using Pedersen hash.
+    fn hash_key(permission: felt252, member: ContractAddress) -> felt252 {
+        pedersen(permission, member.into())
     }
-
-    #[embeddable_as(AccessControlImpl)]
-    impl AccessControl<
-    TContractState, 
-    +HasComponent<TContractState>,
-    +SRC5Component::HasComponent<TContractState>,
-    +Drop<TContractState>
-    > of ipermission_control::IAccessControl<ComponentState<TContractState>>{
-        /// Returns whether `account` has been granted `permission`.
+    /// External interface implementation.
+    #[embeddable_as(PermissionControl)]
+    impl PermissionControlImpl<
+        TContractState, +HasComponent<TContractState>
+    > of IPermissionControl<ComponentState<TContractState>> {
+        /// Checks if the given member has the specified permission.
+        /// @param member The address of the member (ContractAddress).
+        /// @param permission The permission identifier (felt252).
+        /// @return true if the member has the permission, false otherwise.
         fn has_permission(
-            self: @ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+            self: @ComponentState<TContractState>, member: ContractAddress, permission: felt252
         ) -> bool {
-            self.member_permission.read((permission, member))
+            self
+                .member_permission
+                .entry((permission, member))
+                .read() // Read the value from storage.
+        }
+    }
+
+    /// Internal implementation.
+    #[generate_trait]
+    impl PermissionControlInternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of PermissionControlInternalTrait<TContractState> {
+        /// Assigns the PROPOSER permission to a member.
+        /// Emits a PermissionGranted event.
+        /// @param member The address of the member (ContractAddress).
+        fn assign_proposer_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            self
+                .member_permission
+                .entry((Permissions::PROPOSER, member))
+                .write(true); // Grant the permission.
+            self
+                .emit(
+                    Event::PermissionGranted(
+                        PermissionGranted { permission: Permissions::PROPOSER, member }
+                    )
+                ); // Emit the PermissionGranted event.
         }
 
-        /// Returns the admin role that controls `role`.
-        fn get_permission_admin(self: @ComponentState<TContractState>, role: felt252) -> felt252 {
-            self.admin_permission.read(role)
+        /// Assigns the VOTER permission to a member.
+        /// Emits a PermissionGranted event.
+        /// @param member The address of the member (ContractAddress).
+        fn assign_voter_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            self
+                .member_permission
+                .entry((Permissions::VOTER, member))
+                .write(true); // Grant the permission.
+            self
+                .emit(
+                    Event::PermissionGranted(
+                        PermissionGranted { permission: Permissions::VOTER, member }
+                    )
+                ); // Emit the PermissionGranted event.
+        }
+
+        /// Assigns the EXECUTOR permission to a member.
+        /// Emits a PermissionGranted event.
+        /// @param member The address of the member (ContractAddress).
+        fn assign_executor_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            self
+                .member_permission
+                .entry((Permissions::EXECUTOR, member))
+                .write(true); // Grant the permission.
+            self
+                .emit(
+                    Event::PermissionGranted(
+                        PermissionGranted { permission: Permissions::EXECUTOR, member }
+                    )
+                ); // Emit the PermissionGranted event.
+        }
+
+        /// Revokes a specific permission from a member.
+        /// Emits a PermissionRevoked event.
+        /// @param member The address of the member (ContractAddress).
+        /// @param permission The permission identifier (felt252).
+        fn revoke_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress, permission: felt252
+        ) {
+            self
+                .member_permission
+                .entry((permission, member))
+                .write(false); // Revoke the permission.
+            self
+                .emit(
+                    Event::PermissionRevoked(PermissionRevoked { permission, account: member })
+                ); // Emit the PermissionRevoked event.
         }
 
         /// Revokes `proposer permission` from `member`.
@@ -73,9 +145,7 @@ pub mod PermissionControl {
         ) {
             let permissioned = self.has_permission(PROPOSER, member);
             if (permissioned) {
-                let admin = Self::get_permission_admin(@self, permission);
-                self.assert_only_permission(admin);
-                self._revoke_role(permission, member);
+                revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
         }
@@ -92,9 +162,7 @@ pub mod PermissionControl {
         ) {
             let permissioned = self.has_permission(VOTER, member);
             if (permissioned) {
-                let admin = Self::get_permission_admin(@self, permission);
-                self.assert_only_permission(admin);
-                self._revoke_role(permission, member);
+                revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
         } 
@@ -111,44 +179,9 @@ pub mod PermissionControl {
         ) {
             let permissioned = self.has_permission(EXECUTOR, member);
             if (permissioned) {
-                let admin = Self::get_permission_admin(@self, permission);
-                self.assert_only_permission(admin);
-                self._revoke_role(permission, member);
+                revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
-        }
-    }
-
-    #[generate_trait]
-    pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>,
-        +Drop<TContractState>,
-    > of InternalTrait<TContractState> {
-        /// Initializes the contract by registering the IAccessControl interface ID.
-        fn initializer(ref self: ComponentState<TContractState>) {
-            let mut src5_component = get_dep_component_mut!(ref self, SRC5);
-            src5_component.register_interface(ipermission_control::IACCESSCONTROL_ID);
-        }
-
-        /// Validates that the caller has the given role. Otherwise it panics.
-        fn assert_only_permission(self: @ComponentState<TContractState>, permission: felt252) {
-            let caller: ContractAddress = get_caller_address();
-            let authorized = AccessControl::has_permission(self, permission, caller);
-            assert(authorized, Errors::INVALID_CALLER);
-        }
-
-        /// Attempts to revoke `permission` from `member`.
-        ///
-        /// Internal function without access restriction.
-        ///
-        /// May emit a `PermissionRevoked` event.
-        fn _revoke_role(
-            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress
-        ) {
-            self.member_permission.write((permission, member), false);
-            self.emit(PermissionRevoked { permission, member });
         }
     }
 }
