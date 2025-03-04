@@ -2,13 +2,11 @@
 pub mod AccountData {
     use spherre::types::{TransactionStatus, TransactionType};
     use starknet::storage::{Map};
-<<<<<<< HEAD
     use starknet::{ContractAddress};
-=======
     use core::starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use spherre::errors::Errors;
 
 
->>>>>>> 0a79ae7 (Added public function, private function, event, and tests)
     #[storage]
     pub struct Storage {
         transactions: Map<u256, Transaction>,
@@ -25,8 +23,6 @@ pub mod AccountData {
         tx_status: TransactionStatus,
         date_created: u64,
         date_executed: u64,
-<<<<<<< HEAD
-=======
     }
 
     #[event]
@@ -46,7 +42,9 @@ pub mod AccountData {
     impl ThresholdHandlerImpl<
         TContractState, +HasComponent<TContractState>,
     > of IThresholdHandler<ComponentState<TContractState>> {
-        fn get(self: @ComponentState<TContractState>) -> (u64, u64) {
+        //This takes no arguments and returns a tuple in which the first member is a threshold and the
+        //second is members_count of an account
+        fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {
             let threshold: u64 = self.threshold.read();
             let members_count: u64 = self.members_count.read();
             (threshold, members_count)
@@ -62,9 +60,9 @@ pub mod AccountData {
 
         fn set_threshold(ref self: ComponentState<TContractState>, threshold: u64) {
             // This function sets threshold if
-            use spherre::errors::ThresholdError;
+            
             let members_count: u64 = self.members_count.read();
-            assert(threshold < members_count, ThresholdError);
+            assert(threshold < members_count, Errors::ThresholdError);
             self.threshold.write(threshold);
         }
 
@@ -74,7 +72,6 @@ pub mod AccountData {
             // This function emits the threshold and date_updated;
             self.emit(ThresholdUpdated { threshold, date_updated });
         }
->>>>>>> 0a79ae7 (Added public function, private function, event, and tests)
     }
 }
 

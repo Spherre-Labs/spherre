@@ -8,14 +8,11 @@ pub mod SpherreAccount {
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
-<<<<<<< HEAD
         {errors::Errors},
     };
     use starknet::{
         {ContractAddress, contract_address_const},
         {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
-=======
->>>>>>> 0a79ae7 (Added public function, private function, event, and tests)
     };
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
