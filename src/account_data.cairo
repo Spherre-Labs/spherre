@@ -4,9 +4,11 @@ pub mod AccountData {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
+    use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::types::{TransactionStatus, TransactionType};
     use starknet::ContractAddress;
+
     #[storage]
     pub struct Storage {
         pub transactions: Map::<u256, Transaction>,
@@ -16,17 +18,6 @@ pub mod AccountData {
         pub members_count: u64 // the member length
     }
 
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        AddedMember: AddedMember,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct AddedMember {
-        member: ContractAddress,
-    }
-
     #[starknet::storage_node]
     pub struct Transaction {
         id: u256,
@@ -34,6 +25,24 @@ pub mod AccountData {
         tx_status: TransactionStatus,
         date_created: u64,
         date_executed: u64,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        AddedMember: AddedMember,
+        ThresholdUpdated: ThresholdUpdated,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct AddedMember {
+        member: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct ThresholdUpdated {
+        threshold: u64,
+        date_updated: u64,
     }
 
     #[embeddable_as(AccountDataComponent)]
@@ -63,6 +72,13 @@ pub mod AccountData {
         fn add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
             self._add_member(address);
         }
+        //This takes no arguments and returns a tuple in which the first member is a threshold and
+        //the second is members_count of an account
+        fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {
+            let threshold: u64 = self.threshold.read();
+            let members_count: u64 = self.members_count.read();
+            (threshold, members_count)
+        }
     }
 
     #[generate_trait]
@@ -79,5 +95,14 @@ pub mod AccountData {
         fn _get_members_count(self: @ComponentState<TContractState>) -> u64 {
             self.members_count.read()
         }
+
+        ///This is a private function that sets a threshold agter asserting threshold <
+        ///members_count
+        fn set_threshold(ref self: ComponentState<TContractState>, threshold: u64) {
+            let members_count: u64 = self.members_count.read();
+            assert(threshold <= members_count, Errors::ThresholdError);
+            self.threshold.write(threshold);
+        }
     }
 }
+
