@@ -1,3 +1,4 @@
+// use spherre::errors::ThresholdError;
 #[starknet::contract]
 pub mod SpherreAccount {
     use spherre::{

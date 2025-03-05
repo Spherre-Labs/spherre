@@ -57,7 +57,6 @@ pub mod PermissionControl {
                 .read() // Read the value from storage.
         }
     }
-
     /// Internal implementation.
     #[generate_trait]
     impl PermissionControlInternalImpl<

@@ -60,7 +60,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 3. Follow the [Style Guide](#style-guide)
 
 4. Commit your changes:
-   ```bash
+    ```bash
    git commit -m "feat: Description of changes"
    ```
 
