@@ -1,9 +1,9 @@
 #[starknet::component]
 pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
+    use spherre::errors::Errors;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::Permissions; // Import permission constants
-    use spherre::errors::Errors;
     use starknet::ContractAddress;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
@@ -165,7 +165,7 @@ pub mod PermissionControl {
                 self.revoke_permission(member, permission);
             }
             Errors::MISSING_ROLE;
-        } 
+        }
 
         /// Revokes `executor permission` from `member`.
         ///
