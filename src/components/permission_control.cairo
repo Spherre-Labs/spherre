@@ -1,6 +1,7 @@
 #[starknet::component]
 pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
+    use spherre::errors::Errors;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::Permissions; // Import permission constants
     use starknet::ContractAddress;
@@ -130,6 +131,57 @@ pub mod PermissionControl {
                 .emit(
                     Event::PermissionRevoked(PermissionRevoked { permission, account: member })
                 ); // Emit the PermissionRevoked event.
+        }
+
+        /// Revokes `proposer permission` from `member`.
+        ///
+        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller must have `role`'s admin role.
+        fn _revoke_proposer_permission(
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        ) {
+            let permissioned = self.has_permission(member, Permissions::PROPOSER);
+            if (permissioned) {
+                self.revoke_permission(member, permission);
+            }
+            Errors::MISSING_ROLE;
+        }
+
+        /// Revokes `voter permission` from `member`.
+        ///
+        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller must have `role`'s admin role.
+        fn _revoke_voter_permission(
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        ) {
+            let permissioned = self.has_permission(member, Permissions::VOTER);
+            if (permissioned) {
+                self.revoke_permission(member, permission);
+            }
+            Errors::MISSING_ROLE;
+        }
+
+        /// Revokes `executor permission` from `member`.
+        ///
+        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
+        ///
+        /// Requirements:
+        ///
+        /// - The caller must have `role`'s admin role.
+        fn _revoke_executor_permission(
+            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        ) {
+            let permissioned = self.has_permission(member, Permissions::EXECUTOR);
+            if (permissioned) {
+                self.revoke_permission(member, permission);
+            }
+            Errors::MISSING_ROLE;
         }
     }
 }
