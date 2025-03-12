@@ -32,4 +32,7 @@ pub mod actions {
 pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
+    // pub mod test_component_changes;
+    pub mod test_permission_control;
+    pub mod utils;
 }

@@ -18,7 +18,7 @@ pub mod PermissionControl {
     /// Events emitted by this component.
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         PermissionGranted: PermissionGranted,
         PermissionRevoked: PermissionRevoked,
     }
@@ -59,9 +59,9 @@ pub mod PermissionControl {
     }
     /// Internal implementation.
     #[generate_trait]
-    impl PermissionControlInternalImpl<
+    pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>
-    > of PermissionControlInternalTrait<TContractState> {
+    > of InternalTrait<TContractState> {
         /// Assigns the PROPOSER permission to a member.
         /// Emits a PermissionGranted event.
         /// @param member The address of the member (ContractAddress).
@@ -140,12 +140,12 @@ pub mod PermissionControl {
         /// Requirements:
         ///
         /// - The caller must have `role`'s admin role.
-        fn _revoke_proposer_permission(
-            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        fn revoke_proposer_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::PROPOSER);
             if (permissioned) {
-                self.revoke_permission(member, permission);
+                self.revoke_permission(member, Permissions::PROPOSER);
             }
             Errors::MISSING_ROLE;
         }
@@ -157,12 +157,12 @@ pub mod PermissionControl {
         /// Requirements:
         ///
         /// - The caller must have `role`'s admin role.
-        fn _revoke_voter_permission(
-            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        fn revoke_voter_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::VOTER);
             if (permissioned) {
-                self.revoke_permission(member, permission);
+                self.revoke_permission(member, Permissions::VOTER);
             }
             Errors::MISSING_ROLE;
         }
@@ -174,12 +174,12 @@ pub mod PermissionControl {
         /// Requirements:
         ///
         /// - The caller must have `role`'s admin role.
-        fn _revoke_executor_permission(
-            ref self: ComponentState<TContractState>, permission: felt252, member: ContractAddress,
+        fn revoke_executor_permission(
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::EXECUTOR);
             if (permissioned) {
-                self.revoke_permission(member, permission);
+                self.revoke_permission(member, Permissions::EXECUTOR);
             }
             Errors::MISSING_ROLE;
         }
