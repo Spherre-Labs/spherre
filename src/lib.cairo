@@ -1,7 +1,6 @@
 pub mod account;
 pub mod account_data;
 pub mod errors;
-pub mod mock_account_data;
 pub mod spherre;
 pub mod types;
 pub mod interfaces {
@@ -32,7 +31,9 @@ pub mod actions {
 pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
-    // pub mod test_component_changes;
     pub mod test_permission_control;
     pub mod utils;
+    pub mod mocks {
+        pub mod mock_account_data;
+    }
 }
