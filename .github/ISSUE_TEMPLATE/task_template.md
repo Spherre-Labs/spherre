@@ -1,3 +1,11 @@
+---
+name: Task Template
+about: For Creating a task
+title: "[TASK]"
+labels: good-first-issue
+assignees: ""
+---
+
 ## Description 📝
 <!-- A clear and concise description of the task. -->
 
