@@ -1,4 +1,6 @@
-#[derive(Drop, Copy, starknet::Store)]
+use starknet::ContractAddress;
+
+#[derive(Drop, Copy, starknet::Store, PartialEq, Serde)]
 pub enum TransactionStatus {
     #[default]
     VOID,
@@ -8,7 +10,7 @@ pub enum TransactionStatus {
     EXECUTED,
 }
 
-#[derive(Drop, Copy, starknet::Store)]
+#[derive(Drop, Copy, starknet::Store, PartialEq, Serde)]
 pub enum TransactionType {
     #[default]
     VOID,
@@ -20,7 +22,7 @@ pub enum TransactionType {
     NFT_SEND,
 }
 
-#[derive(Drop, Copy)]
+#[derive(Drop, Copy, PartialEq, Serde)]
 pub enum PermissionEnum {
     PROPOSER,
     VOTER,
@@ -31,4 +33,23 @@ pub mod Permissions {
     pub const PROPOSER: felt252 = selector!("PROPOSER");
     pub const VOTER: felt252 = selector!("VOTER");
     pub const EXECUTOR: felt252 = selector!("EXECUTOR");
+}
+
+#[derive(Drop, Copy, Serde, PartialEq)]
+pub struct Transaction {
+    id: u256,
+    tx_type: TransactionType,
+    tx_status: TransactionStatus,
+    proposer: ContractAddress,
+    executor: ContractAddress,
+    approved: Span<ContractAddress>,
+    rejected: Span<ContractAddress>,
+    date_created: u64,
+    date_executed: u64,
+}
+
+#[derive(Drop, Copy, Serde, PartialEq)]
+pub struct Member {
+    address: ContractAddress,
+    permissions: Span<PermissionEnum>
 }

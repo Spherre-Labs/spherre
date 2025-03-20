@@ -1,17 +1,18 @@
 #[starknet::component]
 pub mod AccountData {
+    use alexandria_storage::list::{ListTrait, List};
     use core::num::traits::Zero;
     use core::starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
-    use spherre::types::{TransactionStatus, TransactionType};
+    use spherre::types::{TransactionStatus, TransactionType, Transaction};
     use starknet::ContractAddress;
 
     #[storage]
     pub struct Storage {
-        pub transactions: Map::<u256, Transaction>,
+        pub transactions: Map::<u256, StorageTransaction>,
         pub tx_count: u256, // the transaction length
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
         pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
@@ -19,10 +20,14 @@ pub mod AccountData {
     }
 
     #[starknet::storage_node]
-    pub struct Transaction {
+    pub struct StorageTransaction {
         id: u256,
         tx_type: TransactionType,
         tx_status: TransactionStatus,
+        proposer: ContractAddress,
+        executor: ContractAddress,
+        approved: Vec<ContractAddress>,
+        rejected: Vec<ContractAddress>,
         date_created: u64,
         date_executed: u64,
     }
