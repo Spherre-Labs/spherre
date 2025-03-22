@@ -4,10 +4,11 @@ use spherre::components::permission_control::PermissionControl;
 use spherre::interfaces::ipermission_control::{IPermissionControl, IPermissionControlDispatcher};
 
 use spherre::tests::utils::{MEMBER_ONE};
-use spherre::types::Permissions;
+use spherre::types::{Permissions, PermissionEnum};
 #[starknet::contract]
 pub mod MockPermissionContract {
     use spherre::components::permission_control::PermissionControl;
+    use spherre::types::PermissionEnum;
     use starknet::ContractAddress;
 
     component!(
@@ -55,6 +56,15 @@ pub mod MockPermissionContract {
         }
         fn revoke_executor_permission(ref self: ContractState, member: ContractAddress) {
             self.permission_control_storage.revoke_executor_permission(member);
+        }
+
+        fn get_member_permissions(
+            ref self: ContractState, member: ContractAddress
+        ) -> Array<PermissionEnum> {
+            let member_permissions: Array<PermissionEnum> = self
+                .permission_control_storage
+                .get_member_permissions(member);
+            member_permissions
         }
     }
 }
@@ -184,4 +194,29 @@ fn test_revoke_executor_permission() {
     // check whether member no longer has executor permission
     let check = state.has_permission(member, Permissions::EXECUTOR);
     assert(!check, 'executor permission exists');
+}
+
+// Testcase for the get_member_permissions logic.
+// adds to a member all the permissions and
+// returns and array with all the permissions of
+// the member.
+#[test]
+fn test_get_member_permissions() {
+    let member = MEMBER_ONE();
+    let mut state = get_contract_state();
+    // assign the member all the permissions
+    state.assign_proposer_permission(member);
+    state.assign_executor_permission(member);
+    state.assign_voter_permission(member);
+
+    let permissions: Array<PermissionEnum> = state.get_member_permissions(member);
+
+    let proposer = *permissions.at(0);
+    let executor = *permissions.at(1);
+    let voter = *permissions.at(2);
+
+    // check if the member has all the permissions
+    assert(proposer == PermissionEnum::PROPOSER, 'proposer permission not found');
+    assert(executor == PermissionEnum::EXECUTOR, 'executor permission not found');
+    assert(voter == PermissionEnum::VOTER, 'voter permission not found');
 }
