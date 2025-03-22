@@ -3,7 +3,7 @@ pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
     use spherre::errors::Errors;
     use spherre::interfaces::ipermission_control::IPermissionControl;
-    use spherre::types::Permissions; // Import permission constants
+    use spherre::types::{Permissions, PermissionEnum}; // Import permission constants
     use starknet::ContractAddress;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
@@ -182,6 +182,26 @@ pub mod PermissionControl {
                 self.revoke_permission(member, Permissions::EXECUTOR);
             }
             Errors::MISSING_ROLE;
+        }
+
+        /// Returns all the permissions the member has.
+        /// @param member The address of the member (ContractAddress).
+        fn get_member_permissions(
+            ref self: ComponentState<TContractState>, member: ContractAddress,
+        ) -> Array<PermissionEnum> {
+            let mut permisions: Array<PermissionEnum> = array![];
+
+            if self.has_permission(member, Permissions::PROPOSER) {
+                permisions.append(PermissionEnum::PROPOSER);
+            }
+            if self.has_permission(member, Permissions::EXECUTOR) {
+                permisions.append(PermissionEnum::EXECUTOR);
+            }
+            if self.has_permission(member, Permissions::VOTER) {
+                permisions.append(PermissionEnum::VOTER);
+            }
+
+            return permisions;
         }
     }
 }
