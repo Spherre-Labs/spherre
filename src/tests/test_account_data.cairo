@@ -1,3 +1,5 @@
+use core::array::ArrayTrait;
+use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, MutableVecTrait,};
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
     DeclareResultTrait
@@ -6,6 +8,7 @@ use snforge_std::{
 use spherre::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 
 use spherre::tests::mocks::mock_account_data::{MockContract, MockContract::PrivateTrait};
+use spherre::types::{TransactionType, TransactionStatus};
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 
@@ -127,4 +130,74 @@ fn test_cannot_set_threshold_greater_than_members_count() {
     // call the set_threshold private function
     // with members_count = 0
     state.set_threshold(threshold_val); // should panic
+}
+
+#[test]
+fn test_get_transaction() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define sample transaction data
+    let transaction_id = u256 { low: 1, high: 0 };
+    let proposer = contract_address_const::<'proposer'>();
+    let executor = contract_address_const::<'executor'>();
+    let approver1 = contract_address_const::<'approver1'>();
+    let approver2 = contract_address_const::<'approver2'>();
+    let rejecter = contract_address_const::<'rejecter'>();
+    let date_created = 1617187200;
+    let date_executed = 1617190800;
+
+    // Access the storage entry for the transaction
+    let storage_path = state.account_data.transactions.entry(transaction_id);
+
+    // Write individual fields of the StorageTransaction
+    storage_path.id.write(transaction_id);
+    storage_path.tx_type.write(TransactionType::TOKEN_SEND);
+    storage_path.tx_status.write(TransactionStatus::APPROVED);
+    storage_path.proposer.write(proposer);
+    storage_path.executor.write(executor);
+    storage_path.date_created.write(date_created);
+    storage_path.date_executed.write(date_executed);
+
+    // Append to approved and rejected lists
+    storage_path.approved.append().write(approver1);
+    storage_path.approved.append().write(approver2);
+    storage_path.rejected.append().write(rejecter);
+
+    // Update transaction count
+    state.account_data.tx_count.write(transaction_id + u256 { low: 1, high: 0 });
+
+    // Retrieve the transaction using the get_transaction function
+    let retrieved_transaction = state.get_transaction(transaction_id);
+
+    // Verify the retrieved transaction matches the expected values
+    assert(retrieved_transaction.id == transaction_id, 'Transaction ID mismatch');
+    assert(
+        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch'
+    );
+    assert(
+        retrieved_transaction.tx_status == TransactionStatus::APPROVED,
+        'Transaction status mismatch'
+    );
+    assert(retrieved_transaction.proposer == proposer, 'Proposer mismatch');
+    assert(retrieved_transaction.executor == executor, 'Executor mismatch');
+    assert(retrieved_transaction.date_created == date_created, 'Date created mismatch');
+    assert(retrieved_transaction.date_executed == date_executed, 'Date executed mismatch');
+
+    // Verify approved and rejected addresses
+    assert(retrieved_transaction.approved.len() == 2, 'Approved count mismatch');
+    assert(*retrieved_transaction.approved.at(0) == approver1, 'Approver 1 mismatch');
+    assert(*retrieved_transaction.approved.at(1) == approver2, 'Approver 2 mismatch');
+    assert(retrieved_transaction.rejected.len() == 1, 'Rejected count mismatch');
+    assert(*retrieved_transaction.rejected.at(0) == rejecter, 'Rejecter mismatch');
+}
+
+#[test]
+#[should_panic(expected: 'Transaction ID out of range')]
+fn test_get_nonexistent_transaction() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Attempt to retrieve a non-existent transaction
+    state.get_transaction(u256 { low: 999, high: 0 });
 }
