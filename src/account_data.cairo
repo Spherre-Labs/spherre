@@ -21,15 +21,15 @@ pub mod AccountData {
 
     #[starknet::storage_node]
     pub struct StorageTransaction {
-        id: u256,
-        tx_type: TransactionType,
-        tx_status: TransactionStatus,
-        proposer: ContractAddress,
-        executor: ContractAddress,
-        approved: Vec<ContractAddress>,
-        rejected: Vec<ContractAddress>,
-        date_created: u64,
-        date_executed: u64,
+        pub id: u256,
+        pub tx_type: TransactionType,
+        pub tx_status: TransactionStatus,
+        pub proposer: ContractAddress,
+        pub executor: ContractAddress,
+        pub approved: Vec<ContractAddress>,
+        pub rejected: Vec<ContractAddress>,
+        pub date_created: u64,
+        pub date_executed: u64,
     }
 
     #[event]
@@ -83,6 +83,62 @@ pub mod AccountData {
             let threshold: u64 = self.threshold.read();
             let members_count: u64 = self.members_count.read();
             (threshold, members_count)
+        }
+
+        fn get_transaction(
+            self: @ComponentState<TContractState>, transaction_id: u256
+        ) -> Transaction {
+            // Check if transaction ID is within valid range
+            let tx_count = self.tx_count.read();
+            assert(transaction_id < tx_count, 'Transaction ID out of range');
+
+            // Access the storage entry for the given transaction ID
+            let storage_path = self.transactions.entry(transaction_id);
+
+            // Read each field of the StorageTransaction individually (cos u cant read from
+            // storagenodes directly)
+            let id = storage_path.id.read();
+            let tx_type = storage_path.tx_type.read();
+            let tx_status = storage_path.tx_status.read();
+            let proposer = storage_path.proposer.read();
+            let executor = storage_path.executor.read();
+            let date_created = storage_path.date_created.read();
+            let date_executed = storage_path.date_executed.read();
+
+            // Convert approved Vec<ContractAddress> to Span<ContractAddress>
+            let approved_len = storage_path.approved.len();
+            let mut approved_array = ArrayTrait::new();
+            let mut i = 0;
+            while i < approved_len {
+                let address = storage_path.approved.at(i).read(); // Read the ContractAddress
+                approved_array.append(address);
+                i += 1;
+            };
+            let approved_span = approved_array.span();
+
+            // Convert rejected Vec<ContractAddress> to Span<ContractAddress>
+            let rejected_len = storage_path.rejected.len();
+            let mut rejected_array = ArrayTrait::new();
+            i = 0;
+            while i < rejected_len {
+                let address = storage_path.rejected.at(i).read(); // Read the ContractAddress
+                rejected_array.append(address);
+                i += 1;
+            };
+            let rejected_span = rejected_array.span();
+
+            // return the Transaction struct
+            Transaction {
+                id,
+                tx_type,
+                tx_status,
+                proposer,
+                executor,
+                approved: approved_span,
+                rejected: rejected_span,
+                date_created,
+                date_executed,
+            }
         }
     }
 

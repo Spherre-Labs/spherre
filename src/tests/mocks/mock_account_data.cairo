@@ -2,8 +2,9 @@
 pub mod MockContract {
     use AccountData::InternalTrait;
     use spherre::account_data::AccountData;
+    use spherre::types::Transaction;
     use starknet::ContractAddress;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
 
@@ -43,6 +44,11 @@ pub mod MockContract {
         }
         fn edit_member_count(ref self: ContractState, val: u64) {
             self.account_data.members_count.write(val);
+        }
+
+        // Expose the main contract's get_transaction function
+        fn get_transaction(self: @ContractState, transaction_id: u256) -> Transaction {
+            self.account_data.get_transaction(transaction_id)
         }
     }
 }

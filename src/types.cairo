@@ -37,15 +37,15 @@ pub mod Permissions {
 
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct Transaction {
-    id: u256,
-    tx_type: TransactionType,
-    tx_status: TransactionStatus,
-    proposer: ContractAddress,
-    executor: ContractAddress,
-    approved: Span<ContractAddress>,
-    rejected: Span<ContractAddress>,
-    date_created: u64,
-    date_executed: u64,
+    pub id: u256,
+    pub tx_type: TransactionType,
+    pub tx_status: TransactionStatus,
+    pub proposer: ContractAddress,
+    pub executor: ContractAddress,
+    pub approved: Span<ContractAddress>,
+    pub rejected: Span<ContractAddress>,
+    pub date_created: u64,
+    pub date_executed: u64,
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]

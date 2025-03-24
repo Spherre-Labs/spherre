@@ -1,4 +1,5 @@
 use core::starknet::ContractAddress;
+use spherre::types::{Transaction};
 
 #[starknet::interface]
 pub trait IAccountData<TContractState> {
@@ -6,4 +7,5 @@ pub trait IAccountData<TContractState> {
     fn add_member(ref self: TContractState, address: ContractAddress);
     fn get_members_count(self: @TContractState) -> u64;
     fn get_threshold(self: @TContractState) -> (u64, u64);
+    fn get_transaction(self: @TContractState, transaction_id: u256) -> Transaction;
 }
