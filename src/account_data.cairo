@@ -150,7 +150,7 @@ pub mod AccountData {
             while i < no_of_members {
                 let current_member = self.members.entry(i).read();
                 if current_member == address {
-                    found = true; 
+                    found = true;
                 }
                 i += 1;
             };
