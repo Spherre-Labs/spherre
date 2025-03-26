@@ -201,3 +201,36 @@ fn test_get_nonexistent_transaction() {
     // Attempt to retrieve a non-existent transaction
     state.get_transaction(u256 { low: 999, high: 0 });
 }
+
+#[test]
+fn test_is_member() {
+    let new_member = new_member();
+    let another_new_member = another_new_member();
+    let non_member = contract_address_const::<'non_member'>();
+    let member = member();
+    let contract_address = deploy_mock_contract();
+
+    let mock_contract_dispatcher = IAccountDataDispatcher { contract_address };
+
+    // Act: add members
+    start_cheat_caller_address(contract_address, member);
+    mock_contract_dispatcher.add_member(new_member);
+    mock_contract_dispatcher.add_member(another_new_member);
+    stop_cheat_caller_address(contract_address);
+
+    assert!(
+        mock_contract_dispatcher.is_member(new_member) == true,
+        "New member should be recognized as a member"
+    );
+
+    assert!(
+        mock_contract_dispatcher.is_member(another_new_member) == true,
+        "Another new member should be recognized as a member"
+    );
+
+    assert!(
+        mock_contract_dispatcher.is_member(non_member) == false,
+        "Non-member should not be recognized as a member"
+    );
+}
+
