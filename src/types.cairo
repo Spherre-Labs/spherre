@@ -1,3 +1,4 @@
+use core::byte_array::ByteArray;
 use starknet::ContractAddress;
 
 #[derive(Drop, Copy, starknet::Store, PartialEq, Serde)]
@@ -52,4 +53,10 @@ pub struct Transaction {
 pub struct Member {
     address: ContractAddress,
     permissions: Span<PermissionEnum>
+}
+
+#[derive(Drop, Serde, PartialEq)]
+pub struct AccountDetails {
+    pub name: ByteArray,
+    pub description: ByteArray
 }

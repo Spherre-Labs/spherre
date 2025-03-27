@@ -8,7 +8,7 @@ pub mod SpherreAccount {
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
-        {errors::Errors},
+        {errors::Errors}, types::AccountDetails,
     };
     use starknet::{
         {ContractAddress, contract_address_const},
@@ -91,6 +91,10 @@ pub mod SpherreAccount {
 
         fn get_description(self: @ContractState) -> ByteArray {
             self.description.read()
+        }
+
+        fn get_account_details(self: @ContractState) -> AccountDetails {
+            AccountDetails { name: self.name.read(), description: self.description.read() }
         }
     }
 }
