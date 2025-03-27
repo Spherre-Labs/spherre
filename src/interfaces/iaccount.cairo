@@ -1,6 +1,6 @@
-use starknet::ContractAddress;
 use core::byte_array::ByteArray;
 use spherre::types::AccountDetails;
+use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IAccount<TContractState> {

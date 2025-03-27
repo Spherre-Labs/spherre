@@ -1,6 +1,6 @@
 use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
-use starknet::contract_address_const;
 use crate::types::AccountDetails;
+use starknet::contract_address_const;
 
 // setting up the contract state
 fn CONTRACT_STATE() -> SpherreAccount::ContractState {
@@ -118,7 +118,7 @@ fn test_get_account_details() {
         array![contract_address_const::<4>(), contract_address_const::<5>()],
         2,
     );
-    
+
     let account_details: AccountDetails = state.get_account_details();
     assert_eq!(account_details.name, "John Doe");
     assert_eq!(account_details.description, "John Does's Sphere");
