@@ -15,9 +15,11 @@ pub mod interfaces {
     pub mod ipermission_control;
     pub mod ispherre;
     pub mod itoken_tx;
+    pub mod icomponents;
 }
 pub mod components {
     pub mod permission_control;
+    pub mod security;
 }
 pub mod actions {
     pub mod change_threshold_tx;
@@ -38,3 +40,4 @@ pub mod tests {
         pub mod mock_account_data;
     }
 }
+
