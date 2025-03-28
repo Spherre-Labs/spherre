@@ -1,3 +1,5 @@
+use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
+use crate::types::AccountDetails;
 use starknet::contract_address_const;
 use crate::account::SpherreAccount;
 use crate::account::SpherreAccount::SpherreAccountImpl;
@@ -101,4 +103,25 @@ fn test_description_is_set_correctly() {
     );
     let actual_description: ByteArray = state.get_description();
     assert_eq!(actual_description, "John Does's Sphere");
+}
+
+
+#[test]
+fn test_get_account_details() {
+    let mut state = CONTRACT_STATE();
+    let set_name: ByteArray = "John Doe";
+    let set_description: ByteArray = "John Does's Sphere";
+    SpherreAccount::constructor(
+        ref state,
+        contract_address_const::<2>(),
+        contract_address_const::<10>(),
+        set_name,
+        set_description,
+        array![contract_address_const::<4>(), contract_address_const::<5>()],
+        2,
+    );
+
+    let account_details: AccountDetails = state.get_account_details();
+    assert_eq!(account_details.name, "John Doe");
+    assert_eq!(account_details.description, "John Does's Sphere");
 }

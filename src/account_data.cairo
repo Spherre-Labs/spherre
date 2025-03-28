@@ -147,6 +147,7 @@ pub mod AccountData {
                 date_executed,
             }
         }
+
         fn get_number_of_voters(self: @ComponentState<TContractState>) -> u64 {
             let permission_control = get_dep_component!(self, PermissionControlDep);
             let mut counter: u64 = 0;
@@ -197,6 +198,24 @@ pub mod AccountData {
             }
 
             counter
+=======
+
+        /// Checks if a given address is a member of the account
+        fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {
+            let no_of_members = self.members_count.read();
+            let mut i = 0;
+            let mut found = false;
+
+            while i < no_of_members {
+                let current_member = self.members.entry(i).read();
+                if current_member == address {
+                    found = true;
+                }
+                i += 1;
+            };
+
+            found
+
         }
     }
 

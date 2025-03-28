@@ -11,4 +11,5 @@ pub trait IAccountData<TContractState> {
     fn get_number_of_voters(self: @TContractState) -> u64;
     fn get_number_of_proposers(self: @TContractState) -> u64;
     fn get_number_of_executors(self: @TContractState) -> u64;
+    fn is_member(self: @TContractState, address: ContractAddress) -> bool;
 }
