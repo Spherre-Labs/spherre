@@ -1,21 +1,25 @@
 #[starknet::component]
 pub mod AccountData {
-    use alexandria_storage::list::{ListTrait, List};
+    use alexandria_storage::list::{List, ListTrait};
     use core::num::traits::Zero;
     use core::starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
+        Map, StorageMapReadAccess, StoragePathEntry, StoragePointerReadAccess,
+        StoragePointerWriteAccess, Vec, VecTrait,
     };
+    use spherre::components::permission_control;
+    use spherre::components::permission_control::PermissionControl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
-    use spherre::types::{TransactionStatus, TransactionType, Transaction};
+    use spherre::interfaces::ipermission_control::IPermissionControl;
+    use spherre::types::{Permissions, Transaction, TransactionStatus, TransactionType};
     use starknet::ContractAddress;
 
     #[storage]
     pub struct Storage {
-        pub transactions: Map::<u256, StorageTransaction>,
+        pub transactions: Map<u256, StorageTransaction>,
         pub tx_count: u256, // the transaction length
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
-        pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
+        pub members: Map<u64, ContractAddress>, // Map(id, member) the members of the account
         pub members_count: u64 // the member length
     }
 
@@ -52,7 +56,10 @@ pub mod AccountData {
 
     #[embeddable_as(AccountDataComponent)]
     pub impl AccountDataImpl<
-        TContractState, +HasComponent<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl PermissionControlDep: PermissionControl::HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {
         fn get_account_members(self: @ComponentState<TContractState>) -> Array<ContractAddress> {
             let mut members_of_account: Array<ContractAddress> = array![];
@@ -65,7 +72,7 @@ pub mod AccountData {
                 members_of_account.append(current_member);
 
                 i += 1;
-            };
+            }
 
             members_of_account
         }
@@ -86,7 +93,7 @@ pub mod AccountData {
         }
 
         fn get_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) -> Transaction {
             // Check if transaction ID is within valid range
             let tx_count = self.tx_count.read();
@@ -113,7 +120,7 @@ pub mod AccountData {
                 let address = storage_path.approved.at(i).read(); // Read the ContractAddress
                 approved_array.append(address);
                 i += 1;
-            };
+            }
             let approved_span = approved_array.span();
 
             // Convert rejected Vec<ContractAddress> to Span<ContractAddress>
@@ -124,7 +131,7 @@ pub mod AccountData {
                 let address = storage_path.rejected.at(i).read(); // Read the ContractAddress
                 rejected_array.append(address);
                 i += 1;
-            };
+            }
             let rejected_span = rejected_array.span();
 
             // return the Transaction struct
@@ -139,6 +146,57 @@ pub mod AccountData {
                 date_created,
                 date_executed,
             }
+        }
+        fn get_number_of_voters(self: @ComponentState<TContractState>) -> u64 {
+            let permission_control = get_dep_component!(self, PermissionControlDep);
+            let mut counter: u64 = 0;
+            let no_of_members = self.members_count.read();
+
+            let mut index: u64 = 0;
+            while index < no_of_members {
+                let member = self.members.entry(index).read();
+                if permission_control.has_permission(member, Permissions::VOTER) {
+                    counter += 1;
+                }
+                index += 1;
+            }
+
+            counter
+        }
+
+        fn get_number_of_proposers(self: @ComponentState<TContractState>) -> u64 {
+            let permission_control = get_dep_component!(self, PermissionControlDep);
+            let mut counter: u64 = 0;
+            let no_of_members = self.members_count.read();
+
+            let mut index: u64 = 0;
+            while index < no_of_members {
+                let member = self.members.entry(index).read();
+                if permission_control.has_permission(member, Permissions::PROPOSER) {
+                    counter += 1;
+                }
+                index += 1;
+            }
+
+            counter
+        }
+
+
+        fn get_number_of_executors(self: @ComponentState<TContractState>) -> u64 {
+            let permission_control = get_dep_component!(self, PermissionControlDep);
+            let mut counter: u64 = 0;
+            let no_of_members = self.members_count.read();
+
+            let mut index: u64 = 0;
+            while index < no_of_members {
+                let member = self.members.entry(index).read();
+                if permission_control.has_permission(member, Permissions::EXECUTOR) {
+                    counter += 1;
+                }
+                index += 1;
+            }
+
+            counter
         }
     }
 

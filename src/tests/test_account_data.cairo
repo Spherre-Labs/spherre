@@ -1,16 +1,14 @@
 use core::array::ArrayTrait;
-use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, MutableVecTrait,};
+use core::starknet::storage::{MutableVecTrait, StoragePathEntry, StoragePointerWriteAccess};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
-
 use spherre::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
-
-use spherre::tests::mocks::mock_account_data::{MockContract, MockContract::PrivateTrait};
-use spherre::types::{TransactionType, TransactionStatus};
-use starknet::ContractAddress;
-use starknet::contract_address_const;
+use spherre::tests::mocks::mock_account_data::MockContract;
+use spherre::tests::mocks::mock_account_data::MockContract::PrivateTrait;
+use spherre::types::{TransactionStatus, TransactionType};
+use starknet::{ContractAddress, contract_address_const};
 
 fn zero_address() -> ContractAddress {
     contract_address_const::<0>()
@@ -173,11 +171,11 @@ fn test_get_transaction() {
     // Verify the retrieved transaction matches the expected values
     assert(retrieved_transaction.id == transaction_id, 'Transaction ID mismatch');
     assert(
-        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch'
+        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch',
     );
     assert(
         retrieved_transaction.tx_status == TransactionStatus::APPROVED,
-        'Transaction status mismatch'
+        'Transaction status mismatch',
     );
     assert(retrieved_transaction.proposer == proposer, 'Proposer mismatch');
     assert(retrieved_transaction.executor == executor, 'Executor mismatch');
@@ -201,3 +199,221 @@ fn test_get_nonexistent_transaction() {
     // Attempt to retrieve a non-existent transaction
     state.get_transaction(u256 { low: 999, high: 0 });
 }
+
+#[test]
+fn test_get_number_of_voters() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let voter1 = contract_address_const::<'voter1'>();
+    let voter2 = contract_address_const::<'voter2'>();
+    let non_voter = contract_address_const::<'non_voter'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(voter1);
+    state.account_data.members.entry(1).write(voter2);
+    state.account_data.members.entry(2).write(non_voter);
+    state.account_data.members_count.write(3);
+
+    // Set up permissions for voters
+    let permission_path = state.permission_control.member_permission;
+    permission_path.entry((Permissions::VOTER, voter1)).write(true);
+    permission_path.entry((Permissions::VOTER, voter2)).write(true);
+
+    // Get and verify voter count
+    let voter_count = state.get_number_of_voters();
+    assert(voter_count == 2, 'Wrong number of voters');
+}
+
+#[test]
+fn test_get_number_of_proposers() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let proposer = contract_address_const::<'proposer'>();
+    let non_proposer1 = contract_address_const::<'non_proposer1'>();
+    let non_proposer2 = contract_address_const::<'non_proposer2'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(proposer);
+    state.account_data.members.entry(1).write(non_proposer1);
+    state.account_data.members.entry(2).write(non_proposer2);
+    state.account_data.members_count.write(3);
+
+    // Set up permission for proposer
+    let permission_path = state.permission_control.member_permission;
+    permission_path.entry((Permissions::PROPOSER, proposer)).write(true);
+
+    // Get and verify proposer count
+    let proposer_count = state.get_number_of_proposers();
+    assert(proposer_count == 1, 'Wrong number of proposers');
+}
+
+#[test]
+fn test_get_number_of_executors() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let executor1 = contract_address_const::<'executor1'>();
+    let executor2 = contract_address_const::<'executor2'>();
+    let executor3 = contract_address_const::<'executor3'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(executor1);
+    state.account_data.members.entry(1).write(executor2);
+    state.account_data.members.entry(2).write(executor3);
+    state.account_data.members_count.write(3);
+
+    // Set up permissions for all executors
+    let permission_path = state.permission_control.member_permission;
+    permission_path.entry((Permissions::EXECUTOR, executor1)).write(true);
+    permission_path.entry((Permissions::EXECUTOR, executor2)).write(true);
+    permission_path.entry((Permissions::EXECUTOR, executor3)).write(true);
+
+    // Get and verify executor count
+    let executor_count = state.get_number_of_executors();
+    assert(executor_count == 3, 'Wrong number of executors');
+}
+
+#[test]
+fn test_zero_permission_counts() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let member1 = contract_address_const::<'member1'>();
+    let member2 = contract_address_const::<'member2'>();
+
+    // Add members but don't assign any permissions
+    state.account_data.members.entry(0).write(member1);
+    state.account_data.members.entry(1).write(member2);
+    state.account_data.members_count.write(2);
+
+    // Get and verify all counts are zero
+    let voter_count = state.get_number_of_voters();
+    let proposer_count = state.get_number_of_proposers();
+    let executor_count = state.get_number_of_executors();
+
+    assert(voter_count == 0, 'Should have no voters');
+    assert(proposer_count == 0, 'Should have no proposers');
+    assert(executor_count == 0, 'Should have no executors');
+}
+
+#[test]
+fn test_multiple_permission_counts() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test address
+    let multi_role_member = contract_address_const::<'multi_role'>();
+
+    // Add member
+    state.account_data.members.entry(0).write(multi_role_member);
+    state.account_data.members_count.write(1);
+
+    // Assign all permissions to the member
+    let permission_path = state.permission_control.member_permission;
+    permission_path.entry((Permissions::VOTER, multi_role_member)).write(true);
+    permission_path.entry((Permissions::PROPOSER, multi_role_member)).write(true);
+    permission_path.entry((Permissions::EXECUTOR, multi_role_member)).write(true);
+
+    // Get and verify all counts
+    let voter_count = state.get_number_of_voters();
+    let proposer_count = state.get_number_of_proposers();
+    let executor_count = state.get_number_of_executors();
+
+    assert(voter_count == 1, 'Should have one voter');
+    assert(proposer_count == 1, 'Should have one proposer');
+    assert(executor_count == 1, 'Should have one executor');
+}
+
+#[test]
+fn test_get_number_of_voters() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let voter1 = contract_address_const::<'voter1'>();
+    let voter2 = contract_address_const::<'voter2'>();
+    let non_voter = contract_address_const::<'non_voter'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(voter1);
+    state.account_data.members.entry(1).write(voter2);
+    state.account_data.members.entry(2).write(non_voter);
+    state.account_data.members_count.write(3);
+
+    // Set up permissions for voters using permission_control storage
+    state.permission_control.member_permission.entry((Permissions::VOTER, voter1)).write(true);
+    state.permission_control.member_permission.entry((Permissions::VOTER, voter2)).write(true);
+
+    // Get and verify voter count
+    let voter_count = state.get_number_of_voters();
+    assert(voter_count == 2, 'Wrong number of voters');
+}
+
+#[test]
+fn test_get_number_of_proposers() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let proposer = contract_address_const::<'proposer'>();
+    let non_proposer1 = contract_address_const::<'non_proposer1'>();
+    let non_proposer2 = contract_address_const::<'non_proposer2'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(proposer);
+    state.account_data.members.entry(1).write(non_proposer1);
+    state.account_data.members.entry(2).write(non_proposer2);
+    state.account_data.members_count.write(3);
+
+    // Set up permission for proposer
+    state.permission_control.member_permission.entry((Permissions::PROPOSER, proposer)).write(true);
+
+    // Get and verify proposer count
+    let proposer_count = state.get_number_of_proposers();
+    assert(proposer_count == 1, 'Wrong number of proposers');
+}
+
+#[test]
+fn test_get_number_of_executors() {
+    // Initialize contract state
+    let mut state = get_mock_contract_state();
+
+    // Define test addresses
+    let executor1 = contract_address_const::<'executor1'>();
+    let executor2 = contract_address_const::<'executor2'>();
+    let executor3 = contract_address_const::<'executor3'>();
+
+    // Add all members
+    state.account_data.members.entry(0).write(executor1);
+    state.account_data.members.entry(1).write(executor2);
+    state.account_data.members.entry(2).write(executor3);
+    state.account_data.members_count.write(3);
+
+    // Set up permissions for all executors
+    state
+        .permission_control
+        .member_permission
+        .entry((Permissions::EXECUTOR, executor1))
+        .write(true);
+    state
+        .permission_control
+        .member_permission
+        .entry((Permissions::EXECUTOR, executor2))
+        .write(true);
+    state
+        .permission_control
+        .member_permission
+        .entry((Permissions::EXECUTOR, executor3))
+        .write(true);
+
+    // Get and verify executor count
+    let executor_count = state.get_number_of_executors();
+    assert(executor_count == 3, 'Wrong number of executors');
+}
+

@@ -1,5 +1,6 @@
-use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
 use starknet::contract_address_const;
+use crate::account::SpherreAccount;
+use crate::account::SpherreAccount::SpherreAccountImpl;
 
 // setting up the contract state
 fn CONTRACT_STATE() -> SpherreAccount::ContractState {

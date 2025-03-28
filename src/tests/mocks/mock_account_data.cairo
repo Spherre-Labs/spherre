@@ -4,25 +4,28 @@ pub mod MockContract {
     use spherre::account_data::AccountData;
     use spherre::types::Transaction;
     use starknet::ContractAddress;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
+    component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountDataComponent<ContractState>;
-
     pub impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
     #[storage]
     pub struct Storage {
         #[substorage(v0)]
         pub account_data: AccountData::Storage,
+        #[substorage(v0)]
+        pub permission_control: PermissionControl::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         AccountDataEvent: AccountData::Event,
+        PermissionControlEvent: PermissionControl::Event,
     }
 
     fn get_members(self: @ContractState) -> Array<ContractAddress> {
@@ -49,6 +52,17 @@ pub mod MockContract {
         // Expose the main contract's get_transaction function
         fn get_transaction(self: @ContractState, transaction_id: u256) -> Transaction {
             self.account_data.get_transaction(transaction_id)
+        }
+        fn get_number_of_voters(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_voters()
+        }
+
+        fn get_number_of_proposers(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_proposers()
+        }
+
+        fn get_number_of_executors(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_executors()
         }
     }
 }

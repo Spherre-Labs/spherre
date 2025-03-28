@@ -51,5 +51,5 @@ pub struct Transaction {
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct Member {
     address: ContractAddress,
-    permissions: Span<PermissionEnum>
+    permissions: Span<PermissionEnum>,
 }

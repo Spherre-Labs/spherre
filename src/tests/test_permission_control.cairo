@@ -1,10 +1,9 @@
 use MockPermissionContract::InternalTrait;
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use spherre::components::permission_control::PermissionControl;
 use spherre::interfaces::ipermission_control::{IPermissionControl, IPermissionControlDispatcher};
-
-use spherre::tests::utils::{MEMBER_ONE};
-use spherre::types::{Permissions, PermissionEnum};
+use spherre::tests::utils::MEMBER_ONE;
+use spherre::types::{PermissionEnum, Permissions};
 #[starknet::contract]
 pub mod MockPermissionContract {
     use spherre::components::permission_control::PermissionControl;
@@ -12,7 +11,7 @@ pub mod MockPermissionContract {
     use starknet::ContractAddress;
 
     component!(
-        path: PermissionControl, storage: permission_control_storage, event: PermissionControlEvent
+        path: PermissionControl, storage: permission_control_storage, event: PermissionControlEvent,
     );
 
     #[abi(embed_v0)]
@@ -59,7 +58,7 @@ pub mod MockPermissionContract {
         }
 
         fn get_member_permissions(
-            ref self: ContractState, member: ContractAddress
+            ref self: ContractState, member: ContractAddress,
         ) -> Array<PermissionEnum> {
             let member_permissions: Array<PermissionEnum> = self
                 .permission_control_storage
@@ -83,7 +82,7 @@ fn get_contract_state() -> MockPermissionContract::ContractState {
 }
 
 fn get_component_state() -> PermissionControl::ComponentState<
-    MockPermissionContract::ContractState
+    MockPermissionContract::ContractState,
 > {
     PermissionControl::component_state_for_testing()
 }
