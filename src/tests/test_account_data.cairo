@@ -1,4 +1,3 @@
-use spherre::types::Permissions;
 use core::array::ArrayTrait;
 use core::starknet::storage::{MutableVecTrait, StoragePathEntry, StoragePointerWriteAccess};
 use snforge_std::{
@@ -8,7 +7,7 @@ use snforge_std::{
 use spherre::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 use spherre::tests::mocks::mock_account_data::MockContract;
 use spherre::tests::mocks::mock_account_data::MockContract::PrivateTrait;
-use spherre::types::{TransactionStatus, TransactionType};
+use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 
@@ -349,17 +348,17 @@ fn test_is_member() {
 
     assert!(
         mock_contract_dispatcher.is_member(new_member) == true,
-        "New member should be recognized as a member"
+        "New member should be recognized as a member",
     );
 
     assert!(
         mock_contract_dispatcher.is_member(another_new_member) == true,
-        "Another new member should be recognized as a member"
+        "Another new member should be recognized as a member",
     );
 
     assert!(
         mock_contract_dispatcher.is_member(non_member) == false,
-        "Non-member should not be recognized as a member"
+        "Non-member should not be recognized as a member",
     );
 }
 

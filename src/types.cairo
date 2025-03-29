@@ -58,5 +58,5 @@ pub struct Member {
 #[derive(Drop, Serde, PartialEq)]
 pub struct AccountDetails {
     pub name: ByteArray,
-    pub description: ByteArray
+    pub description: ByteArray,
 }

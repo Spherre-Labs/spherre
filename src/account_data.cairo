@@ -198,7 +198,7 @@ pub mod AccountData {
             }
 
             counter
-=======
+        }
 
         /// Checks if a given address is a member of the account
         fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {
@@ -212,10 +212,9 @@ pub mod AccountData {
                     found = true;
                 }
                 i += 1;
-            };
+            }
 
             found
-
         }
     }
 
