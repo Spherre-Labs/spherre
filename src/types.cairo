@@ -52,11 +52,11 @@ pub struct Transaction {
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct Member {
     address: ContractAddress,
-    permissions: Span<PermissionEnum>
+    permissions: Span<PermissionEnum>,
 }
 
 #[derive(Drop, Serde, PartialEq)]
 pub struct AccountDetails {
     pub name: ByteArray,
-    pub description: ByteArray
+    pub description: ByteArray,
 }

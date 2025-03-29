@@ -1,19 +1,16 @@
 // use spherre::errors::ThresholdError;
 #[starknet::contract]
 pub mod SpherreAccount {
-    use spherre::{
-        account_data::AccountData,
-        actions::{
-            change_threshold_tx::ChangeThresholdTransaction,
-            member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
-            nft_tx::NFTTransaction, token_tx::TokenTransaction,
-        },
-        {errors::Errors}, types::AccountDetails,
-    };
-    use starknet::{
-        {ContractAddress, contract_address_const},
-        {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
-    };
+    use spherre::account_data::AccountData;
+    use spherre::actions::change_threshold_tx::ChangeThresholdTransaction;
+    use spherre::actions::member_permission_tx::MemberPermissionTransaction;
+    use spherre::actions::member_tx::MemberTransaction;
+    use spherre::actions::nft_tx::NFTTransaction;
+    use spherre::actions::token_tx::TokenTransaction;
+    use spherre::errors::Errors;
+    use spherre::types::AccountDetails;
+    use starknet::storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess};
+    use starknet::{ContractAddress, contract_address_const};
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(
