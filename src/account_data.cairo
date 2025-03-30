@@ -50,7 +50,7 @@ pub mod AccountData {
         date_updated: u64,
     }
 
-    #[embeddable_as(AccountDataComponent)]
+    #[embeddable_as(AccountData)]
     pub impl AccountDataImpl<
         TContractState, +HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {

@@ -1,8 +1,10 @@
 // use spherre::errors::ThresholdError;
 #[starknet::contract]
 pub mod SpherreAccount {
-    use spherre::{
+    use AccountData::InternalTrait;
+use spherre::{
         account_data::AccountData,
+        components::permission_control::PermissionControl,
         actions::{
             change_threshold_tx::ChangeThresholdTransaction,
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
@@ -16,6 +18,7 @@ pub mod SpherreAccount {
     };
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
+    component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
     component!(
         path: ChangeThresholdTransaction,
         storage: change_threshold_transaction,
@@ -30,6 +33,14 @@ pub mod SpherreAccount {
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
 
+    #[abi(embed_v0)]
+    impl AccountDataImpl = AccountData::AccountData<ContractState>;
+    impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl PermissionControlImpl = PermissionControl::PermissionControl<ContractState>;
+    impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
         deployer: ContractAddress,
@@ -37,6 +48,8 @@ pub mod SpherreAccount {
         description: ByteArray,
         #[substorage(v0)]
         account_data: AccountData::Storage,
+        #[substorage(v0)]
+        permission_control: PermissionControl::Storage,
         #[substorage(v0)]
         change_threshold_transaction: ChangeThresholdTransaction::Storage,
         #[substorage(v0)]
@@ -54,6 +67,8 @@ pub mod SpherreAccount {
     pub enum Event {
         #[flat]
         AccountDataEvent: AccountData::Event,
+        #[flat]
+        PermissionControlEvent: PermissionControl::Event,
         #[flat]
         ChangeThresholdEvent: ChangeThresholdTransaction::Event,
         #[flat]
@@ -78,9 +93,19 @@ pub mod SpherreAccount {
     ) {
         assert(deployer != contract_address_const::<0>(), Errors::ERR_DEPLOYER_ZERO);
         assert(owner != contract_address_const::<0>(), Errors::ERR_OWNER_ZERO);
+        assert(members.len() > 0, Errors::NON_ZERO_MEMBER_LENGTH);
+        assert(threshold > 0, Errors::NON_ZERO_THRESHOLD);
         assert((members.len()).into() >= threshold, Errors::ERR_INVALID_MEMBER_THRESHOLD);
+        
         self.name.write(name);
         self.description.write(description);
+        let len_member = members.len();
+        for index in 0 .. len_member {
+            let member = *members.at(index);
+            self.account_data._add_member(member);
+            self.permission_control.assign_all_permissions(member);
+        };
+        self.account_data.set_threshold(threshold);
     }
 
     #[generate_trait]
