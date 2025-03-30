@@ -1,10 +1,24 @@
 use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
+use crate::interfaces::iaccount::{IAccount, IAccountDispatcher};
 use crate::types::AccountDetails;
+use snforge_std::{
+    start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait,
+    DeclareResultTrait
+};
+use starknet::ContractAddress;
 use starknet::contract_address_const;
 
 // setting up the contract state
 fn CONTRACT_STATE() -> SpherreAccount::ContractState {
     SpherreAccount::contract_state_for_testing()
+}
+
+// Helper function to deploy a contract for testing
+fn deploy_contract() -> ContractAddress {
+    let contract_class = declare("SpherreAccount").unwrap().contract_class();
+    let mut calldata = array![];
+    let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+    contract_address
 }
 
 // Validate Deployer Address
@@ -38,7 +52,7 @@ fn test_owner_is_not_zero_address() {
         contract_address_const::<0>(),
         "John Doe",
         "John Does's Sphere",
-        array![],
+        array![contract_address_const::<4>(), contract_address_const::<5>()],
         4,
     );
 }
@@ -123,4 +137,24 @@ fn test_get_account_details() {
     assert_eq!(account_details.name, "John Doe");
     assert_eq!(account_details.description, "John Does's Sphere");
 }
+// Test Ownable functionality
 
+// Test that the owner is correctly set during initialization
+#[test]
+fn test_owner_is_set_correctly() {
+    let mut state = CONTRACT_STATE();
+    let owner_address = contract_address_const::<10>();
+
+    SpherreAccount::constructor(
+        ref state,
+        contract_address_const::<2>(),
+        owner_address,
+        "John Doe",
+        "John Does's Sphere",
+        array![contract_address_const::<4>(), contract_address_const::<5>()],
+        2,
+    );
+
+    let actual_owner = state.owner();
+    assert_eq!(actual_owner, owner_address, "Owner should be set correctly");
+}
