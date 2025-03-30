@@ -2,6 +2,7 @@
 pub mod MockContract {
     use AccountData::InternalTrait;
     use spherre::account_data::AccountData;
+    use spherre::components::permission_control::PermissionControl;
     use spherre::types::Transaction;
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
@@ -12,6 +13,11 @@ pub mod MockContract {
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountDataComponent<ContractState>;
     pub impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    pub impl PermissionControlImpl =
+        PermissionControl::PermissionControl<ContractState>;
+    pub impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
     #[storage]
     pub struct Storage {
@@ -63,6 +69,17 @@ pub mod MockContract {
 
         fn get_number_of_executors(self: @ContractState) -> u64 {
             self.account_data.get_number_of_executors()
+        }
+        fn set_voter_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_voter_permission(member);
+        }
+
+        fn set_proposer_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_proposer_permission(member);
+        }
+
+        fn set_executor_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_executor_permission(member);
         }
     }
 }

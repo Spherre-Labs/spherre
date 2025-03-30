@@ -217,11 +217,8 @@ fn test_get_number_of_voters() {
     state.account_data.members.entry(2).write(non_voter);
     state.account_data.members_count.write(3);
 
-    // Set up permissions for voters
-    let permission_path = state.permission_control.member_permission;
-    permission_path.entry((Permissions::VOTER, voter1)).write(true);
-    permission_path.entry((Permissions::VOTER, voter2)).write(true);
-
+    state.set_voter_permission(voter1);
+    state.set_voter_permission(voter2);
     // Get and verify voter count
     let voter_count = state.get_number_of_voters();
     assert(voter_count == 2, 'Wrong number of voters');
@@ -244,8 +241,7 @@ fn test_get_number_of_proposers() {
     state.account_data.members_count.write(3);
 
     // Set up permission for proposer
-    let permission_path = state.permission_control.member_permission;
-    permission_path.entry((Permissions::PROPOSER, proposer)).write(true);
+    state.set_proposer_permission(proposer);
 
     // Get and verify proposer count
     let proposer_count = state.get_number_of_proposers();
@@ -269,10 +265,9 @@ fn test_get_number_of_executors() {
     state.account_data.members_count.write(3);
 
     // Set up permissions for all executors
-    let permission_path = state.permission_control.member_permission;
-    permission_path.entry((Permissions::EXECUTOR, executor1)).write(true);
-    permission_path.entry((Permissions::EXECUTOR, executor2)).write(true);
-    permission_path.entry((Permissions::EXECUTOR, executor3)).write(true);
+    state.set_executor_permission(executor1);
+    state.set_executor_permission(executor2);
+    state.set_executor_permission(executor3);
 
     // Get and verify executor count
     let executor_count = state.get_number_of_executors();
@@ -316,10 +311,9 @@ fn test_multiple_permission_counts() {
     state.account_data.members_count.write(1);
 
     // Assign all permissions to the member
-    let permission_path = state.permission_control.member_permission;
-    permission_path.entry((Permissions::VOTER, multi_role_member)).write(true);
-    permission_path.entry((Permissions::PROPOSER, multi_role_member)).write(true);
-    permission_path.entry((Permissions::EXECUTOR, multi_role_member)).write(true);
+    state.set_voter_permission(multi_role_member);
+    state.set_proposer_permission(multi_role_member);
+    state.set_executor_permission(multi_role_member);
 
     // Get and verify all counts
     let voter_count = state.get_number_of_voters();
@@ -347,17 +341,17 @@ fn test_is_member() {
     stop_cheat_caller_address(contract_address);
 
     assert!(
-        mock_contract_dispatcher.is_member(new_member) == true,
+        mock_contract_dispatcher.is_member(new_member),
         "New member should be recognized as a member",
     );
 
     assert!(
-        mock_contract_dispatcher.is_member(another_new_member) == true,
+        mock_contract_dispatcher.is_member(another_new_member),
         "Another new member should be recognized as a member",
     );
 
     assert!(
-        mock_contract_dispatcher.is_member(non_member) == false,
+        mock_contract_dispatcher.is_member(non_member),
         "Non-member should not be recognized as a member",
     );
 }
