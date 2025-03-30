@@ -9,8 +9,7 @@ pub mod MockContract {
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
 
     #[abi(embed_v0)]
-    pub impl AccountDataImpl = AccountData::AccountDataComponent<ContractState>;
-
+    pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
     pub impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
     #[storage]
