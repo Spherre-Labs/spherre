@@ -2,9 +2,8 @@
 #[starknet::contract]
 pub mod SpherreAccount {
     use AccountData::InternalTrait;
-use spherre::{
-        account_data::AccountData,
-        components::permission_control::PermissionControl,
+    use spherre::{
+        account_data::AccountData, components::permission_control::PermissionControl,
         actions::{
             change_threshold_tx::ChangeThresholdTransaction,
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
@@ -38,7 +37,8 @@ use spherre::{
     impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl PermissionControlImpl = PermissionControl::PermissionControl<ContractState>;
+    impl PermissionControlImpl =
+        PermissionControl::PermissionControl<ContractState>;
     impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
     #[storage]
@@ -96,15 +96,16 @@ use spherre::{
         assert(members.len() > 0, Errors::NON_ZERO_MEMBER_LENGTH);
         assert(threshold > 0, Errors::NON_ZERO_THRESHOLD);
         assert((members.len()).into() >= threshold, Errors::ERR_INVALID_MEMBER_THRESHOLD);
-        
+
         self.name.write(name);
         self.description.write(description);
         let len_member = members.len();
-        for index in 0 .. len_member {
-            let member = *members.at(index);
-            self.account_data._add_member(member);
-            self.permission_control.assign_all_permissions(member);
-        };
+        for index in 0
+            ..len_member {
+                let member = *members.at(index);
+                self.account_data._add_member(member);
+                self.permission_control.assign_all_permissions(member);
+            };
         self.account_data.set_threshold(threshold);
     }
 
