@@ -8,7 +8,6 @@ use spherre::types::{Permissions, PermissionEnum};
 #[starknet::contract]
 pub mod MockPermissionContract {
     use spherre::components::permission_control::PermissionControl;
-    use spherre::types::PermissionEnum;
     use starknet::ContractAddress;
 
     component!(
@@ -57,20 +56,17 @@ pub mod MockPermissionContract {
         fn revoke_executor_permission(ref self: ContractState, member: ContractAddress) {
             self.permission_control_storage.revoke_executor_permission(member);
         }
-
-        fn get_member_permissions(
-            ref self: ContractState, member: ContractAddress
-        ) -> Array<PermissionEnum> {
-            let member_permissions: Array<PermissionEnum> = self
-                .permission_control_storage
-                .get_member_permissions(member);
-            member_permissions
+        fn assign_all_permissions(ref self: ContractState, member: ContractAddress) {
+            self.permission_control_storage.assign_all_permissions(member);
+        }
+        fn revoke_all_permissions(ref self: ContractState, member: ContractAddress) {
+            self.permission_control_storage.revoke_all_permissions(member);
         }
     }
 }
 // use MockPermissionContract::{PermissionControlInternalImpl::InternalTrait};
 
-// deploy mock permission contract and return the
+/// Deploy mock permission contract and return the dispatcher
 fn deploy_contract() -> IPermissionControlDispatcher {
     let contract = declare("MockPermissionContract").unwrap().contract_class();
     let (contract_address, _) = contract.deploy(@array![]).unwrap();
@@ -97,9 +93,9 @@ impl TestingStateDefault of Default<TestingState> {
 }
 
 
-// Testcase for the assign_proposer_permission logic.
-// assign proposer permission to member and
-// check if member has proposer permission.
+/// Testcase for the assign_proposer_permission logic.
+/// assign proposer permission to member and
+/// check if member has proposer permission.
 #[test]
 fn test_assign_proposer_permission() {
     let member = MEMBER_ONE();
@@ -111,9 +107,9 @@ fn test_assign_proposer_permission() {
     assert(check, 'no proposer permission');
 }
 
-// Testcase for the assign_voter_permission logic.
-// assign voter permission to member and
-// check if member has voter permission.
+/// Testcase for the assign_voter_permission logic.
+/// assign voter permission to member and
+/// check if member has voter permission.
 #[test]
 fn test_assign_voter_permission() {
     let member = MEMBER_ONE();
@@ -125,9 +121,9 @@ fn test_assign_voter_permission() {
     assert(check, 'no voter permission');
 }
 
-// Testcase for the assign_executor_permission logic.
-// assign executor permission to member and
-// check if member has executor permission.
+/// Testcase for the assign_executor_permission logic.
+/// assign executor permission to member and
+/// check if member has executor permission.
 #[test]
 fn test_assign_executor_permission() {
     let member = MEMBER_ONE();
@@ -139,9 +135,9 @@ fn test_assign_executor_permission() {
     assert(check, 'no executor permission');
 }
 
-// Testcase for the revoke_proposer_permission logic.
-// revoke proposer permission to member and
-// check if member no longer has proposer permission.
+/// Testcase for the revoke_proposer_permission logic.
+/// revoke proposer permission to member and
+/// check if member no longer has proposer permission.
 #[test]
 fn test_revoke_proposer_permission() {
     let member = MEMBER_ONE();
@@ -158,9 +154,9 @@ fn test_revoke_proposer_permission() {
     assert(!check, 'proposer permission exists');
 }
 
-// Testcase for the revoke_voter_permission logic.
-// revoke voter permission to member and
-// check if member no longer has voter permission.
+/// Testcase for the revoke_voter_permission logic.
+/// revoke voter permission to member and
+/// check if member no longer has voter permission.
 #[test]
 fn test_revoke_voter_permission() {
     let member = MEMBER_ONE();
@@ -177,9 +173,9 @@ fn test_revoke_voter_permission() {
     assert(!check, 'voter permission exists');
 }
 
-// Testcase for the revoke_executor_permission logic.
-// revoke executor permission to member and
-// check if member no longer has executor permission.
+/// Testcase for the revoke_executor_permission logic.
+/// revoke executor permission to member and
+/// check if member no longer has executor permission.
 #[test]
 fn test_revoke_executor_permission() {
     let member = MEMBER_ONE();
@@ -196,10 +192,10 @@ fn test_revoke_executor_permission() {
     assert(!check, 'executor permission exists');
 }
 
-// Testcase for the get_member_permissions logic.
-// adds to a member all the permissions and
-// returns and array with all the permissions of
-// the member.
+/// Testcase for the get_member_permissions logic.
+/// adds to a member all the permissions and
+/// returns and array with all the permissions of
+/// the member.
 #[test]
 fn test_get_member_permissions() {
     let member = MEMBER_ONE();
@@ -219,4 +215,44 @@ fn test_get_member_permissions() {
     assert(proposer == PermissionEnum::PROPOSER, 'proposer permission not found');
     assert(executor == PermissionEnum::EXECUTOR, 'executor permission not found');
     assert(voter == PermissionEnum::VOTER, 'voter permission not found');
+}
+
+/// Testcase for the assign_all_permissions logic.
+/// adds to a member all the permissions and
+/// check if the member has it
+#[test]
+fn test_assign_all_permissions() {
+    let member = MEMBER_ONE();
+    let mut state = get_contract_state();
+    // assign the member all the permissions
+    state.assign_all_permissions(member);
+
+    // check if the member has all the permissions
+    assert(state.has_permission(member, Permissions::PROPOSER), 'proposer permission not found');
+    assert(state.has_permission(member, Permissions::EXECUTOR), 'executor permission not found');
+    assert(state.has_permission(member, Permissions::VOTER), 'voter permission not found');
+}
+
+/// Testcase for the revoke_all_permissions logic.
+/// revokes all the permissions the member has and
+/// check does not have them
+#[test]
+fn test_revoke_all_permissions() {
+    let member = MEMBER_ONE();
+    let mut state = get_contract_state();
+    // assign the member all the permissions
+    state.assign_all_permissions(member);
+
+    // check if the member has all the permissions
+    assert(state.has_permission(member, Permissions::PROPOSER), 'proposer permission not found');
+    assert(state.has_permission(member, Permissions::EXECUTOR), 'executor permission not found');
+    assert(state.has_permission(member, Permissions::VOTER), 'voter permission not found');
+
+    // revoke all the permissions
+    state.revoke_all_permissions(member);
+
+    // check that the member does not have the permissions
+    assert(!state.has_permission(member, Permissions::PROPOSER), 'proposer permission found');
+    assert(!state.has_permission(member, Permissions::EXECUTOR), 'executor permission found');
+    assert(!state.has_permission(member, Permissions::VOTER), 'voter permission found');
 }
