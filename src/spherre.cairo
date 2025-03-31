@@ -2,6 +2,7 @@
 pub mod Spherre {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::security::pausable::PausableComponent;
+    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use starknet::{ContractAddress, get_caller_address};
@@ -13,6 +14,8 @@ pub mod Spherre {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         pausable: PausableComponent::Storage,
+        #[substorage(v0)]
+        reentrancy_guard: ReentrancyGuardComponent::Storage,
     }
 
     #[event]
@@ -21,11 +24,16 @@ pub mod Spherre {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
-        PausableEvent: PausableComponent::Event
+        PausableEvent: PausableComponent::Event,
+        #[flat]
+        ReentrancyGuardEvent: ReentrancyGuardComponent::Event
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
+    component!(
+        path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
+    );
 
     // Implement Ownable mixin
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
@@ -35,10 +43,14 @@ pub mod Spherre {
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
 
+    // Implement ReentrancyGuard mixin (only has InternalImpl)
+    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
+
     #[constructor]
     pub fn constructor(ref self: ContractState, owner: ContractAddress) {
         self.ownable.initializer(owner);
         // Note: PausableComponent doesn't require an initializer
+    // Note: ReentrancyGuardComponent doesn't require an initializer
     }
 
     // Implement the ISpherre interface
@@ -71,6 +83,15 @@ pub mod Spherre {
         fn unpause(ref self: ContractState) {
             assert_only_owner_custom(@self);
             self.pausable.unpause();
+        }
+
+        // ReentrancyGuard implementation
+        fn reentrancy_guard_start(ref self: ContractState) {
+            self.reentrancy_guard.start();
+        }
+
+        fn reentrancy_guard_end(ref self: ContractState) {
+            self.reentrancy_guard.end();
         }
     }
 

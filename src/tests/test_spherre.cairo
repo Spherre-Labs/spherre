@@ -346,3 +346,74 @@ fn test_cannot_unpause_when_not_paused() {
     // Clean up
     stop_cheat_caller_address(contract_address);
 }
+
+// ===== ReentrancyGuard Tests =====
+
+// Test the basic functionality of reentrancy guard
+#[test]
+fn test_reentrancy_guard_basic() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Start reentrancy guard
+    dispatcher.reentrancy_guard_start();
+
+    // End reentrancy guard
+    dispatcher.reentrancy_guard_end();
+    // The test passes if no errors are thrown
+}
+
+// Test that reentrancy is detected and prevented
+#[test]
+#[should_panic]
+fn test_reentrancy_guard_prevents_reentrant_calls() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Start reentrancy guard
+    dispatcher.reentrancy_guard_start();
+
+    // Attempt a reentrant call (should fail)
+    dispatcher.reentrancy_guard_start();
+
+    // We should never reach this point
+    dispatcher.reentrancy_guard_end();
+}
+
+// Test that reentrancy guard can be used multiple times sequentially
+#[test]
+fn test_reentrancy_guard_multiple_uses() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // First use
+    dispatcher.reentrancy_guard_start();
+    dispatcher.reentrancy_guard_end();
+
+    // Second use
+    dispatcher.reentrancy_guard_start();
+    dispatcher.reentrancy_guard_end();
+
+    // Third use
+    dispatcher.reentrancy_guard_start();
+    dispatcher.reentrancy_guard_end();
+    // The test passes if no errors are thrown
+}
