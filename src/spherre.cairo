@@ -1,6 +1,7 @@
 #[starknet::contract]
 pub mod Spherre {
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::security::pausable::PausableComponent;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use starknet::{ContractAddress, get_caller_address};
@@ -10,24 +11,34 @@ pub mod Spherre {
         owner: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        pausable: PausableComponent::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
-        OwnableEvent: OwnableComponent::Event
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        PausableEvent: PausableComponent::Event
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
 
     // Implement Ownable mixin
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
+    // Implement Pausable mixin
+    impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
+    impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+
     #[constructor]
     pub fn constructor(ref self: ContractState, owner: ContractAddress) {
         self.ownable.initializer(owner);
+        // Note: PausableComponent doesn't require an initializer
     }
 
     // Implement the ISpherre interface
@@ -45,6 +56,21 @@ pub mod Spherre {
         fn renounce_ownership(ref self: ContractState) {
             assert_only_owner_custom(@self);
             self.ownable.renounce_ownership();
+        }
+
+        // Pausable implementation
+        fn is_paused(self: @ContractState) -> bool {
+            self.pausable.is_paused()
+        }
+
+        fn pause(ref self: ContractState) {
+            assert_only_owner_custom(@self);
+            self.pausable.pause();
+        }
+
+        fn unpause(ref self: ContractState) {
+            assert_only_owner_custom(@self);
+            self.pausable.unpause();
         }
     }
 
