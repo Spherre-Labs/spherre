@@ -1,12 +1,17 @@
-use core::byte_array::ByteArray;
 use crate::interfaces::ispherre::{ISpherre, ISpherreDispatcher, ISpherreDispatcherTrait};
 use crate::spherre::{Spherre, Spherre::SpherreImpl};
+use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
 use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait,
     DeclareResultTrait
 };
 use starknet::ContractAddress;
 use starknet::contract_address_const;
+
+// Define role constants for testing
+const PROPOSER_ROLE: felt252 = 'PR';
+const EXECUTOR_ROLE: felt252 = 'ER';
+const VOTER_ROLE: felt252 = 'VR';
 
 // Setting up the contract state
 fn CONTRACT_STATE() -> Spherre::ContractState {
@@ -416,4 +421,117 @@ fn test_reentrancy_guard_multiple_uses() {
     dispatcher.reentrancy_guard_start();
     dispatcher.reentrancy_guard_end();
     // The test passes if no errors are thrown
+}
+
+// ACCESSCONTROL TESTS
+
+// Test that non-owner cannot grant a role
+#[test]
+#[should_panic(expected: "Caller is not the owner")]
+fn test_grant_role_as_non_owner() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+    let non_owner = contract_address_const::<5>();
+    let account = contract_address_const::<20>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Set the caller address to non-owner
+    start_cheat_caller_address(contract_address, non_owner);
+
+    // Attempt to grant PR to account as non-owner (should fail)
+    dispatcher.grant_role(PROPOSER_ROLE, account);
+
+    // Clean up
+    stop_cheat_caller_address(contract_address);
+}
+
+
+// Test that non-owner cannot revoke a role
+#[test]
+#[should_panic(expected: "Caller is not the owner")]
+fn test_revoke_role_as_non_owner() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+    let non_owner = contract_address_const::<5>();
+    let account = contract_address_const::<20>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Set the caller address to owner
+    start_cheat_caller_address(contract_address, owner);
+
+    // Grant PR to account
+    dispatcher.grant_role(PROPOSER_ROLE, account);
+
+    // Stop cheating as owner
+    stop_cheat_caller_address(contract_address);
+
+    // Set the caller address to non-owner
+    start_cheat_caller_address(contract_address, non_owner);
+
+    // Attempt to revoke PR from account as non-owner (should fail)
+    dispatcher.revoke_role(PROPOSER_ROLE, account);
+
+    // Clean up
+    stop_cheat_caller_address(contract_address);
+}
+
+// Test that an account cannot renounce a role for another account
+#[test]
+#[should_panic]
+fn test_renounce_role_for_another_account() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+    let account1 = contract_address_const::<20>();
+    let account2 = contract_address_const::<30>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Set the caller address to owner
+    start_cheat_caller_address(contract_address, owner);
+
+    // Grant PROPOSER_ROLE to account1
+    dispatcher.grant_role(PROPOSER_ROLE, account1);
+
+    // Stop cheating as owner
+    stop_cheat_caller_address(contract_address);
+
+    // Set the caller address to account2
+    start_cheat_caller_address(contract_address, account2);
+
+    // Attempt to renounce PROPOSER_ROLE for account1 as account2 (should fail)
+    dispatcher.renounce_role(PROPOSER_ROLE, account1);
+
+    // Clean up
+    stop_cheat_caller_address(contract_address);
+}
+
+// Test get_role_admin
+#[test]
+fn test_get_role_admin() {
+    // Set up test data
+    let owner = contract_address_const::<10>();
+
+    // Deploy the contract with constructor parameters
+    let contract_address = deploy_contract(owner);
+
+    // Create a dispatcher to call the contract
+    let dispatcher = ISpherreDispatcher { contract_address };
+
+    // Check that DEFAULT_ADMIN_ROLE is the admin for PR
+    let admin_role = dispatcher.get_role_admin(PROPOSER_ROLE);
+    assert_eq!(admin_role, DEFAULT_ADMIN_ROLE, "Admin role should be DEFAULT_ADMIN_ROLE");
 }

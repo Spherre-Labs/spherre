@@ -15,4 +15,14 @@ pub trait ISpherre<TContractState> {
     // ReentrancyGuard functions
     fn reentrancy_guard_start(ref self: TContractState);
     fn reentrancy_guard_end(ref self: TContractState);
+
+    // AccessControl functions
+    fn has_role(self: @TContractState, role: felt252, account: ContractAddress) -> bool;
+    fn get_role_admin(self: @TContractState, role: felt252) -> felt252;
+    fn grant_role(ref self: TContractState, role: felt252, account: ContractAddress);
+    fn revoke_role(ref self: TContractState, role: felt252, account: ContractAddress);
+    fn renounce_role(ref self: TContractState, role: felt252, account: ContractAddress);
+
+    // SRC5 functions
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }
