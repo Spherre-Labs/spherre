@@ -123,4 +123,3 @@ fn test_get_account_details() {
     assert_eq!(account_details.name, "John Doe");
     assert_eq!(account_details.description, "John Does's Sphere");
 }
-

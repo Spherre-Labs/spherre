@@ -7,4 +7,12 @@ pub mod Errors {
     pub const MISSING_ROLE: felt252 = 'Caller is missing role';
     pub const ThresholdError: felt252 = 'Threshold is too high, lower it';
     pub const NON_ZERO_THRESHOLD: felt252 = 'Threshold must be > 0';
+    pub const ERR_NOT_OWNER: felt252 = 'Caller is not the owner';
+
+    // Constants for the Ownable error format
+    pub const ERR_NOT_OWNER_SELECTOR: felt252 =
+        0x46a6158a16a947e5916b2a2ca68501a45e93d7110e81aa2d6438b1c57c879a3;
+    pub const ERR_NOT_OWNER_PADDING: felt252 = 0x0;
+    pub const ERR_NOT_OWNER_MESSAGE: felt252 = 0x43616c6c6572206973206e6f7420746865206f776e6572;
+    pub const ERR_NOT_OWNER_MARKER: felt252 = 0x17;
 }
