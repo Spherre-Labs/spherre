@@ -1,6 +1,5 @@
 #[starknet::component]
 pub mod AccountData {
-    use alexandria_storage::list::{ListTrait, List};
     use core::num::traits::Zero;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
@@ -74,9 +73,6 @@ pub mod AccountData {
             self.members_count.read()
         }
 
-        fn add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
-            self._add_member(address);
-        }
         //This takes no arguments and returns a tuple in which the first member is a threshold and
         //the second is members_count of an account
         fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {

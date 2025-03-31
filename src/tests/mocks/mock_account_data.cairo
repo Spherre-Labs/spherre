@@ -24,17 +24,20 @@ pub mod MockContract {
         AccountDataEvent: AccountData::Event,
     }
 
-    fn get_members(self: @ContractState) -> Array<ContractAddress> {
-        let members = self.account_data.get_account_members();
-        members
-    }
-
-    fn get_members_count(self: @ContractState) -> u64 {
-        self.account_data.members_count.read()
-    }
 
     #[generate_trait]
     pub impl PrivateImpl of PrivateTrait {
+        fn is_member(self: @ContractState, member: ContractAddress) -> bool {
+            self.account_data.is_member(member)
+        }
+        fn get_members(self: @ContractState) -> Array<ContractAddress> {
+            let members = self.account_data.get_account_members();
+            members
+        }
+
+        fn get_members_count(self: @ContractState) -> u64 {
+            self.account_data.members_count.read()
+        }
         fn set_threshold(ref self: ContractState, val: u64) {
             self.account_data.set_threshold(val);
         }
@@ -48,6 +51,10 @@ pub mod MockContract {
         // Expose the main contract's get_transaction function
         fn get_transaction(self: @ContractState, transaction_id: u256) -> Transaction {
             self.account_data.get_transaction(transaction_id)
+        }
+
+        fn add_member(ref self: ContractState, member: ContractAddress) {
+            self.account_data._add_member(member);
         }
     }
 }
