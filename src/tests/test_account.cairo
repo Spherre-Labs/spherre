@@ -1,4 +1,4 @@
-use crate::account::{SpherreAccount, SpherreAccount::SpherreAccountImpl};
+use crate::account::{SpherreAccount, SpherreAccount::AccountImpl};
 use crate::types::AccountDetails;
 use starknet::contract_address_const;
 

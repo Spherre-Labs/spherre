@@ -10,6 +10,7 @@ pub mod SpherreAccount {
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
         {errors::Errors}, types::AccountDetails,
+        interfaces::iaccount::IAccount,
     };
     use starknet::{
         {ContractAddress, contract_address_const},
@@ -108,9 +109,8 @@ pub mod SpherreAccount {
             };
         self.account_data.set_threshold(threshold);
     }
-
-    #[generate_trait]
-    pub impl SpherreAccountImpl of ISpherreAccount {
+    #[abi(embed_v0)]
+    pub impl AccountImpl of IAccount<ContractState> {
         fn get_name(self: @ContractState) -> ByteArray {
             self.name.read()
         }
@@ -118,9 +118,9 @@ pub mod SpherreAccount {
         fn get_description(self: @ContractState) -> ByteArray {
             self.description.read()
         }
-
         fn get_account_details(self: @ContractState) -> AccountDetails {
             AccountDetails { name: self.name.read(), description: self.description.read() }
         }
     }
+
 }

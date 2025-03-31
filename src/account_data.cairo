@@ -1,6 +1,5 @@
 #[starknet::component]
 pub mod AccountData {
-    use alexandria_storage::list::{ListTrait, List};
     use core::num::traits::Zero;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
