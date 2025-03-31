@@ -47,14 +47,8 @@ fn get_mock_contract_state() -> MockContract::ContractState {
 #[should_panic(expected: 'Zero Address Caller')]
 fn test_zero_address_caller_should_fail() {
     let zero_address = zero_address();
-    let member = member();
-    let contract_address = deploy_mock_contract();
-
-    let mock_contract_dispatcher = IAccountDataDispatcher { contract_address };
-    // let mock_contract_internal_dispatcher = IAccountDataDispatcherTrait { contract_address };
-    start_cheat_caller_address(contract_address, member);
-    mock_contract_dispatcher.add_member(zero_address);
-    stop_cheat_caller_address(contract_address);
+    let mut state = get_mock_contract_state();
+    state.add_member(zero_address);
 }
 
 // This indirectly tests get_members_count
@@ -62,15 +56,9 @@ fn test_zero_address_caller_should_fail() {
 #[test]
 fn test_add_member() {
     let new_member = new_member();
-    let member = member();
-    let contract_address = deploy_mock_contract();
-
-    let mock_contract_dispatcher = IAccountDataDispatcher { contract_address };
-    start_cheat_caller_address(contract_address, member);
-    mock_contract_dispatcher.add_member(new_member);
-    stop_cheat_caller_address(contract_address);
-
-    let count = mock_contract_dispatcher.get_members_count();
+    let mut state = get_mock_contract_state();
+    state.add_member(new_member);
+    let count = state.get_members_count();
     assert(count == 1, 'Member not added');
 }
 
@@ -79,19 +67,14 @@ fn test_get_members() {
     let new_member = new_member();
     let another_new_member = another_new_member();
     let third_member = third_member();
-    let member = member();
-    let contract_address = deploy_mock_contract();
+    let mut state = get_mock_contract_state();
+    state.add_member(new_member);
+    state.add_member(another_new_member);
+    state.add_member(third_member);
 
-    let mock_contract_dispatcher = IAccountDataDispatcher { contract_address };
-    start_cheat_caller_address(contract_address, member);
-    mock_contract_dispatcher.add_member(new_member);
-    mock_contract_dispatcher.add_member(another_new_member);
-    mock_contract_dispatcher.add_member(third_member);
-    stop_cheat_caller_address(contract_address);
-
-    let count = mock_contract_dispatcher.get_members_count();
+    let count = state.get_members_count();
     assert(count == 3, 'Members not added');
-    let members = mock_contract_dispatcher.get_account_members();
+    let members = state.get_members();
     let member_0 = *members.at(0);
     let member_1 = *members.at(1);
     let member_2 = *members.at(2);
@@ -207,30 +190,15 @@ fn test_is_member() {
     let new_member = new_member();
     let another_new_member = another_new_member();
     let non_member = contract_address_const::<'non_member'>();
-    let member = member();
-    let contract_address = deploy_mock_contract();
-
-    let mock_contract_dispatcher = IAccountDataDispatcher { contract_address };
-
-    // Act: add members
-    start_cheat_caller_address(contract_address, member);
-    mock_contract_dispatcher.add_member(new_member);
-    mock_contract_dispatcher.add_member(another_new_member);
-    stop_cheat_caller_address(contract_address);
+    let mut state = get_mock_contract_state();
+    state.add_member(new_member);
+    state.add_member(another_new_member);
+    assert!(state.is_member(new_member), "New member should be recognized as a member");
 
     assert!(
-        mock_contract_dispatcher.is_member(new_member) == true,
-        "New member should be recognized as a member"
+        state.is_member(another_new_member), "Another new member should be recognized as a member"
     );
 
-    assert!(
-        mock_contract_dispatcher.is_member(another_new_member) == true,
-        "Another new member should be recognized as a member"
-    );
-
-    assert!(
-        mock_contract_dispatcher.is_member(non_member) == false,
-        "Non-member should not be recognized as a member"
-    );
+    assert!(!state.is_member(non_member), "Non-member should not be recognized as a member");
 }
 
