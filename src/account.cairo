@@ -1,8 +1,6 @@
 // use spherre::errors::ThresholdError;
 #[starknet::contract]
 pub mod SpherreAccount {
-    // Import OpenZeppelin Ownable component
-    use openzeppelin::access::ownable::OwnableComponent;
     use spherre::{
         account_data::AccountData,
         actions::{
@@ -10,7 +8,7 @@ pub mod SpherreAccount {
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
-        {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
+        {errors::Errors}, types::AccountDetails,
     };
     use starknet::{
         {ContractAddress, contract_address_const},
@@ -31,13 +29,6 @@ pub mod SpherreAccount {
     );
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
-    // Add Ownable component
-    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-
-    // Implement Ownable mixin but don't embed it in the ABI
-    // We'll expose the functions we need through our own implementation
-    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
-    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -56,9 +47,6 @@ pub mod SpherreAccount {
         nft_transaction: NFTTransaction::Storage,
         #[substorage(v0)]
         token_transaction: TokenTransaction::Storage,
-        // Add Ownable storage
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
     }
 
     #[event]
@@ -76,9 +64,6 @@ pub mod SpherreAccount {
         NFTTransactionEvent: NFTTransaction::Event,
         #[flat]
         TokenTransactionEvent: TokenTransaction::Event,
-        // Add Ownable events
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
     }
 
     #[constructor]
@@ -96,13 +81,10 @@ pub mod SpherreAccount {
         assert((members.len()).into() >= threshold, Errors::ERR_INVALID_MEMBER_THRESHOLD);
         self.name.write(name);
         self.description.write(description);
-
-        // Initialize Ownable with the owner
-        self.ownable.initializer(owner);
     }
 
-    #[abi(embed_v0)]
-    pub impl SpherreAccountImpl of IAccount<ContractState> {
+    #[generate_trait]
+    pub impl SpherreAccountImpl of ISpherreAccount {
         fn get_name(self: @ContractState) -> ByteArray {
             self.name.read()
         }
@@ -113,32 +95,6 @@ pub mod SpherreAccount {
 
         fn get_account_details(self: @ContractState) -> AccountDetails {
             AccountDetails { name: self.name.read(), description: self.description.read() }
-        }
-
-        // Implement Ownable functions from the interface
-        fn owner(self: @ContractState) -> ContractAddress {
-            self.ownable.owner()
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            self.ownable.transfer_ownership(new_owner);
-        }
-
-        fn renounce_ownership(ref self: ContractState) {
-            self.ownable.renounce_ownership();
-        }
-
-        // Add functions that require owner access
-        fn update_name(ref self: ContractState, new_name: ByteArray) {
-            // Only the owner can update the name
-            self.ownable.assert_only_owner();
-            self.name.write(new_name);
-        }
-
-        fn update_description(ref self: ContractState, new_description: ByteArray) {
-            // Only the owner can update the description
-            self.ownable.assert_only_owner();
-            self.description.write(new_description);
         }
     }
 }

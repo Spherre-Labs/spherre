@@ -33,6 +33,7 @@ pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
     pub mod test_permission_control;
+    pub mod test_spherre;
     pub mod utils;
     pub mod mocks {
         pub mod mock_account_data;
