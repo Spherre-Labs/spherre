@@ -9,8 +9,7 @@ pub mod SpherreAccount {
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
             nft_tx::NFTTransaction, token_tx::TokenTransaction,
         },
-        {errors::Errors}, types::AccountDetails,
-        interfaces::iaccount::IAccount,
+        {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
     };
     use starknet::{
         {ContractAddress, contract_address_const},
@@ -122,5 +121,4 @@ pub mod SpherreAccount {
             AccountDetails { name: self.name.read(), description: self.description.read() }
         }
     }
-
 }

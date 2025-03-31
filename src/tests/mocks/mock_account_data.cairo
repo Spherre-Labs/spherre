@@ -24,7 +24,6 @@ pub mod MockContract {
         AccountDataEvent: AccountData::Event,
     }
 
-    
 
     #[generate_trait]
     pub impl PrivateImpl of PrivateTrait {
@@ -35,7 +34,7 @@ pub mod MockContract {
             let members = self.account_data.get_account_members();
             members
         }
-    
+
         fn get_members_count(self: @ContractState) -> u64 {
             self.account_data.members_count.read()
         }

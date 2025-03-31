@@ -72,7 +72,7 @@ pub mod AccountData {
         fn get_members_count(self: @ComponentState<TContractState>) -> u64 {
             self.members_count.read()
         }
-        
+
         //This takes no arguments and returns a tuple in which the first member is a threshold and
         //the second is members_count of an account
         fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {

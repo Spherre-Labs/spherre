@@ -193,19 +193,12 @@ fn test_is_member() {
     let mut state = get_mock_contract_state();
     state.add_member(new_member);
     state.add_member(another_new_member);
-    assert!(
-        state.is_member(new_member),
-        "New member should be recognized as a member"
-    );
+    assert!(state.is_member(new_member), "New member should be recognized as a member");
 
     assert!(
-        state.is_member(another_new_member),
-        "Another new member should be recognized as a member"
+        state.is_member(another_new_member), "Another new member should be recognized as a member"
     );
 
-    assert!(
-        !state.is_member(non_member),
-        "Non-member should not be recognized as a member"
-    );
+    assert!(!state.is_member(non_member), "Non-member should not be recognized as a member");
 }
 
