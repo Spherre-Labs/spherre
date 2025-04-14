@@ -202,3 +202,41 @@ fn test_is_member() {
     assert!(!state.is_member(non_member), "Non-member should not be recognized as a member");
 }
 
+#[test]
+fn test_get_number_of_voters() {
+    let mut state = get_mock_contract_state();
+    let new_member = new_member();
+    let another_new_member = another_new_member();
+    state.add_member(new_member);
+    state.add_member(another_new_member);
+    assert(state.get_number_of_voters() == 0, 'voters count should be 0');
+    state.assign_voter_permission(new_member);
+    state.assign_voter_permission(another_new_member);
+    assert(state.get_number_of_voters() == 2, 'voters count should be 2');
+}
+
+#[test]
+fn test_get_number_of_proposer  () {
+    let mut state = get_mock_contract_state();
+    let new_member = new_member();
+    let another_new_member = another_new_member();
+    state.add_member(new_member);
+    state.add_member(another_new_member);
+    assert(state.get_number_of_proposers() == 0, 'voters count should be 0');
+    state.assign_proposer_permission(new_member);
+    state.assign_proposer_permission(another_new_member);
+    assert(state.get_number_of_proposers() == 2, 'voters count should be 2');
+}
+
+#[test]
+fn test_get_number_of_executors () {
+    let mut state = get_mock_contract_state();
+    let new_member = new_member();
+    let another_new_member = another_new_member();
+    state.add_member(new_member);
+    state.add_member(another_new_member);
+    assert(state.get_number_of_executors() == 0, 'voters count should be 0');
+    state.assign_executor_permission(new_member);
+    state.assign_executor_permission(another_new_member);
+    assert(state.get_number_of_executors() == 2, 'voters count should be 2');
+}
