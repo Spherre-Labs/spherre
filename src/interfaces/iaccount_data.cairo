@@ -8,4 +8,7 @@ pub trait IAccountData<TContractState> {
     fn get_threshold(self: @TContractState) -> (u64, u64);
     fn get_transaction(self: @TContractState, transaction_id: u256) -> Transaction;
     fn is_member(self: @TContractState, address: ContractAddress) -> bool;
+    fn get_number_of_voters(self: @TContractState) -> u64;
+    fn get_number_of_proposers(self: @TContractState) -> u64;
+    fn get_number_of_executors(self: @TContractState) -> u64;
 }
