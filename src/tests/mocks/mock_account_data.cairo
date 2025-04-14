@@ -1,27 +1,39 @@
 #[starknet::contract]
 pub mod MockContract {
-    use AccountData::InternalTrait;
+    // use AccountData::InternalTrait;
     use spherre::account_data::AccountData;
+    use spherre::components::permission_control::{PermissionControl};
     use spherre::types::Transaction;
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
+    component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
     pub impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl PermissionControlImpl =
+        PermissionControl::PermissionControl<ContractState>;
+    pub impl PermissionInternalImpl = PermissionControl::InternalImpl<ContractState>;
+
     #[storage]
     pub struct Storage {
         #[substorage(v0)]
         pub account_data: AccountData::Storage,
+        #[substorage(v0)]
+        pub permission_control: PermissionControl::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
         AccountDataEvent: AccountData::Event,
+        #[flat]
+        PermissionControlEvent: PermissionControl::Event,
     }
 
 
@@ -55,6 +67,24 @@ pub mod MockContract {
 
         fn add_member(ref self: ContractState, member: ContractAddress) {
             self.account_data._add_member(member);
+        }
+        fn assign_voter_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_voter_permission(member);
+        }
+        fn assign_proposer_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_proposer_permission(member);
+        }
+        fn assign_executor_permission(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_executor_permission(member);
+        }
+        fn get_number_of_voters(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_voters()
+        }
+        fn get_number_of_proposers(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_proposers()
+        }
+        fn get_number_of_executors(self: @ContractState) -> u64 {
+            self.account_data.get_number_of_executors()
         }
     }
 }
