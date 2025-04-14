@@ -216,7 +216,7 @@ fn test_get_number_of_voters() {
 }
 
 #[test]
-fn test_get_number_of_proposer  () {
+fn test_get_number_of_proposer() {
     let mut state = get_mock_contract_state();
     let new_member = new_member();
     let another_new_member = another_new_member();
@@ -229,7 +229,7 @@ fn test_get_number_of_proposer  () {
 }
 
 #[test]
-fn test_get_number_of_executors () {
+fn test_get_number_of_executors() {
     let mut state = get_mock_contract_state();
     let new_member = new_member();
     let another_new_member = another_new_member();

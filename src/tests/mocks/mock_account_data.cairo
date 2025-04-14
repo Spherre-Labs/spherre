@@ -1,6 +1,5 @@
 #[starknet::contract]
 pub mod MockContract {
-    
     // use AccountData::InternalTrait;
     use spherre::account_data::AccountData;
     use spherre::components::permission_control::{PermissionControl};
@@ -16,7 +15,8 @@ pub mod MockContract {
     pub impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
-    pub impl PermissionControlImpl = PermissionControl::PermissionControl<ContractState>;
+    pub impl PermissionControlImpl =
+        PermissionControl::PermissionControl<ContractState>;
     pub impl PermissionInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
     #[storage]
@@ -77,13 +77,13 @@ pub mod MockContract {
         fn assign_executor_permission(ref self: ContractState, member: ContractAddress) {
             self.permission_control.assign_executor_permission(member);
         }
-        fn get_number_of_voters(self: @ContractState) -> u64{
+        fn get_number_of_voters(self: @ContractState) -> u64 {
             self.account_data.get_number_of_voters()
         }
-        fn get_number_of_proposers(self: @ContractState) -> u64{
+        fn get_number_of_proposers(self: @ContractState) -> u64 {
             self.account_data.get_number_of_proposers()
         }
-        fn get_number_of_executors(self: @ContractState) -> u64{
+        fn get_number_of_executors(self: @ContractState) -> u64 {
             self.account_data.get_number_of_executors()
         }
     }

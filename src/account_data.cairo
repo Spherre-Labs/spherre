@@ -1,14 +1,13 @@
 #[starknet::component]
 pub mod AccountData {
-    
     use core::num::traits::Zero;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
     use spherre::components::permission_control;
-    use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
+    use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{TransactionStatus, TransactionType, Transaction, Permissions};
     use starknet::ContractAddress;
 
@@ -54,7 +53,8 @@ pub mod AccountData {
 
     #[embeddable_as(AccountData)]
     pub impl AccountDataImpl<
-        TContractState, +HasComponent<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {
@@ -162,36 +162,39 @@ pub mod AccountData {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::VOTER) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::VOTER) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
         fn get_number_of_proposers(self: @ComponentState<TContractState>) -> u64 {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::PROPOSER) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::PROPOSER) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
         fn get_number_of_executors(self: @ComponentState<TContractState>) -> u64 {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members{
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::EXECUTOR) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::EXECUTOR) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
     }
