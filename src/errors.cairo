@@ -8,6 +8,8 @@ pub mod Errors {
     pub const ThresholdError: felt252 = 'Threshold is too high, lower it';
     pub const NON_ZERO_THRESHOLD: felt252 = 'Threshold must be > 0';
     pub const ERR_NOT_OWNER: felt252 = 'Caller is not the owner';
+    pub const ERR_NOT_MEMBER: felt252 = 'Caller is not a member';
+    pub const ERR_NOT_PROPOSER: felt252 = 'Caller is not a proposer';
 
     // Constants for the Ownable error format
     pub const ERR_NOT_OWNER_SELECTOR: felt252 =

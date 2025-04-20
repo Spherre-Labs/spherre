@@ -5,12 +5,14 @@ use snforge_std::{
     DeclareResultTrait
 };
 
-use spherre::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 
-use spherre::tests::mocks::mock_account_data::{MockContract, MockContract::PrivateTrait};
+use spherre::tests::mocks::mock_account_data::{
+    MockContract, MockContract::PrivateTrait, IMockContractDispatcher, IMockContractDispatcherTrait
+};
 use spherre::types::{TransactionType, TransactionStatus};
 use starknet::ContractAddress;
 use starknet::contract_address_const;
+
 
 fn zero_address() -> ContractAddress {
     contract_address_const::<0>()
@@ -32,11 +34,11 @@ fn member() -> ContractAddress {
     contract_address_const::<'member'>()
 }
 
-fn deploy_mock_contract() -> ContractAddress {
+fn deploy_mock_contract() -> IMockContractDispatcher {
     let contract_class = declare("MockContract").unwrap().contract_class();
     let mut calldata = array![];
     let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
-    contract_address
+    IMockContractDispatcher { contract_address }
 }
 
 fn get_mock_contract_state() -> MockContract::ContractState {
@@ -121,7 +123,7 @@ fn test_get_transaction() {
     let mut state = get_mock_contract_state();
 
     // Define sample transaction data
-    let transaction_id = u256 { low: 1, high: 0 };
+    let transaction_id: u256 = 1;
     let proposer = contract_address_const::<'proposer'>();
     let executor = contract_address_const::<'executor'>();
     let approver1 = contract_address_const::<'approver1'>();
@@ -148,7 +150,7 @@ fn test_get_transaction() {
     storage_path.rejected.append().write(rejecter);
 
     // Update transaction count
-    state.account_data.tx_count.write(transaction_id + u256 { low: 1, high: 0 });
+    state.account_data.tx_count.write(transaction_id + 1);
 
     // Retrieve the transaction using the get_transaction function
     let retrieved_transaction = state.get_transaction(transaction_id);
@@ -239,4 +241,53 @@ fn test_get_number_of_executors() {
     state.assign_executor_permission(new_member);
     state.assign_executor_permission(another_new_member);
     assert(state.get_number_of_executors() == 2, 'voters count should be 2');
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a member')]
+fn test_only_member_can_create_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a proposer')]
+fn test_onlY_member_with_proposer_permission_can_create_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+fn test_create_transaction_successful() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Assign Proposer Role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Create Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Get the transaction
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_type == TransactionType::TOKEN_SEND, 'wrong tx type');
+    assert(transaction.proposer == caller, 'wrong proposer');
+    assert(transaction.id == tx_id, 'Wrong ID');
+    assert(transaction.tx_status == TransactionStatus::INITIATED, 'Wrong Status');
 }

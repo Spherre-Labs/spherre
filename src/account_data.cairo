@@ -9,7 +9,7 @@ pub mod AccountData {
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{TransactionStatus, TransactionType, Transaction, Permissions};
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
     #[storage]
     pub struct Storage {
@@ -17,7 +17,8 @@ pub mod AccountData {
         pub tx_count: u256, // the transaction length
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
         pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
-        pub members_count: u64 // the member length
+        pub members_count: u64, // the member length
+        pub has_voted: Map<(u256, ContractAddress), bool> // Map(tx_id, member) -> bool
     }
 
     #[starknet::storage_node]
@@ -91,7 +92,8 @@ pub mod AccountData {
         ) -> Transaction {
             // Check if transaction ID is within valid range
             let tx_count = self.tx_count.read();
-            assert(transaction_id < tx_count, 'Transaction ID out of range');
+            assert(transaction_id <= tx_count, 'Transaction ID out of range');
+            assert(transaction_id != 0, 'Transaction ID out of range');
 
             // Access the storage entry for the given transaction ID
             let storage_path = self.transactions.entry(transaction_id);
@@ -201,7 +203,10 @@ pub mod AccountData {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn _add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
             assert(!address.is_zero(), 'Zero Address Caller');
@@ -214,12 +219,42 @@ pub mod AccountData {
             self.members_count.read()
         }
 
-        ///This is a private function that sets a threshold agter asserting threshold <
-        ///members_count
+
         fn set_threshold(ref self: ComponentState<TContractState>, threshold: u64) {
             let members_count: u64 = self.members_count.read();
             assert(threshold <= members_count, Errors::ThresholdError);
             self.threshold.write(threshold);
+        }
+        // Initialize a transaction with a transaction type and return the id
+        // @params tx_type: The type of the transaction
+        // Returns: (u256) The transaction id
+        fn create_transaction(
+            ref self: ComponentState<TContractState>, tx_type: TransactionType
+        ) -> u256 {
+            let caller = get_caller_address();
+            // check if the caller is a member
+            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // check if the caller has the proposer permission
+            let permission_control_comp = get_dep_component!(@self, PermissionControl);
+            assert(
+                permission_control_comp.has_permission(caller, Permissions::PROPOSER),
+                Errors::ERR_NOT_PROPOSER
+            );
+
+            // increment the id
+            let transaction_id = self.tx_count.read() + 1;
+
+            // create the transaction
+            let transaction = self.transactions.entry(transaction_id);
+            transaction.id.write(transaction_id);
+            transaction.tx_type.write(tx_type);
+            transaction.tx_status.write(TransactionStatus::INITIATED);
+            transaction.proposer.write(caller);
+            transaction.date_created.write(get_block_timestamp());
+
+            // update the transaction count
+            self.tx_count.write(transaction_id);
+            transaction_id
         }
     }
 }
