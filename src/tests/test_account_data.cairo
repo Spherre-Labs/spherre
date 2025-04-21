@@ -298,7 +298,6 @@ fn test_approve_transaction_successful() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
 
-    
     // Add Member
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
@@ -312,17 +311,13 @@ fn test_approve_transaction_successful() {
     // Create Transaction
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
-
     // Approve Transaction (Should Pass)
     mock_contract.approve_transaction_pub(tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
 
-
-
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(transaction.approved.len() == 1, 'Approvers count should be 1');
     assert(transaction.tx_status == TransactionStatus::APPROVED, 'Transaction should be approved');
-
 }
 
 
