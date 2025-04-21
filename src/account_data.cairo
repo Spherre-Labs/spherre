@@ -9,6 +9,7 @@ pub mod AccountData {
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{TransactionStatus, TransactionType, Transaction, Permissions};
+    use starknet::storage::MutableVecTrait;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
     #[storage]
@@ -39,6 +40,8 @@ pub mod AccountData {
     pub enum Event {
         AddedMember: AddedMember,
         ThresholdUpdated: ThresholdUpdated,
+        TransactionApproved: TransactionApproved,
+        TransactionVoted: TransactionVoted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -50,6 +53,23 @@ pub mod AccountData {
     pub struct ThresholdUpdated {
         threshold: u64,
         date_updated: u64,
+    }
+
+
+    #[derive(Drop, starknet::Event)]
+    pub struct TransactionVoted {
+        #[key]
+        transaction_id: u256,
+        #[key]
+        voter: ContractAddress,
+        date_voted: u64
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct TransactionApproved {
+        #[key]
+        transaction_id: u256,
+        date_approved: u64
     }
 
     #[embeddable_as(AccountData)]
@@ -79,8 +99,8 @@ pub mod AccountData {
             self.members_count.read()
         }
 
-        //This takes no arguments and returns a tuple in which the first member is a threshold and
-        //the second is members_count of an account
+        //This takes no arguments and returns a tuple where the first member is the threshold and
+        //the second is the members_count of the account
         fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {
             let threshold: u64 = self.threshold.read();
             let members_count: u64 = self.members_count.read();
@@ -91,9 +111,7 @@ pub mod AccountData {
             self: @ComponentState<TContractState>, transaction_id: u256
         ) -> Transaction {
             // Check if transaction ID is within valid range
-            let tx_count = self.tx_count.read();
-            assert(transaction_id <= tx_count, 'Transaction ID out of range');
-            assert(transaction_id != 0, 'Transaction ID out of range');
+            self.assert_valid_transaction(transaction_id);
 
             // Access the storage entry for the given transaction ID
             let storage_path = self.transactions.entry(transaction_id);
@@ -255,6 +273,85 @@ pub mod AccountData {
             // update the transaction count
             self.tx_count.write(transaction_id);
             transaction_id
+        }
+        // Approve a transaction
+        // @params tx_id: The transaction id
+        // @params caller: The approver
+        fn approve_transaction(
+            ref self: ComponentState<TContractState>, tx_id: u256, caller: ContractAddress
+        ) {
+            // check if caller can vote
+            self.assert_caller_can_vote(tx_id, caller);
+
+            // update has_voted map to prevent double voting
+            self.has_voted.entry((tx_id, caller)).write(true);
+
+            // get the transaction
+            let transaction = self.transactions.entry(tx_id);
+            // add the caller to the list of approvers
+            transaction.approved.append().write(caller);
+
+            let approvers_length = transaction.approved.len();
+            let (threshold, _) = self.get_threshold();
+            let timestamp = get_block_timestamp();
+
+            // check if approval threshold has been reached and updated
+            // the transaction status if that is the case.
+            if approvers_length >= threshold {
+                transaction.tx_status.write(TransactionStatus::APPROVED);
+                self.emit(TransactionApproved { transaction_id: tx_id, date_approved: timestamp });
+            }
+            self
+                .emit(
+                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                )
+        }
+
+        fn _update_transaction_status(
+            ref self: ComponentState<TContractState>,
+            transaction_id: u256,
+            status: TransactionStatus
+        ) {
+            self.assert_valid_transaction(transaction_id);
+            self.transactions.entry(transaction_id).tx_status.write(status);
+        }
+
+        fn assert_valid_transaction(self: @ComponentState<TContractState>, transaction_id: u256) {
+            let tx_count = self.tx_count.read();
+            assert(transaction_id <= tx_count, Errors::ERR_INVALID_TRANSACTION);
+            assert(transaction_id != 0, Errors::ERR_INVALID_TRANSACTION);
+        }
+        fn assert_is_votable_transaction(
+            self: @ComponentState<TContractState>, transaction_id: u256
+        ) {
+            self.assert_valid_transaction(transaction_id);
+            let transaction = self.transactions.entry(transaction_id);
+            assert(
+                transaction.tx_status.read() == TransactionStatus::INITIATED,
+                Errors::ERR_TRANSACTION_NOT_VOTABLE
+            );
+        }
+        fn assert_caller_can_vote(
+            self: @ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
+        ) {
+            // check for transaction validity
+            // check if transaction in range
+            self.assert_valid_transaction(transaction_id);
+            // check if transaction is votable
+            self.assert_is_votable_transaction(transaction_id);
+            // check if the caller is a member
+            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // check if the caller has the voter permission
+            let permission_control_comp = get_dep_component!(self, PermissionControl);
+            assert(
+                permission_control_comp.has_permission(caller, Permissions::VOTER),
+                Errors::ERR_NOT_VOTER
+            );
+            // check that member has not voted
+            assert(
+                !self.has_voted.entry((transaction_id, caller)).read(),
+                Errors::ERR_CALLER_CANNOT_VOTE
+            );
         }
     }
 }

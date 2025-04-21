@@ -178,7 +178,7 @@ fn test_get_transaction() {
 }
 
 #[test]
-#[should_panic(expected: 'Transaction ID out of range')]
+#[should_panic(expected: 'Transaction is out of range')]
 fn test_get_nonexistent_transaction() {
     // Initialize contract state
     let mut state = get_mock_contract_state();
@@ -244,6 +244,30 @@ fn test_get_number_of_executors() {
 }
 
 #[test]
+fn test_create_transaction_successful() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Assign Proposer Role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Create Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Get the transaction
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_type == TransactionType::TOKEN_SEND, 'wrong tx type');
+    assert(transaction.proposer == caller, 'wrong proposer');
+    assert(transaction.id == tx_id, 'Wrong ID');
+    assert(transaction.tx_status == TransactionStatus::INITIATED, 'Wrong Status');
+}
+
+#[test]
 #[should_panic(expected: 'Caller is not a member')]
 fn test_only_member_can_create_transaction() {
     let mock_contract = deploy_mock_contract();
@@ -268,26 +292,127 @@ fn test_onlY_member_with_proposer_permission_can_create_transaction() {
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
+
 #[test]
-fn test_create_transaction_successful() {
+fn test_approve_transaction_successful() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+
+    // Approve Transaction (Should Pass)
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+
+
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.approved.len() == 1, 'Approvers count should be 1');
+    assert(transaction.tx_status == TransactionStatus::APPROVED, 'Transaction should be approved');
+
+}
+
+
+#[test]
+#[should_panic(expected: 'Caller is not a voter')]
+fn test_non_voter_cannot_approve_transaction() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
     // Add Member
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
-    stop_cheat_caller_address(mock_contract.contract_address);
-    // Assign Proposer Role
-    start_cheat_caller_address(mock_contract.contract_address, caller);
+
+    // Assign Proposer Role to create transaction
     mock_contract.assign_proposer_permission_pub(caller);
-    stop_cheat_caller_address(mock_contract.contract_address);
+
     // Create Transaction
-    start_cheat_caller_address(mock_contract.contract_address, caller);
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Approve Transaction (Should Panic)
+    mock_contract.approve_transaction_pub(tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
-    // Get the transaction
-    let transaction = mock_contract.get_transaction_pub(tx_id);
-    assert(transaction.tx_type == TransactionType::TOKEN_SEND, 'wrong tx type');
-    assert(transaction.proposer == caller, 'wrong proposer');
-    assert(transaction.id == tx_id, 'Wrong ID');
-    assert(transaction.tx_status == TransactionStatus::INITIATED, 'Wrong Status');
 }
+
+#[test]
+#[should_panic(expected: 'Transaction is not votable')]
+fn test_cannot_approve_transaction_with_non_initiated_status() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Update Transaction status to EXECUTED
+    mock_contract.update_transaction_status(tx_id, TransactionStatus::EXECUTED);
+
+    // Approve Transaction (Should Panic)
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Transaction is out of range')]
+fn test_cannot_approve_unknown_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let tx_id: u256 = 1;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    // Approve Transaction (Should Panic)
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller cannot vote again')]
+fn test_cannot_approve_transaction_more_than_once() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let new_caller = new_member();
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(new_caller);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Update Threshold to bypass "Transaction not votable" fail
+    mock_contract.set_threshold_pub(2);
+
+    // Approve Transaction (Should Pass)
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Approve Transaction (Should Panic)
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+

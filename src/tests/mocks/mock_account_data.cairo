@@ -1,12 +1,16 @@
-use spherre::types::{TransactionType, Transaction};
+use spherre::types::{TransactionType, Transaction, TransactionStatus};
 use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IMockContract<TContractState> {
     fn create_transaction_pub(ref self: TContractState, tx_type: TransactionType) -> u256;
+    fn approve_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
+    fn update_transaction_status(ref self: TContractState, tx_id: u256, status: TransactionStatus);
     fn add_member_pub(ref self: TContractState, member: ContractAddress);
     fn assign_proposer_permission_pub(ref self: TContractState, member: ContractAddress);
+    fn assign_voter_permission_pub(ref self: TContractState, member: ContractAddress);
     fn get_transaction_pub(ref self: TContractState, id: u256) -> Transaction;
+    fn set_threshold_pub(ref self: TContractState, val: u64);
 }
 
 
@@ -15,7 +19,7 @@ pub mod MockContract {
     // use AccountData::InternalTrait;
     use spherre::account_data::AccountData;
     use spherre::components::permission_control::{PermissionControl};
-    use spherre::types::{Transaction, TransactionType};
+    use spherre::types::{Transaction, TransactionType, TransactionStatus};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
@@ -53,14 +57,29 @@ pub mod MockContract {
         fn create_transaction_pub(ref self: ContractState, tx_type: TransactionType) -> u256 {
             self.account_data.create_transaction(tx_type)
         }
+        fn approve_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
+            self.account_data.approve_transaction(tx_id, caller)
+        }
+        fn update_transaction_status(
+            ref self: ContractState, tx_id: u256, status: TransactionStatus
+        ) {
+            self.account_data._update_transaction_status(tx_id, status)
+        }
         fn add_member_pub(ref self: ContractState, member: ContractAddress) {
             self.account_data._add_member(member);
         }
         fn assign_proposer_permission_pub(ref self: ContractState, member: ContractAddress) {
             self.permission_control.assign_proposer_permission(member);
         }
+        fn assign_voter_permission_pub(ref self: ContractState, member: ContractAddress) {
+            self.permission_control.assign_voter_permission(member);
+        }
         fn get_transaction_pub(ref self: ContractState, id: u256) -> Transaction {
             self.account_data.get_transaction(id)
+        }
+
+        fn set_threshold_pub(ref self: ContractState, val: u64) {
+            self.account_data.set_threshold(val);
         }
     }
 
