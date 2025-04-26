@@ -554,7 +554,7 @@ fn test_transaction_status_changes_to_rejected() {
     mock_contract.set_threshold_pub(2);
 
     // Approve Transaction (Should Pass)
-    mock_contract.reject_transaction_pub(tx_id, caller);    
+    mock_contract.reject_transaction_pub(tx_id, caller);
 
     stop_cheat_caller_address(mock_contract.contract_address);
 

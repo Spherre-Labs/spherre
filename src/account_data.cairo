@@ -335,23 +335,19 @@ pub mod AccountData {
             let timestamp = get_block_timestamp();
 
             // check if approval threshold has been reached and update
-            // the transaction status if that is the case. 
+            // the transaction status if that is the case.
             // According to issue description, transaction is automatically
             // rejected in any other case
 
             if rejectors_length >= threshold {
                 transaction.tx_status.write(TransactionStatus::REJECTED);
-                self
-                    .emit(
-                        TransactionRejected { transaction_id: tx_id, date_approved: timestamp }
-                    );
+                self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
             }
 
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
                 )
-
         }
 
         fn _update_transaction_status(
