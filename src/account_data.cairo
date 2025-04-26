@@ -71,7 +71,7 @@ pub mod AccountData {
                 members_of_account.append(current_member);
 
                 i += 1;
-            };
+            }
 
             members_of_account
         }
@@ -119,7 +119,7 @@ pub mod AccountData {
                 let address = storage_path.approved.at(i).read(); // Read the ContractAddress
                 approved_array.append(address);
                 i += 1;
-            };
+            }
             let approved_span = approved_array.span();
 
             // Convert rejected Vec<ContractAddress> to Span<ContractAddress>
@@ -130,7 +130,7 @@ pub mod AccountData {
                 let address = storage_path.rejected.at(i).read(); // Read the ContractAddress
                 rejected_array.append(address);
                 i += 1;
-            };
+            }
             let rejected_span = rejected_array.span();
 
             // return the Transaction struct
@@ -159,7 +159,7 @@ pub mod AccountData {
                     counter += 1;
                 }
                 index += 1;
-            };
+            }
 
             counter
         }
@@ -176,7 +176,7 @@ pub mod AccountData {
                     counter += 1;
                 }
                 index += 1;
-            };
+            }
 
             counter
         }
@@ -194,7 +194,7 @@ pub mod AccountData {
                     counter += 1;
                 }
                 index += 1;
-            };
+            }
 
             counter
         }
@@ -211,7 +211,7 @@ pub mod AccountData {
                     found = true;
                 }
                 i += 1;
-            };
+            }
 
             found
         }

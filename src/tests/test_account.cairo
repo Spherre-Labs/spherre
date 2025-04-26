@@ -1,7 +1,11 @@
-use starknet::contract_address_const;
+use core::traits::TryInto;
+use openzeppelin::upgrades::interface::IUpgradeable;
+use starknet::testing::set_caller_address;
+use starknet::{ClassHash, contract_address_const};
 use crate::account::SpherreAccount;
 use crate::account::SpherreAccount::SpherreAccountImpl;
 use crate::types::AccountDetails;
+
 
 // setting up the contract state
 fn CONTRACT_STATE() -> SpherreAccount::ContractState {
@@ -123,4 +127,37 @@ fn test_get_account_details() {
     let account_details: AccountDetails = state.get_account_details();
     assert_eq!(account_details.name, "John Doe");
     assert_eq!(account_details.description, "John Does's Sphere");
+}
+
+#[test]
+fn test_upgrade_functionality() {
+    // Setup contract state
+    let mut state = SpherreAccount::contract_state_for_testing();
+
+    let deployer = contract_address_const::<0x123>();
+    let owner = contract_address_const::<0x456>();
+    let new_class_hash: ClassHash = 0x789.try_into().unwrap();
+    SpherreAccount::constructor(
+        ref state,
+        deployer,
+        owner,
+        "Test Upgradeable Account",
+        "An upgradeable multisig account",
+        array![owner],
+        1,
+    );
+
+    let name_before = SpherreAccount::SpherreAccountImpl::get_name(@state);
+    let description_before = SpherreAccount::SpherreAccountImpl::get_description(@state);
+
+    set_caller_address(deployer);
+
+    IUpgradeable::<SpherreAccount::ContractState>::upgrade(ref state, new_class_hash);
+
+    // Assert that state is preserved after upgrade
+    let name_after = SpherreAccount::SpherreAccountImpl::get_name(@state);
+    let description_after = SpherreAccount::SpherreAccountImpl::get_description(@state);
+
+    assert(name_before == name_after, 'Name should be preserved');
+    assert(description_before == description_after, 'Description should be preserved');
 }

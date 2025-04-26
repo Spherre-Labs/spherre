@@ -12,9 +12,6 @@ starknet = "2.8.5"
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.35.1" }
 assert_macros = "2.8.5"
 openzeppelin = { git = "https://github.com/openzeppelin/cairo-contracts", tag = "v0.18.0" }
-alexandria_storage = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag = "v0.2.0" }
-alexandria_sorting = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag = "v0.2.0" }
-alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria.git", tag = "v0.2.0" }
 
 [tool.fmt]
 sort-module-level-items = true
