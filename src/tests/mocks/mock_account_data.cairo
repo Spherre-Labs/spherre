@@ -5,6 +5,7 @@ use starknet::ContractAddress;
 pub trait IMockContract<TContractState> {
     fn create_transaction_pub(ref self: TContractState, tx_type: TransactionType) -> u256;
     fn approve_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
+    fn reject_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
     fn update_transaction_status(ref self: TContractState, tx_id: u256, status: TransactionStatus);
     fn add_member_pub(ref self: TContractState, member: ContractAddress);
     fn assign_proposer_permission_pub(ref self: TContractState, member: ContractAddress);
@@ -59,6 +60,9 @@ pub mod MockContract {
         }
         fn approve_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.approve_transaction(tx_id, caller)
+        }
+        fn reject_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
+            self.account_data.reject_transaction(tx_id, caller)
         }
         fn update_transaction_status(
             ref self: ContractState, tx_id: u256, status: TransactionStatus

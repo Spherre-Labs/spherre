@@ -19,7 +19,8 @@ pub mod AccountData {
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
         pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
         pub members_count: u64, // the member length
-        pub has_voted: Map<(u256, ContractAddress), bool> // Map(tx_id, member) -> bool
+        pub has_voted: Map<(u256, ContractAddress), bool>, // Map(tx_id, member) -> bool
+        pub transaction_rejectors: Map<ContractAddress, u256> // Map(member that rejected) -> tx_id
     }
 
     #[starknet::storage_node]
@@ -41,6 +42,7 @@ pub mod AccountData {
         AddedMember: AddedMember,
         ThresholdUpdated: ThresholdUpdated,
         TransactionApproved: TransactionApproved,
+        TransactionRejected: TransactionRejected,
         TransactionVoted: TransactionVoted,
     }
 
@@ -67,6 +69,13 @@ pub mod AccountData {
 
     #[derive(Drop, starknet::Event)]
     pub struct TransactionApproved {
+        #[key]
+        transaction_id: u256,
+        date_approved: u64
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct TransactionRejected {
         #[key]
         transaction_id: u256,
         date_approved: u64
@@ -301,6 +310,44 @@ pub mod AccountData {
                 transaction.tx_status.write(TransactionStatus::APPROVED);
                 self.emit(TransactionApproved { transaction_id: tx_id, date_approved: timestamp });
             }
+            self
+                .emit(
+                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                )
+        }
+
+        fn reject_transaction(
+            ref self: ComponentState<TContractState>, tx_id: u256, caller: ContractAddress
+        ) {
+            // check if caller can vote
+            self.assert_caller_can_vote(tx_id, caller);
+
+            // update has_voted map to prevent double voting
+            self.has_voted.entry((tx_id, caller)).write(true);
+
+            // get the transaction
+            let transaction = self.transactions.entry(tx_id);
+            // add the caller to the list of approvers
+            transaction.rejected.append().write(caller);
+
+            let rejectors_length = transaction.rejected.len();
+            let approved_length = transaction.approved.len();
+            let no_of_possible_voters = self.get_number_of_voters();
+            let members_that_have_voted = approved_length + rejectors_length;
+            let not_voted_yet = no_of_possible_voters - members_that_have_voted;
+            let max_possible_approved_length = approved_length + not_voted_yet;
+            let (threshold, _) = self.get_threshold();
+            let timestamp = get_block_timestamp();
+            // check if approval threshold has been reached and update
+            // the transaction status if that is the case.
+            // According to issue description, transaction is automatically
+            // rejected in any other case
+
+            if max_possible_approved_length < threshold {
+                transaction.tx_status.write(TransactionStatus::REJECTED);
+                self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
+            }
+
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
