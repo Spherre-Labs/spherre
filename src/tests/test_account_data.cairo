@@ -580,21 +580,21 @@ fn test_transaction_status_changes_to_rejected() {
 
     mock_contract.assign_voter_permission_pub(caller_2);
     mock_contract.reject_transaction_pub(tx_id, caller_2);
-    
+
     stop_cheat_caller_address(mock_contract.contract_address);
 
     start_cheat_caller_address(mock_contract.contract_address, caller_3);
 
     mock_contract.assign_voter_permission_pub(caller_3);
     mock_contract.reject_transaction_pub(tx_id, caller_3);
-    
+
     stop_cheat_caller_address(mock_contract.contract_address);
 
     start_cheat_caller_address(mock_contract.contract_address, caller_4);
 
     mock_contract.assign_voter_permission_pub(caller_4);
     mock_contract.reject_transaction_pub(tx_id, caller_4);
-    
+
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
