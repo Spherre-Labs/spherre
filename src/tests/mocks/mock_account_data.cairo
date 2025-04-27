@@ -12,18 +12,22 @@ pub trait IMockContract<TContractState> {
     fn assign_voter_permission_pub(ref self: TContractState, member: ContractAddress);
     fn get_transaction_pub(ref self: TContractState, id: u256) -> Transaction;
     fn set_threshold_pub(ref self: TContractState, val: u64);
+    fn pause(ref self: TContractState);
+    fn unpause(ref self: TContractState);
 }
 
 
 #[starknet::contract]
 pub mod MockContract {
     // use AccountData::InternalTrait;
+    use openzeppelin_security::pausable::PausableComponent;
     use spherre::account_data::AccountData;
     use spherre::components::permission_control::{PermissionControl};
     use spherre::types::{Transaction, TransactionType, TransactionStatus};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
+    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
 
@@ -36,12 +40,19 @@ pub mod MockContract {
         PermissionControl::PermissionControl<ContractState>;
     pub impl PermissionInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
+    pub impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+
+
     #[storage]
     pub struct Storage {
         #[substorage(v0)]
         pub account_data: AccountData::Storage,
         #[substorage(v0)]
         pub permission_control: PermissionControl::Storage,
+        #[substorage(v0)]
+        pub pausable: PausableComponent::Storage,
     }
 
     #[event]
@@ -51,6 +62,8 @@ pub mod MockContract {
         AccountDataEvent: AccountData::Event,
         #[flat]
         PermissionControlEvent: PermissionControl::Event,
+        #[flat]
+        PausableEvent: PausableComponent::Event,
     }
 
     #[abi(embed_v0)]
@@ -84,6 +97,13 @@ pub mod MockContract {
 
         fn set_threshold_pub(ref self: ContractState, val: u64) {
             self.account_data.set_threshold(val);
+        }
+        fn pause(ref self: ContractState) {
+            self.pausable.pause();
+        }
+
+        fn unpause(ref self: ContractState) {
+            self.pausable.unpause();
         }
     }
 
