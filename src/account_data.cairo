@@ -331,15 +331,19 @@ pub mod AccountData {
             transaction.rejected.append().write(caller);
 
             let rejectors_length = transaction.rejected.len();
+            let approved_length = transaction.approved.len();
+            let no_of_possible_voters = self.get_number_of_voters();
+            let members_that_have_voted = approved_length + rejectors_length;
+            let not_voted_yet = no_of_possible_voters - members_that_have_voted;
+            let max_possible_approved_length = approved_length + not_voted_yet;
             let (threshold, _) = self.get_threshold();
             let timestamp = get_block_timestamp();
-
             // check if approval threshold has been reached and update
             // the transaction status if that is the case.
             // According to issue description, transaction is automatically
             // rejected in any other case
 
-            if rejectors_length >= threshold {
+            if max_possible_approved_length < threshold {
                 transaction.tx_status.write(TransactionStatus::REJECTED);
                 self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
             }

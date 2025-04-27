@@ -345,7 +345,6 @@ fn test_reject_transaction_successful() {
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(transaction.rejected.len() == 1, 'Rejecters count should be 1');
     assert(transaction.approved.len() == 0, 'Approvers count should be 1');
-    assert(transaction.tx_status == TransactionStatus::REJECTED, 'Transaction should be approved');
 }
 
 
@@ -503,23 +502,33 @@ fn test_cannot_approve_transaction_more_than_once() {
 fn test_cannot_reject_transaction_more_than_once() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
-    let new_caller = new_member();
+    let second_caller = new_member();
+    let third_caller = contract_address_const::<'third_caller'>();
+    let fourth_caller = contract_address_const::<'fourth_caller'>();
+    let fifth_caller = contract_address_const::<'fifth_caller'>();
     // Add Member
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
-    mock_contract.add_member_pub(new_caller);
+    mock_contract.add_member_pub(second_caller);
+    mock_contract.add_member_pub(third_caller);
+    mock_contract.add_member_pub(fourth_caller);
+    mock_contract.add_member_pub(fifth_caller);
 
     // Assign Proposer Role to create transaction
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Assign voter Role
     mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(second_caller);
+    mock_contract.assign_voter_permission_pub(third_caller);
+    mock_contract.assign_voter_permission_pub(fourth_caller);
+    mock_contract.assign_voter_permission_pub(fifth_caller);
 
     // Create Transaction
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
     // Update Threshold to bypass "Transaction not votable" fail
-    mock_contract.set_threshold_pub(2);
+    mock_contract.set_threshold_pub(4);
 
     // Approve Transaction (Should Pass)
     mock_contract.reject_transaction_pub(tx_id, caller);
@@ -534,18 +543,27 @@ fn test_cannot_reject_transaction_more_than_once() {
 fn test_transaction_status_changes_to_rejected() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
-    let new_caller = new_member();
+    let caller_2 = contract_address_const::<'caller_2'>();
+    let caller_3 = contract_address_const::<'caller_3'>();
+    let caller_4 = contract_address_const::<'caller_4'>();
+    let caller_5 = contract_address_const::<'caller_5'>();
     // Add Member
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
-    mock_contract.add_member_pub(new_caller);
+    mock_contract.add_member_pub(caller_2);
+    mock_contract.add_member_pub(caller_3);
+    mock_contract.add_member_pub(caller_4);
+    mock_contract.add_member_pub(caller_5);
 
     // Assign Proposer Role to create transaction
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Assign voter Role
     mock_contract.assign_voter_permission_pub(caller);
-    mock_contract.assign_voter_permission_pub(new_caller);
+    mock_contract.assign_voter_permission_pub(caller_2);
+    mock_contract.assign_voter_permission_pub(caller_3);
+    mock_contract.assign_voter_permission_pub(caller_4);
+    mock_contract.assign_voter_permission_pub(caller_5);
 
     // Create Transaction
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
@@ -558,12 +576,28 @@ fn test_transaction_status_changes_to_rejected() {
 
     stop_cheat_caller_address(mock_contract.contract_address);
 
-    start_cheat_caller_address(mock_contract.contract_address, new_caller);
+    start_cheat_caller_address(mock_contract.contract_address, caller_2);
 
-    mock_contract.reject_transaction_pub(tx_id, new_caller);
+    mock_contract.assign_voter_permission_pub(caller_2);
+    mock_contract.reject_transaction_pub(tx_id, caller_2);
+    
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller_3);
+
+    mock_contract.assign_voter_permission_pub(caller_3);
+    mock_contract.reject_transaction_pub(tx_id, caller_3);
+    
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller_4);
+
+    mock_contract.assign_voter_permission_pub(caller_4);
+    mock_contract.reject_transaction_pub(tx_id, caller_4);
+    
+    stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.rejected.len() == 4, 'Rejections did not go through');
     assert(transaction.tx_status == TransactionStatus::REJECTED, 'Status change error');
-
-    stop_cheat_caller_address(mock_contract.contract_address);
 }
