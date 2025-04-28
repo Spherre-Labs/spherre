@@ -4,6 +4,8 @@ pub mod AccountData {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
+    use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
+    use openzeppelin_security::pausable::PausableComponent;
     use spherre::components::permission_control;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
@@ -87,6 +89,7 @@ pub mod AccountData {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
+        impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {
         fn get_account_members(self: @ComponentState<TContractState>) -> Array<ContractAddress> {
             let mut members_of_account: Array<ContractAddress> = array![];
@@ -234,6 +237,7 @@ pub mod AccountData {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
+        impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn _add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
             assert(!address.is_zero(), 'Zero Address Caller');
@@ -248,6 +252,10 @@ pub mod AccountData {
 
 
         fn set_threshold(ref self: ComponentState<TContractState>, threshold: u64) {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
             let members_count: u64 = self.members_count.read();
             assert(threshold <= members_count, Errors::ThresholdError);
             self.threshold.write(threshold);
@@ -258,6 +266,10 @@ pub mod AccountData {
         fn create_transaction(
             ref self: ComponentState<TContractState>, tx_type: TransactionType
         ) -> u256 {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
             let caller = get_caller_address();
             // check if the caller is a member
             assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
@@ -289,6 +301,10 @@ pub mod AccountData {
         fn approve_transaction(
             ref self: ComponentState<TContractState>, tx_id: u256, caller: ContractAddress
         ) {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
             // check if caller can vote
             self.assert_caller_can_vote(tx_id, caller);
 

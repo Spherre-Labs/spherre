@@ -2,6 +2,7 @@
 #[starknet::contract]
 pub mod SpherreAccount {
     use AccountData::InternalTrait;
+    use openzeppelin_security::pausable::PausableComponent;
     use spherre::{
         account_data::AccountData, components::permission_control::PermissionControl,
         actions::{
@@ -12,7 +13,7 @@ pub mod SpherreAccount {
         {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
     };
     use starknet::{
-        {ContractAddress, contract_address_const},
+        {ContractAddress, get_caller_address, contract_address_const},
         {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
     };
 
@@ -31,6 +32,7 @@ pub mod SpherreAccount {
     );
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
+    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
 
     #[abi(embed_v0)]
     impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -41,9 +43,16 @@ pub mod SpherreAccount {
         PermissionControl::PermissionControl<ContractState>;
     impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
+    // Expose external pause/unpause functions with deployer access control
+    #[abi(embed_v0)]
+    pub impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
+    pub impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+
+
     #[storage]
     struct Storage {
-        deployer: ContractAddress,
+        pub deployer: ContractAddress,
+        pub contract_address: ContractAddress,
         name: ByteArray,
         description: ByteArray,
         #[substorage(v0)]
@@ -60,6 +69,8 @@ pub mod SpherreAccount {
         nft_transaction: NFTTransaction::Storage,
         #[substorage(v0)]
         token_transaction: TokenTransaction::Storage,
+        #[substorage(v0)]
+        pausable: PausableComponent::Storage,
     }
 
     #[event]
@@ -79,6 +90,8 @@ pub mod SpherreAccount {
         NFTTransactionEvent: NFTTransaction::Event,
         #[flat]
         TokenTransactionEvent: TokenTransaction::Event,
+        #[flat]
+        PausableEvent: PausableComponent::Event,
     }
 
     #[constructor]
@@ -107,6 +120,9 @@ pub mod SpherreAccount {
                 self.permission_control.assign_all_permissions(member);
             };
         self.account_data.set_threshold(threshold);
+
+        // Record deployer
+        self.deployer.write(deployer);
     }
     #[abi(embed_v0)]
     pub impl AccountImpl of IAccount<ContractState> {
@@ -119,6 +135,24 @@ pub mod SpherreAccount {
         }
         fn get_account_details(self: @ContractState) -> AccountDetails {
             AccountDetails { name: self.name.read(), description: self.description.read() }
+        }
+        fn get_deployer(self: @ContractState) -> ContractAddress {
+            self.deployer.read()
+        }
+
+        fn pause(ref self: ContractState) {
+            let caller = get_caller_address();
+            let deployer = self.deployer.read();
+            assert(caller == deployer, Errors::ERR_NOT_DEPLOYER);
+            // The Pausable component automatically emits events when the respective functions are
+            // called. These events are included in the PausableEvent variant.
+            self.pausable.pause();
+        }
+        fn unpause(ref self: ContractState) {
+            let caller = get_caller_address();
+            let deployer = self.deployer.read();
+            assert(caller == deployer, Errors::ERR_NOT_DEPLOYER);
+            self.pausable.unpause();
         }
     }
 }

@@ -14,6 +14,8 @@ pub mod Errors {
     pub const ERR_INVALID_TRANSACTION: felt252 = 'Transaction is out of range';
     pub const ERR_TRANSACTION_NOT_VOTABLE: felt252 = 'Transaction is not votable';
     pub const ERR_CALLER_CANNOT_VOTE: felt252 = 'Caller cannot vote again';
+    pub const ERR_NOT_DEPLOYER: felt252 = 'Caller is not deployer';
+    pub const ERR_CALL_WHILE_PAUSED: felt252 = 'Contract is paused';
 
     // Constants for the Ownable error format
     pub const ERR_NOT_OWNER_SELECTOR: felt252 =

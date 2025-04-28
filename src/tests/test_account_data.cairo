@@ -1,5 +1,6 @@
 use core::array::ArrayTrait;
 use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, MutableVecTrait,};
+use crate::account::{SpherreAccount::AccountImpl};
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
     DeclareResultTrait
@@ -13,6 +14,10 @@ use spherre::types::{TransactionType, TransactionStatus};
 use starknet::ContractAddress;
 use starknet::contract_address_const;
 
+// Helper function to get addresses
+fn deployer() -> ContractAddress {
+    contract_address_const::<'deployer'>()
+}
 
 fn zero_address() -> ContractAddress {
     contract_address_const::<0>()
@@ -600,4 +605,43 @@ fn test_transaction_status_changes_to_rejected() {
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(transaction.rejected.len() == 4, 'Rejections did not go through');
     assert(transaction.tx_status == TransactionStatus::REJECTED, 'Status change error');
+}
+
+#[test]
+#[should_panic(expected: 'Pausable: paused')]
+fn test_blocked_operations_when_paused() {
+    let mock = deploy_mock_contract();
+    let deployer = contract_address_const::<'member'>();
+    let member = member();
+
+    // Setup
+    start_cheat_caller_address(mock.contract_address, deployer);
+    mock.add_member_pub(member);
+    mock.assign_proposer_permission_pub(member);
+    mock.assign_voter_permission_pub(member);
+
+    // Create transaction first
+    let tx_id = mock.create_transaction_pub(TransactionType::TOKEN_SEND);
+    assert(mock.get_transaction_pub(tx_id).id == tx_id, 'Should create tx');
+
+    // Pause and verify blocking
+    mock.pause();
+    mock.create_transaction_pub(TransactionType::TOKEN_SEND); // Should panic
+}
+
+#[test]
+fn test_unpaused_operations() {
+    let mock = deploy_mock_contract();
+    let deployer = contract_address_const::<'member'>();
+    let member = member();
+
+    start_cheat_caller_address(mock.contract_address, deployer);
+    mock.add_member_pub(member);
+    mock.pause();
+    mock.unpause();
+
+    // Should work after unpause
+    mock.assign_proposer_permission_pub(member);
+    let tx_id = mock.create_transaction_pub(TransactionType::TOKEN_SEND);
+    assert(mock.get_transaction_pub(tx_id).id == tx_id, 'Should create tx');
 }
