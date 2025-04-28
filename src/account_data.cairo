@@ -147,57 +147,6 @@ pub mod AccountData {
             }
         }
 
-        fn get_number_of_voters(self: @ComponentState<TContractState>) -> u64 {
-            let permission_control = get_dep_component!(self, PermissionControlDep);
-            let mut counter: u64 = 0;
-            let no_of_members = self.members_count.read();
-
-            let mut index: u64 = 0;
-            while index < no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control.has_permission(member, Permissions::VOTER) {
-                    counter += 1;
-                }
-                index += 1;
-            }
-
-            counter
-        }
-
-        fn get_number_of_proposers(self: @ComponentState<TContractState>) -> u64 {
-            let permission_control = get_dep_component!(self, PermissionControlDep);
-            let mut counter: u64 = 0;
-            let no_of_members = self.members_count.read();
-
-            let mut index: u64 = 0;
-            while index < no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control.has_permission(member, Permissions::PROPOSER) {
-                    counter += 1;
-                }
-                index += 1;
-            }
-
-            counter
-        }
-
-
-        fn get_number_of_executors(self: @ComponentState<TContractState>) -> u64 {
-            let permission_control = get_dep_component!(self, PermissionControlDep);
-            let mut counter: u64 = 0;
-            let no_of_members = self.members_count.read();
-
-            let mut index: u64 = 0;
-            while index < no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control.has_permission(member, Permissions::EXECUTOR) {
-                    counter += 1;
-                }
-                index += 1;
-            }
-
-            counter
-        }
 
         /// Checks if a given address is a member of the account
         fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {

@@ -110,27 +110,5 @@ pub mod MockContract {
         fn get_transaction(self: @ContractState, transaction_id: u256) -> Transaction {
             self.account_data.get_transaction(transaction_id)
         }
-        fn get_number_of_voters(self: @ContractState) -> u64 {
-            self.account_data.get_number_of_voters()
-        }
-
-        fn get_number_of_proposers(self: @ContractState) -> u64 {
-            self.account_data.get_number_of_proposers()
-        }
-
-        fn get_number_of_executors(self: @ContractState) -> u64 {
-            self.account_data.get_number_of_executors()
-        }
-        fn set_voter_permission(ref self: ContractState, member: ContractAddress) {
-            self.permission_control.assign_voter_permission(member);
-        }
-
-        fn set_proposer_permission(ref self: ContractState, member: ContractAddress) {
-            self.permission_control.assign_proposer_permission(member);
-        }
-
-        fn set_executor_permission(ref self: ContractState, member: ContractAddress) {
-            self.permission_control.assign_executor_permission(member);
-        }
     }
 }
