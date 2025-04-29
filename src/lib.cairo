@@ -24,7 +24,7 @@ pub mod actions {
     pub mod member_permission_tx;
     pub mod member_tx;
     pub mod nft_tx;
-    pub mod token_tx;
+    pub mod token_transaction;
 }
 
 
@@ -37,5 +37,9 @@ pub mod tests {
     pub mod utils;
     pub mod mocks {
         pub mod mock_account_data;
+        pub mod mock_token;
+    }
+    pub mod actions {
+        pub mod test_token_transaction;
     }
 }
