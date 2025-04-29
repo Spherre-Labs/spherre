@@ -61,10 +61,40 @@ pub struct AccountDetails {
     pub description: ByteArray
 }
 
-
+///
+///  ACTIONS DATA STRUCTURES
+///
 #[derive(Drop, Serde, starknet::Store)]
 pub struct TokenTransactionData {
     pub token: ContractAddress,
     pub amount: u256,
     pub recipient: ContractAddress
+}
+#[derive(Drop, Serde, starknet::Store)]
+pub struct NFTTransactionData {
+    pub nft_contract: ContractAddress,
+    pub token_id: u256,
+    pub recipient: ContractAddress
+}
+
+#[derive(Drop, Serde, starknet::Store)]
+pub struct ThresholdChangeData {
+    pub new_threshold: u64
+}
+
+#[derive(Drop, Serde)]
+pub struct EditPermissionData {
+    pub member: ContractAddress,
+    pub permissions: Array<PermissionEnum>
+}
+
+#[derive(Drop, Serde, starknet::Store)]
+pub struct MemberRemoveData {
+    pub member: ContractAddress
+}
+
+#[derive(Drop, Serde)]
+pub struct MemberAddData {
+    pub member: ContractAddress,
+    pub permissions: Array<PermissionEnum>
 }

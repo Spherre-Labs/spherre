@@ -6,9 +6,11 @@ pub mod SpherreAccount {
     use spherre::{
         account_data::AccountData, components::permission_control::PermissionControl,
         actions::{
-            change_threshold_tx::ChangeThresholdTransaction,
-            member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
-            nft_tx::NFTTransaction, token_transaction::TokenTransaction,
+            change_threshold_transaction::ChangeThresholdTransaction,
+            member_permission_tx::MemberPermissionTransaction,
+            member_add_transaction::MemberAddTransaction,
+            member_remove_transaction::MemberRemoveTransaction, nft_transaction::NFTTransaction,
+            token_transaction::TokenTransaction,
         },
         {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
     };
@@ -24,7 +26,16 @@ pub mod SpherreAccount {
         storage: change_threshold_transaction,
         event: ChangeThresholdEvent,
     );
-    component!(path: MemberTransaction, storage: member_transaction, event: MemberTransactionEvent);
+    component!(
+        path: MemberAddTransaction,
+        storage: member_add_transaction,
+        event: MemberAddTransactionEvent
+    );
+    component!(
+        path: MemberRemoveTransaction,
+        storage: member_remove_transaction,
+        event: MemberRemoveTransactionEvent
+    );
     component!(
         path: MemberPermissionTransaction,
         storage: member_permission_transaction,
@@ -62,7 +73,9 @@ pub mod SpherreAccount {
         #[substorage(v0)]
         change_threshold_transaction: ChangeThresholdTransaction::Storage,
         #[substorage(v0)]
-        member_transaction: MemberTransaction::Storage,
+        member_add_transaction: MemberAddTransaction::Storage,
+        #[substorage(v0)]
+        member_remove_transaction: MemberRemoveTransaction::Storage,
         #[substorage(v0)]
         member_permission_transaction: MemberPermissionTransaction::Storage,
         #[substorage(v0)]
@@ -83,7 +96,9 @@ pub mod SpherreAccount {
         #[flat]
         ChangeThresholdEvent: ChangeThresholdTransaction::Event,
         #[flat]
-        MemberTransactionEvent: MemberTransaction::Event,
+        MemberAddTransactionEvent: MemberAddTransaction::Event,
+        #[flat]
+        MemberRemoveTransactionEvent: MemberRemoveTransaction::Event,
         #[flat]
         MemberPermissionTransactionEvent: MemberPermissionTransaction::Event,
         #[flat]
