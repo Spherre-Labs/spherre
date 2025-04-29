@@ -20,10 +20,11 @@ pub mod components {
     pub mod permission_control;
 }
 pub mod actions {
-    pub mod change_threshold_tx;
+    pub mod change_threshold_transaction;
+    pub mod member_add_transaction;
     pub mod member_permission_tx;
-    pub mod member_tx;
-    pub mod nft_tx;
+    pub mod member_remove_transaction;
+    pub mod nft_transaction;
     pub mod token_transaction;
 }
 
