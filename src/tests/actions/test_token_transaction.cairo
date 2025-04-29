@@ -87,11 +87,10 @@ fn test_propose_transaction_fail_if_not_proposer() {
     mock_contract.add_member_pub(caller);
 
     // Propose Transaction
-    mock_contract.propose_token_transaction_pub(
-        token.contract_address,
-        amount_to_send,
-        receiver
-    ); // should panic
+    mock_contract
+        .propose_token_transaction_pub(
+            token.contract_address, amount_to_send, receiver
+        ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -111,11 +110,10 @@ fn test_propose_transaction_fail_if_balance_is_insufficient() {
     // Assign Proposer Role
     mock_contract.assign_proposer_permission_pub(caller);
     // Propose Transaction
-    mock_contract.propose_token_transaction_pub(
-        token.contract_address,
-        amount_to_send,
-        receiver
-    ); // should panic
+    mock_contract
+        .propose_token_transaction_pub(
+            token.contract_address, amount_to_send, receiver
+        ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -135,10 +133,9 @@ fn test_propose_transaction_fail_if_recipient_is_account() {
     // Assign Proposer Role
     mock_contract.assign_proposer_permission_pub(caller);
     // Propose Transaction
-    mock_contract.propose_token_transaction_pub(
-        token.contract_address,
-        amount_to_send,
-        receiver
-    ); // should panic
+    mock_contract
+        .propose_token_transaction_pub(
+            token.contract_address, amount_to_send, receiver
+        ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
