@@ -23,4 +23,12 @@ pub mod Errors {
     pub const ERR_NOT_OWNER_PADDING: felt252 = 0x0;
     pub const ERR_NOT_OWNER_MESSAGE: felt252 = 0x43616c6c6572206973206e6f7420746865206f776e6572;
     pub const ERR_NOT_OWNER_MARKER: felt252 = 0x17;
+
+    // Constants for token transaction
+    pub const ERR_NON_ZERO_ADDRESS_TOKEN: felt252 = 'Token address is zero';
+    pub const ERR_NON_ZERO_ADDRESS_RECIPIENT: felt252 = 'Recipient address is zero';
+    pub const ERR_INSUFFICIENT_TOKEN_AMOUNT: felt252 = 'Insufficient token amount';
+    pub const ERR_RECIPIENT_CANNOT_BE_ACCOUNT: felt252 = 'Recipient cannot be account';
+    pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
+    pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
 }

@@ -60,3 +60,11 @@ pub struct AccountDetails {
     pub name: ByteArray,
     pub description: ByteArray
 }
+
+
+#[derive(Drop, Serde, starknet::Store)]
+pub struct TokenTransactionData {
+    pub token: ContractAddress,
+    pub amount: u256,
+    pub recipient: ContractAddress
+}

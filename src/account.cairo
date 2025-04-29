@@ -8,7 +8,7 @@ pub mod SpherreAccount {
         actions::{
             change_threshold_tx::ChangeThresholdTransaction,
             member_permission_tx::MemberPermissionTransaction, member_tx::MemberTransaction,
-            nft_tx::NFTTransaction, token_tx::TokenTransaction,
+            nft_tx::NFTTransaction, token_transaction::TokenTransaction,
         },
         {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
     };
