@@ -1,4 +1,4 @@
-use spherre::types::{TransactionType, Transaction, TransactionStatus};
+use spherre::types::{TransactionType, Transaction, TransactionStatus, TokenTransactionData};
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -10,10 +10,14 @@ pub trait IMockContract<TContractState> {
     fn add_member_pub(ref self: TContractState, member: ContractAddress);
     fn assign_proposer_permission_pub(ref self: TContractState, member: ContractAddress);
     fn assign_voter_permission_pub(ref self: TContractState, member: ContractAddress);
-    fn get_transaction_pub(ref self: TContractState, id: u256) -> Transaction;
+    fn get_transaction_pub(self: @TContractState, id: u256) -> Transaction;
     fn set_threshold_pub(ref self: TContractState, val: u64);
     fn pause(ref self: TContractState);
     fn unpause(ref self: TContractState);
+    fn propose_token_transaction_pub(
+        ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress
+    ) -> u256;
+    fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
 }
 
 
@@ -22,14 +26,17 @@ pub mod MockContract {
     // use AccountData::InternalTrait;
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::account_data::AccountData;
+    use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
-    use spherre::types::{Transaction, TransactionType, TransactionStatus};
+    use spherre::interfaces::itoken_tx::ITokenTransaction;
+    use spherre::types::{Transaction, TransactionType, TransactionStatus, TokenTransactionData};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
+    component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -44,6 +51,10 @@ pub mod MockContract {
     pub impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     pub impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl TokenTransactionImpl =
+        TokenTransaction::TokenTransaction<ContractState>;
+
 
     #[storage]
     pub struct Storage {
@@ -53,6 +64,8 @@ pub mod MockContract {
         pub permission_control: PermissionControl::Storage,
         #[substorage(v0)]
         pub pausable: PausableComponent::Storage,
+        #[substorage(v0)]
+        pub token_transaction: TokenTransaction::Storage,
     }
 
     #[event]
@@ -64,6 +77,8 @@ pub mod MockContract {
         PermissionControlEvent: PermissionControl::Event,
         #[flat]
         PausableEvent: PausableComponent::Event,
+        #[flat]
+        TokenTransactionEvent: TokenTransaction::Event,
     }
 
     #[abi(embed_v0)]
@@ -91,10 +106,12 @@ pub mod MockContract {
         fn assign_voter_permission_pub(ref self: ContractState, member: ContractAddress) {
             self.permission_control.assign_voter_permission(member);
         }
-        fn get_transaction_pub(ref self: ContractState, id: u256) -> Transaction {
+        fn get_transaction_pub(self: @ContractState, id: u256) -> Transaction {
             self.account_data.get_transaction(id)
         }
-
+        fn get_token_transaction_pub(ref self: ContractState, id: u256) -> TokenTransactionData {
+            self.token_transaction.get_token_transaction(id)
+        }
         fn set_threshold_pub(ref self: ContractState, val: u64) {
             self.account_data.set_threshold(val);
         }
@@ -104,6 +121,15 @@ pub mod MockContract {
 
         fn unpause(ref self: ContractState) {
             self.pausable.unpause();
+        }
+
+        fn propose_token_transaction_pub(
+            ref self: ContractState,
+            token: ContractAddress,
+            amount: u256,
+            recipient: ContractAddress
+        ) -> u256 {
+            self.token_transaction.propose_token_transaction(token, amount, recipient)
         }
     }
 

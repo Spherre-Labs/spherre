@@ -1,5 +1,13 @@
+use starknet::ContractAddress;
+
+#[starknet::interface]
+pub trait IMockToken<TContractState> {
+    fn mint(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
+}
+
 #[starknet::contract]
 pub mod MockToken {
+    use core::integer::u256;
     use core::num::traits::Zero;
     use core::starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, Map, StoragePathEntry
@@ -7,6 +15,7 @@ pub mod MockToken {
     use spherre::interfaces::ierc20::IERC20;
     use starknet::event::EventEmitter;
     use starknet::{ContractAddress, get_caller_address};
+    use super::IMockToken;
 
     #[storage]
     pub struct Storage {
@@ -45,11 +54,12 @@ pub mod MockToken {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, name: ByteArray) {
-        self.token_name.write(name);
+    fn constructor(ref self: ContractState) {
+        self.token_name.write("MockToken");
         self.symbol.write("MKT");
         self.decimal.write(18);
         self.owner.write(get_caller_address());
+        self.total_supply.write(10000000000000000000000000);
     }
 
     #[abi(embed_v0)]
@@ -137,7 +147,10 @@ pub mod MockToken {
         fn decimals(self: @ContractState) -> u8 {
             self.decimal.read()
         }
+    }
 
+    #[abi(embed_v0)]
+    impl MockTokenAltImpl of IMockToken<ContractState> {
         fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
             let previous_total_supply = self.total_supply.read();
             let previous_balance = self.balances.entry(recipient).read();
