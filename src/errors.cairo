@@ -11,8 +11,10 @@ pub mod Errors {
     pub const ERR_NOT_MEMBER: felt252 = 'Caller is not a member';
     pub const ERR_NOT_PROPOSER: felt252 = 'Caller is not a proposer';
     pub const ERR_NOT_VOTER: felt252 = 'Caller is not a voter';
+    pub const ERR_NOT_EXECUTOR: felt252 = 'Caller is not an executor';
     pub const ERR_INVALID_TRANSACTION: felt252 = 'Transaction is out of range';
     pub const ERR_TRANSACTION_NOT_VOTABLE: felt252 = 'Transaction is not votable';
+    pub const ERR_TRANSACTION_NOT_EXECUTABLE: felt252 = 'Transaction is not executable';
     pub const ERR_CALLER_CANNOT_VOTE: felt252 = 'Caller cannot vote again';
     pub const ERR_NOT_DEPLOYER: felt252 = 'Caller is not deployer';
     pub const ERR_CALL_WHILE_PAUSED: felt252 = 'Contract is paused';

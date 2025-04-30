@@ -46,6 +46,7 @@ pub mod AccountData {
         TransactionApproved: TransactionApproved,
         TransactionRejected: TransactionRejected,
         TransactionVoted: TransactionVoted,
+        TransactionExecuted: TransactionExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -81,6 +82,15 @@ pub mod AccountData {
         #[key]
         transaction_id: u256,
         date_approved: u64
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct TransactionExecuted {
+        #[key]
+        transaction_id: u256,
+        #[key]
+        executor: ContractAddress,
+        date_executed: u64
     }
 
     #[embeddable_as(AccountData)]
@@ -368,6 +378,36 @@ pub mod AccountData {
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
                 )
+        }
+
+        fn execute_transaction(
+            ref self: ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
+        ) {
+            self.assert_valid_transaction(transaction_id);
+            let transaction = self.transactions.entry(transaction_id);
+            assert(
+                transaction.tx_status.read() == TransactionStatus::APPROVED,
+                Errors::ERR_TRANSACTION_NOT_EXECUTABLE
+            );
+            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+
+            let permission_control_comp = get_dep_component!(@self, PermissionControl);
+            assert(
+                permission_control_comp.has_permission(caller, Permissions::EXECUTOR),
+                Errors::ERR_NOT_EXECUTOR
+            );
+
+            transaction.tx_status.write(TransactionStatus::EXECUTED);
+            let timestamp = get_block_timestamp();
+            transaction.date_executed.write(timestamp);
+            transaction.executor.write(caller);
+
+            self
+                .emit(
+                    TransactionExecuted {
+                        transaction_id: transaction_id, executor: caller, date_executed: timestamp,
+                    }
+                );
         }
 
         fn _update_transaction_status(

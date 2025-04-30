@@ -3,7 +3,7 @@ use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, Mutab
 use crate::account::{SpherreAccount::AccountImpl};
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    DeclareResultTrait, start_cheat_block_timestamp, stop_cheat_block_timestamp
 };
 
 
@@ -321,6 +321,7 @@ fn test_approve_transaction_successful() {
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
+
     assert(transaction.approved.len() == 1, 'Approvers count should be 1');
     assert(transaction.tx_status == TransactionStatus::APPROVED, 'Transaction should be approved');
 }
@@ -503,6 +504,46 @@ fn test_cannot_approve_transaction_more_than_once() {
 }
 
 #[test]
+fn test_execute_transaction_successful() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+
+    // Set a non-zero block timestamp for testing
+    start_cheat_block_timestamp(mock_contract.contract_address, 1713049189);
+
+    mock_contract.add_member_pub(caller);
+
+    // Assign permissions
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Set threshold to 1 so a single vote will approve
+    mock_contract.set_threshold_pub(1);
+
+    // Approve Transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Execute Transaction
+    mock_contract.execute_transaction_pub(tx_id, caller);
+
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify transaction is executed
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
+    assert(transaction.executor == caller, 'Executor should be caller');
+    assert(transaction.date_executed > 0, 'Execution date should be set');
+}
+
+#[test]
 #[should_panic(expected: 'Caller cannot vote again')]
 fn test_cannot_reject_transaction_more_than_once() {
     let mock_contract = deploy_mock_contract();
@@ -644,4 +685,98 @@ fn test_unpaused_operations() {
     mock.assign_proposer_permission_pub(member);
     let tx_id = mock.create_transaction_pub(TransactionType::TOKEN_SEND);
     assert(mock.get_transaction_pub(tx_id).id == tx_id, 'Should create tx');
+}
+
+
+#[test]
+#[should_panic(expected: 'Caller is not a member')]
+fn test_non_member_cannot_execute_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let member_addr = member();
+    let non_member = new_member(); // using a different address that's not added as a member
+
+    start_cheat_caller_address(mock_contract.contract_address, member_addr);
+    mock_contract.add_member_pub(member_addr);
+
+    mock_contract.assign_proposer_permission_pub(member_addr);
+    mock_contract.assign_voter_permission_pub(member_addr);
+    mock_contract.assign_executor_permission_pub(member_addr);
+
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    mock_contract.set_threshold_pub(1);
+
+    mock_contract.approve_transaction_pub(tx_id, member_addr);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Try to execute as non-member (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, non_member);
+    mock_contract.execute_transaction_pub(tx_id, non_member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not an executor')]
+fn test_non_executor_cannot_execute_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let proposer = member();
+    let voter = new_member();
+
+    start_cheat_caller_address(mock_contract.contract_address, proposer);
+    mock_contract.add_member_pub(proposer);
+    mock_contract.add_member_pub(voter);
+
+    // Assign permissions
+    mock_contract.assign_proposer_permission_pub(proposer);
+    mock_contract.assign_voter_permission_pub(voter);
+    // Note: deliberately NOT assigning executor permission to voter
+
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    mock_contract.set_threshold_pub(1);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, voter);
+    mock_contract.approve_transaction_pub(tx_id, voter);
+
+    // Try to execute as non-executor (should panic)
+    mock_contract.execute_transaction_pub(tx_id, voter);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Transaction is not executable')]
+fn test_cannot_execute_non_approved_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Create Transaction (status will be INITIATED)
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Try to execute non-approved transaction (should panic)
+    mock_contract.execute_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Transaction is out of range')]
+fn test_cannot_execute_nonexistent_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Try to execute non-existent transaction (should panic)
+    let non_existent_tx_id: u256 = 999;
+    mock_contract.execute_transaction_pub(non_existent_tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
 }
