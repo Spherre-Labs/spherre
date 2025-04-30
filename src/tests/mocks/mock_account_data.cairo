@@ -133,7 +133,7 @@ pub mod MockContract {
         ) -> u256 {
             self.token_transaction.propose_token_transaction(token, amount, recipient)
         }
-        
+
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)
         }
