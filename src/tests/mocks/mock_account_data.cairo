@@ -27,6 +27,7 @@ pub trait IMockContract<TContractState> {
 pub mod MockContract {
     // use AccountData::InternalTrait;
     use openzeppelin_security::pausable::PausableComponent;
+    use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
     use spherre::account_data::AccountData;
     use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
@@ -89,10 +90,12 @@ pub mod MockContract {
             self.account_data.create_transaction(tx_type)
         }
         fn approve_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
-            self.account_data.approve_transaction(tx_id, caller)
+            // The caller address should be set in the test before calling this function
+            self.account_data.approve_transaction(tx_id)
         }
         fn reject_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
-            self.account_data.reject_transaction(tx_id, caller)
+            // The caller address should be set in the test before calling this function
+            self.account_data.reject_transaction(tx_id)
         }
         fn update_transaction_status(
             ref self: ContractState, tx_id: u256, status: TransactionStatus
