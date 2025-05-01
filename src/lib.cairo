@@ -20,11 +20,12 @@ pub mod components {
     pub mod permission_control;
 }
 pub mod actions {
-    pub mod change_threshold_tx;
+    pub mod change_threshold_transaction;
+    pub mod member_add_transaction;
     pub mod member_permission_tx;
-    pub mod member_tx;
-    pub mod nft_tx;
-    pub mod token_tx;
+    pub mod member_remove_transaction;
+    pub mod nft_transaction;
+    pub mod token_transaction;
 }
 
 
@@ -33,8 +34,13 @@ pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
     pub mod test_permission_control;
+    pub mod test_spherre;
     pub mod utils;
     pub mod mocks {
         pub mod mock_account_data;
+        pub mod mock_token;
+    }
+    pub mod actions {
+        pub mod test_token_transaction;
     }
 }

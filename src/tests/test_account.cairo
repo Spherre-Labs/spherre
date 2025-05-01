@@ -1,15 +1,26 @@
-use core::traits::TryInto;
-use openzeppelin::upgrades::interface::IUpgradeable;
-use starknet::testing::set_caller_address;
-use starknet::{ClassHash, contract_address_const};
-use crate::account::SpherreAccount;
-use crate::account::SpherreAccount::SpherreAccountImpl;
+use crate::account::{SpherreAccount, SpherreAccount::AccountImpl};
 use crate::types::AccountDetails;
-
+use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address,};
+use starknet::contract_address_const;
+use starknet::{storage::{StorableStoragePointerReadAccess}};
 
 // setting up the contract state
 fn CONTRACT_STATE() -> SpherreAccount::ContractState {
     SpherreAccount::contract_state_for_testing()
+}
+
+fn init_contract() -> SpherreAccount::ContractState {
+    let mut state = SpherreAccount::contract_state_for_testing();
+    SpherreAccount::constructor(
+        ref state,
+        contract_address_const::<2>(), // deployer
+        contract_address_const::<2>(), // owner (same as deployer)
+        "TestAccount", // name
+        "TestDescription", // description
+        array![contract_address_const::<3>()], // members
+        1, // threshold
+    );
+    state
 }
 
 // Validate Deployer Address
@@ -130,34 +141,45 @@ fn test_get_account_details() {
 }
 
 #[test]
-fn test_upgrade_functionality() {
-    // Setup contract state
-    let mut state = SpherreAccount::contract_state_for_testing();
+fn test_deployer_storage() {
+    let deployer = contract_address_const::<2>();
+    let mut state = CONTRACT_STATE();
 
-    let deployer = contract_address_const::<0x123>();
-    let owner = contract_address_const::<0x456>();
-    let new_class_hash: ClassHash = 0x789.try_into().unwrap();
     SpherreAccount::constructor(
         ref state,
         deployer,
-        owner,
-        "Test Upgradeable Account",
-        "An upgradeable multisig account",
-        array![owner],
+        contract_address_const::<10>(),
+        "Test",
+        "Desc",
+        array![contract_address_const::<3>()],
         1,
     );
 
-    let name_before = SpherreAccount::SpherreAccountImpl::get_name(@state);
-    let description_before = SpherreAccount::SpherreAccountImpl::get_description(@state);
+    assert(state.get_deployer() == deployer, 'Deployer not stored correctly');
+}
+#[test]
+#[should_panic(expected: 'Caller is not deployer')]
+fn test_non_deployer_cannot_pause() {
+    let mut state = init_contract();
+    let non_deployer = contract_address_const::<3>();
 
-    set_caller_address(deployer);
+    start_cheat_caller_address(state.contract_address.read(), non_deployer);
+    state.pause(); // Now works with proper imports
+}
 
-    IUpgradeable::<SpherreAccount::ContractState>::upgrade(ref state, new_class_hash);
+#[test]
+#[should_panic(expected: 'Caller is not deployer')]
+fn test_non_deployer_cannot_unpause() {
+    let mut state = init_contract();
+    let deployer = contract_address_const::<2>();
+    let non_deployer = contract_address_const::<3>();
 
-    // Assert that state is preserved after upgrade
-    let name_after = SpherreAccount::SpherreAccountImpl::get_name(@state);
-    let description_after = SpherreAccount::SpherreAccountImpl::get_description(@state);
+    // Pause first as deployer
+    start_cheat_caller_address(state.contract_address.read(), deployer);
+    state.pause();
+    stop_cheat_caller_address(state.contract_address.read());
 
-    assert(name_before == name_after, 'Name should be preserved');
-    assert(description_before == description_after, 'Description should be preserved');
+    // Try unpause as non-deployer
+    start_cheat_caller_address(state.contract_address.read(), non_deployer);
+    state.unpause();
 }

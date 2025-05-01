@@ -1,7 +1,6 @@
 #[starknet::component]
 pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
-    use spherre::errors::Errors;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{PermissionEnum, Permissions}; // Import permission constants
     use starknet::ContractAddress;
@@ -56,6 +55,26 @@ pub mod PermissionControl {
                 .entry((permission, member))
                 .read() // Read the value from storage.
         }
+
+        /// Returns all the permissions the member has.
+        /// @param member The address of the member (ContractAddress).
+        fn get_member_permissions(
+            self: @ComponentState<TContractState>, member: ContractAddress,
+        ) -> Array<PermissionEnum> {
+            let mut permisions: Array<PermissionEnum> = array![];
+
+            if self.has_permission(member, Permissions::PROPOSER) {
+                permisions.append(PermissionEnum::PROPOSER);
+            }
+            if self.has_permission(member, Permissions::EXECUTOR) {
+                permisions.append(PermissionEnum::EXECUTOR);
+            }
+            if self.has_permission(member, Permissions::VOTER) {
+                permisions.append(PermissionEnum::VOTER);
+            }
+
+            return permisions;
+        }
     }
     /// Internal implementation.
     #[generate_trait]
@@ -68,16 +87,20 @@ pub mod PermissionControl {
         fn assign_proposer_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
-            self
-                .member_permission
-                .entry((Permissions::PROPOSER, member))
-                .write(true); // Grant the permission.
-            self
-                .emit(
-                    Event::PermissionGranted(
-                        PermissionGranted { permission: Permissions::PROPOSER, member },
-                    ),
-                ); // Emit the PermissionGranted event.
+
+            let permissioned = self.has_permission(member, Permissions::PROPOSER);
+            if (!permissioned) {
+                self
+                    .member_permission
+                    .entry((Permissions::PROPOSER, member))
+                    .write(true); // Grant the permission.
+                self
+                    .emit(
+                        Event::PermissionGranted(
+                            PermissionGranted { permission: Permissions::PROPOSER, member }
+                        )
+                    ); // Emit the PermissionGranted event.
+            }
         }
 
         /// Assigns the VOTER permission to a member.
@@ -86,16 +109,21 @@ pub mod PermissionControl {
         fn assign_voter_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
-            self
-                .member_permission
-                .entry((Permissions::VOTER, member))
-                .write(true); // Grant the permission.
-            self
-                .emit(
-                    Event::PermissionGranted(
-                        PermissionGranted { permission: Permissions::VOTER, member },
-                    ),
-                ); // Emit the PermissionGranted event.
+
+            let permissioned = self.has_permission(member, Permissions::VOTER);
+            if (!permissioned) {
+                self
+                    .member_permission
+                    .entry((Permissions::VOTER, member))
+                    .write(true); // Grant the permission.
+                self
+                    .emit(
+                        Event::PermissionGranted(
+                            PermissionGranted { permission: Permissions::VOTER, member }
+                        )
+                    ); // Emit the PermissionGranted event.
+            }
+
         }
 
         /// Assigns the EXECUTOR permission to a member.
@@ -104,16 +132,22 @@ pub mod PermissionControl {
         fn assign_executor_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
-            self
-                .member_permission
-                .entry((Permissions::EXECUTOR, member))
-                .write(true); // Grant the permission.
-            self
-                .emit(
-                    Event::PermissionGranted(
-                        PermissionGranted { permission: Permissions::EXECUTOR, member },
-                    ),
-                ); // Emit the PermissionGranted event.
+       ); // Emit the PermissionGranted event.
+
+            let permissioned = self.has_permission(member, Permissions::EXECUTOR);
+            if (!permissioned) {
+                self
+                    .member_permission
+                    .entry((Permissions::EXECUTOR, member))
+                    .write(true); // Grant the permission.
+                self
+                    .emit(
+                        Event::PermissionGranted(
+                            PermissionGranted { permission: Permissions::EXECUTOR, member }
+                        )
+                    ); // Emit the PermissionGranted event.
+            }
+
         }
 
         /// Revokes a specific permission from a member.
@@ -147,7 +181,6 @@ pub mod PermissionControl {
             if (permissioned) {
                 self.revoke_permission(member, Permissions::PROPOSER);
             }
-            Errors::MISSING_ROLE;
         }
 
         /// Revokes `voter permission` from `member`.
@@ -164,7 +197,6 @@ pub mod PermissionControl {
             if (permissioned) {
                 self.revoke_permission(member, Permissions::VOTER);
             }
-            Errors::MISSING_ROLE;
         }
 
         /// Revokes `executor permission` from `member`.
@@ -181,27 +213,26 @@ pub mod PermissionControl {
             if (permissioned) {
                 self.revoke_permission(member, Permissions::EXECUTOR);
             }
-            Errors::MISSING_ROLE;
         }
 
-        /// Returns all the permissions the member has.
+        /// Assign all the permissions to the member.
         /// @param member The address of the member (ContractAddress).
-        fn get_member_permissions(
-            ref self: ComponentState<TContractState>, member: ContractAddress,
-        ) -> Array<PermissionEnum> {
-            let mut permisions: Array<PermissionEnum> = array![];
+        fn assign_all_permissions(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            self.assign_proposer_permission(member);
+            self.assign_voter_permission(member);
+            self.assign_executor_permission(member);
+        }
 
-            if self.has_permission(member, Permissions::PROPOSER) {
-                permisions.append(PermissionEnum::PROPOSER);
-            }
-            if self.has_permission(member, Permissions::EXECUTOR) {
-                permisions.append(PermissionEnum::EXECUTOR);
-            }
-            if self.has_permission(member, Permissions::VOTER) {
-                permisions.append(PermissionEnum::VOTER);
-            }
-
-            return permisions;
+        /// Revokes all the permissions the member has.
+        /// @param member The address of the member (ContractAddress).
+        fn revoke_all_permissions(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            self.revoke_proposer_permission(member);
+            self.revoke_voter_permission(member);
+            self.revoke_executor_permission(member);
         }
     }
 }
