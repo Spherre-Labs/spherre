@@ -780,3 +780,98 @@ fn test_cannot_execute_nonexistent_transaction() {
     mock_contract.execute_transaction_pub(non_existent_tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
+
+#[test]
+fn test_approve_transaction_threshold_reached() {
+    let mock_contract = deploy_mock_contract();
+    let member1 = member();
+    let member2 = new_member();
+    let member3 = another_new_member();
+
+    // Add members
+    start_cheat_caller_address(mock_contract.contract_address, member1);
+    mock_contract.add_member_pub(member1);
+    mock_contract.add_member_pub(member2);
+    mock_contract.add_member_pub(member3);
+
+    // Set threshold to 2
+    mock_contract.set_threshold_pub(2);
+
+    // Assign roles
+    mock_contract.assign_proposer_permission_pub(member1);
+    mock_contract.assign_voter_permission_pub(member1);
+    mock_contract.assign_voter_permission_pub(member2);
+    mock_contract.assign_voter_permission_pub(member3);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // First approval - should not reach threshold yet
+    mock_contract.approve_transaction_pub(tx_id, member1);
+
+    // Check status - should still be INITIATED
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::INITIATED, 'Status should be INITIATED');
+    assert(transaction.approved.len() == 1, 'Should have 1 approval');
+
+    // Second approval - should reach threshold
+    start_cheat_caller_address(mock_contract.contract_address, member2);
+    mock_contract.approve_transaction_pub(tx_id, member2);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Check status - should now be APPROVED
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::APPROVED, 'Status should be APPROVED');
+    assert(transaction.approved.len() == 2, 'Should have 2 approvals');
+}
+
+#[test]
+fn test_reject_transaction_forces_rejection() {
+    let mock_contract = deploy_mock_contract();
+    let member1 = member();
+    let member2 = new_member();
+    let member3 = another_new_member();
+    let member4 = third_member();
+
+    // Add members
+    start_cheat_caller_address(mock_contract.contract_address, member1);
+    mock_contract.add_member_pub(member1);
+    mock_contract.add_member_pub(member2);
+    mock_contract.add_member_pub(member3);
+    mock_contract.add_member_pub(member4);
+
+    // Set threshold to 3 (out of 4 members)
+    mock_contract.set_threshold_pub(3);
+
+    // Assign roles
+    mock_contract.assign_proposer_permission_pub(member1);
+    mock_contract.assign_voter_permission_pub(member1);
+    mock_contract.assign_voter_permission_pub(member2);
+    mock_contract.assign_voter_permission_pub(member3);
+    mock_contract.assign_voter_permission_pub(member4);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // First approval
+    mock_contract.approve_transaction_pub(tx_id, member1);
+
+    // Check status - should still be INITIATED
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::INITIATED, 'Status should be INITIATED');
+    assert(transaction.approved.len() == 1, 'Should have 1 approval');
+
+    // Two members reject the transaction
+    start_cheat_caller_address(mock_contract.contract_address, member2);
+    mock_contract.reject_transaction_pub(tx_id, member2);
+
+    start_cheat_caller_address(mock_contract.contract_address, member3);
+    mock_contract.reject_transaction_pub(tx_id, member3);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Check status - should now be REJECTED because even if the last member approves,
+    // we can't reach the threshold of 3 approvals
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::REJECTED, 'Status should be REJECTED');
+    assert(transaction.rejected.len() == 2, 'Should have 2 rejections');
+}
