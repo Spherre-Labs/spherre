@@ -11,6 +11,7 @@ pub mod MockNFT {
     use core::num::traits::Zero;
     use starknet::ContractAddress;
     use starknet::storage::{Map, StorageMapReadAccess};
+    use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess};
     use super::IMockNFT;
 
     #[storage]
@@ -37,7 +38,7 @@ pub mod MockNFT {
             assert(!recipient.is_zero(), 'Invalid recipient');
             assert(self.owners.read(token_id).is_zero(), 'Token already minted');
 
-            self.owners.write(token_id, recipient);
+            self.owners.entry(token_id).write(recipient);
 
             self.emit(Transfer { from: Zero::zero(), to: recipient, token_id });
 
