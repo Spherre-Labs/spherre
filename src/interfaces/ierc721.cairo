@@ -24,5 +24,5 @@ pub trait IERC721<TContractState> {
     // IERC721Metadata
     fn name(self: @TContractState) -> ByteArray;
     fn symbol(self: @TContractState) -> ByteArray;
-    fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;    
+    fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
 }

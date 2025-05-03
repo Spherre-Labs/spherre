@@ -56,7 +56,7 @@ pub mod NFTTransaction {
         ) -> u256 {
             // Check that nft_contract and recipient are not zero addresses
             assert(nft_contract.is_non_zero(), Errors::ERR_NON_ZERO_ADDRESS_NFT_CONTRACT);
-             // Validate token ID
+            // Validate token ID
             assert(token_id.is_non_zero(), Errors::ERR_INVALID_TOKEN_ID);
             assert(recipient.is_non_zero(), Errors::ERR_NON_ZERO_ADDRESS_RECIPIENT);
             // Check that the recipient address is not the account address
