@@ -8,4 +8,5 @@ pub trait ITokenTransaction<TContractState> {
     ) -> u256;
     fn get_token_transaction(self: @TContractState, id: u256) -> TokenTransactionData;
     fn token_transaction_list(self: @TContractState) -> Array<TokenTransactionData>;
+    fn execute_token_transaction(ref self: TContractState, id: u256);
 }
