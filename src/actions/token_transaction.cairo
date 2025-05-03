@@ -18,7 +18,7 @@ pub mod TokenTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_contract_address};
+    use starknet::{ContractAddress, get_contract_address, get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -29,12 +29,23 @@ pub mod TokenTransaction {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        TokenTransactionCreated: TokenTransactionCreated
+        TokenTransactionCreated: TokenTransactionCreated,
+        TokenTransactionExecuted: TokenTransactionExecuted
     }
 
 
     #[derive(Drop, starknet::Event)]
     struct TokenTransactionCreated {
+        #[key]
+        id: u256,
+        token: ContractAddress,
+        amount: u256,
+        recipient: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct TokenTransactionExecuted {
+        #[key]
         id: u256,
         token: ContractAddress,
         amount: u256,
@@ -108,6 +119,52 @@ pub mod TokenTransaction {
                     array.append(tx);
                 };
             array
+        }
+        fn execute_token_transaction(ref self: ComponentState<TContractState>, id: u256) {
+            self.assert_is_valid_token_transaction(id);
+            let token_transaction = self.get_token_transaction(id);
+            let caller = get_caller_address();
+            // check if balance of the token is greater than amount
+            let account_address = get_contract_address();
+            let erc20_dispatcher = IERC20Dispatcher { contract_address: token_transaction.token };
+            assert(
+                erc20_dispatcher.balance_of(account_address) >= token_transaction.amount,
+                Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
+            );
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+            // execute the transaction in account data. all check is done there
+            account_data_comp.execute_transaction(id, caller);
+            // send the token to the recipient
+            erc20_dispatcher.transfer(token_transaction.recipient, token_transaction.amount);
+            // emit event
+            self
+                .emit(
+                    TokenTransactionExecuted {
+                        id,
+                        token: token_transaction.token,
+                        amount: token_transaction.amount,
+                        recipient: token_transaction.recipient
+                    }
+                );
+        }
+    }
+    #[generate_trait]
+    pub impl PrivateImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl AccountData: account_data::AccountData::HasComponent<TContractState>,
+        impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
+        impl Pausable: PausableComponent::HasComponent<TContractState>,
+    > of PrivateTrait<TContractState> {
+        fn assert_is_valid_token_transaction(self: @ComponentState<TContractState>, id: u256) {
+            let account_data_comp = get_dep_component!(self, AccountData);
+            let transaction: Transaction = account_data_comp.get_transaction(id);
+            // verify the transaction type
+            assert(
+                transaction.tx_type == TransactionType::TOKEN_SEND,
+                Errors::ERR_INVALID_TOKEN_TRANSACTION
+            );
         }
     }
 }
