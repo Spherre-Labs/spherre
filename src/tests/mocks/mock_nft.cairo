@@ -9,9 +9,9 @@ pub trait IMockNFT<TContractState> {
 #[starknet::contract]
 pub mod MockNFT {
     use core::num::traits::Zero;
+    use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess};
     use starknet::ContractAddress;
     use starknet::storage::{Map, StorageMapReadAccess};
-    use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess};
     use super::IMockNFT;
 
     #[storage]

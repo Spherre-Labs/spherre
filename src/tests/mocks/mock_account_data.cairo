@@ -38,8 +38,8 @@ pub mod MockContract {
     // use AccountData::InternalTrait;
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::account_data::AccountData;
-    use spherre::actions::token_transaction::TokenTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
+    use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
