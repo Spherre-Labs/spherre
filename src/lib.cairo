@@ -38,9 +38,11 @@ pub mod tests {
     pub mod utils;
     pub mod mocks {
         pub mod mock_account_data;
+        pub mod mock_nft;
         pub mod mock_token;
     }
     pub mod actions {
+        pub mod test_nft_transaction;
         pub mod test_token_transaction;
     }
 }

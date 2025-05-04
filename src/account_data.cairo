@@ -242,6 +242,80 @@ pub mod AccountData {
                 };
             counter
         }
+
+        fn approve_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
+            let caller = get_caller_address();
+            // check if caller can vote
+            self.assert_caller_can_vote(tx_id, caller);
+
+            // update has_voted map to prevent double voting
+            self.has_voted.entry((tx_id, caller)).write(true);
+
+            // get the transaction
+            let transaction = self.transactions.entry(tx_id);
+            // add the caller to the list of approvers
+            transaction.approved.append().write(caller);
+
+            let approvers_length = transaction.approved.len();
+            let (threshold, _) = self.get_threshold();
+            let timestamp = get_block_timestamp();
+
+            // check if approval threshold has been reached and updated
+            // the transaction status if that is the case.
+            if approvers_length >= threshold {
+                transaction.tx_status.write(TransactionStatus::APPROVED);
+                self.emit(TransactionApproved { transaction_id: tx_id, date_approved: timestamp });
+            }
+            self
+                .emit(
+                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                )
+        }
+
+        fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
+            let caller = get_caller_address();
+            // check if caller can vote
+            self.assert_caller_can_vote(tx_id, caller);
+
+            // update has_voted map to prevent double voting
+            self.has_voted.entry((tx_id, caller)).write(true);
+
+            // get the transaction
+            let transaction = self.transactions.entry(tx_id);
+            // add the caller to the list of approvers
+            transaction.rejected.append().write(caller);
+
+            let rejectors_length = transaction.rejected.len();
+            let approved_length = transaction.approved.len();
+            let no_of_possible_voters = self.get_number_of_voters();
+            let members_that_have_voted = approved_length + rejectors_length;
+            let not_voted_yet = no_of_possible_voters - members_that_have_voted;
+            let max_possible_approved_length = approved_length + not_voted_yet;
+            let (threshold, _) = self.get_threshold();
+            let timestamp = get_block_timestamp();
+            // check if approval threshold has been reached and update
+            // the transaction status if that is the case.
+            // According to issue description, transaction is automatically
+            // rejected in any other case
+
+            if max_possible_approved_length < threshold {
+                transaction.tx_status.write(TransactionStatus::REJECTED);
+                self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
+            }
+
+            self
+                .emit(
+                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                )
+        }
     }
 
     #[generate_trait]
@@ -308,80 +382,7 @@ pub mod AccountData {
             self.tx_count.write(transaction_id);
             transaction_id
         }
-        // Approve a transaction
-        // @params tx_id: The transaction id
-        // @params caller: The approver
-        fn approve_transaction(
-            ref self: ComponentState<TContractState>, tx_id: u256, caller: ContractAddress
-        ) {
-            // PAUSE GUARD
-            let pausable = get_dep_component!(@self, Pausable);
-            pausable.assert_not_paused();
 
-            // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
-
-            // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
-
-            // get the transaction
-            let transaction = self.transactions.entry(tx_id);
-            // add the caller to the list of approvers
-            transaction.approved.append().write(caller);
-
-            let approvers_length = transaction.approved.len();
-            let (threshold, _) = self.get_threshold();
-            let timestamp = get_block_timestamp();
-
-            // check if approval threshold has been reached and updated
-            // the transaction status if that is the case.
-            if approvers_length >= threshold {
-                transaction.tx_status.write(TransactionStatus::APPROVED);
-                self.emit(TransactionApproved { transaction_id: tx_id, date_approved: timestamp });
-            }
-            self
-                .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
-                )
-        }
-
-        fn reject_transaction(
-            ref self: ComponentState<TContractState>, tx_id: u256, caller: ContractAddress
-        ) {
-            // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
-
-            // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
-
-            // get the transaction
-            let transaction = self.transactions.entry(tx_id);
-            // add the caller to the list of approvers
-            transaction.rejected.append().write(caller);
-
-            let rejectors_length = transaction.rejected.len();
-            let approved_length = transaction.approved.len();
-            let no_of_possible_voters = self.get_number_of_voters();
-            let members_that_have_voted = approved_length + rejectors_length;
-            let not_voted_yet = no_of_possible_voters - members_that_have_voted;
-            let max_possible_approved_length = approved_length + not_voted_yet;
-            let (threshold, _) = self.get_threshold();
-            let timestamp = get_block_timestamp();
-            // check if approval threshold has been reached and update
-            // the transaction status if that is the case.
-            // According to issue description, transaction is automatically
-            // rejected in any other case
-
-            if max_possible_approved_length < threshold {
-                transaction.tx_status.write(TransactionStatus::REJECTED);
-                self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
-            }
-
-            self
-                .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
-                )
-        }
 
         fn execute_transaction(
             ref self: ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
@@ -461,4 +462,3 @@ pub mod AccountData {
         }
     }
 }
-

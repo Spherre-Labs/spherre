@@ -1,4 +1,6 @@
-use spherre::types::{TransactionType, Transaction, TransactionStatus, TokenTransactionData};
+use spherre::types::{
+    TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData
+};
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -17,9 +19,18 @@ pub trait IMockContract<TContractState> {
     fn propose_token_transaction_pub(
         ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress
     ) -> u256;
+    fn execute_token_transaction_pub(ref self: TContractState, id: u256);
     fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
     fn execute_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
     fn assign_executor_permission_pub(ref self: TContractState, member: ContractAddress);
+    fn propose_nft_transaction_pub(
+        ref self: TContractState,
+        nft_contract: ContractAddress,
+        token_id: u256,
+        recipient: ContractAddress
+    ) -> u256;
+    fn get_nft_transaction_pub(ref self: TContractState, id: u256) -> NFTTransactionData;
+    fn nft_transaction_list_pub(ref self: TContractState) -> Array<NFTTransactionData>;
 }
 
 
@@ -37,10 +48,13 @@ pub mod MockContract {
     // use AccountData::InternalTrait;
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::account_data::AccountData;
+    use spherre::actions::nft_transaction::NFTTransaction;
     use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
-    use spherre::types::{Transaction, TransactionType, TransactionStatus, TokenTransactionData};
+    use spherre::types::{
+        Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData
+    };
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
@@ -49,6 +63,7 @@ pub mod MockContract {
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
+    component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -67,7 +82,6 @@ pub mod MockContract {
     #[abi(embed_v0)]
     pub impl TokenTransactionImpl =
         TokenTransaction::TokenTransaction<ContractState>;
-        
     #[storage]
     pub struct Storage {
         deployer: ContractAddress,
@@ -80,6 +94,8 @@ pub mod MockContract {
         pub pausable: PausableComponent::Storage,
         #[substorage(v0)]
         pub token_transaction: TokenTransaction::Storage,
+        #[substorage(v0)]
+        pub nft_transaction: NFTTransaction::Storage,
     }
 
     #[event]
@@ -131,6 +147,8 @@ pub mod MockContract {
         PausableEvent: PausableComponent::Event,
         #[flat]
         TokenTransactionEvent: TokenTransaction::Event,
+        #[flat]
+        NFTTransactionEvent: NFTTransaction::Event,
     }
 
     #[abi(embed_v0)]
@@ -139,10 +157,12 @@ pub mod MockContract {
             self.account_data.create_transaction(tx_type)
         }
         fn approve_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
-            self.account_data.approve_transaction(tx_id, caller)
+            // The caller address should be set in the test before calling this function
+            self.account_data.approve_transaction(tx_id)
         }
         fn reject_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
-            self.account_data.reject_transaction(tx_id, caller)
+            // The caller address should be set in the test before calling this function
+            self.account_data.reject_transaction(tx_id)
         }
         fn update_transaction_status(
             ref self: ContractState, tx_id: u256, status: TransactionStatus
@@ -183,6 +203,9 @@ pub mod MockContract {
         ) -> u256 {
             self.token_transaction.propose_token_transaction(token, amount, recipient)
         }
+        fn execute_token_transaction_pub(ref self: ContractState, id: u256) {
+            self.token_transaction.execute_token_transaction(id)
+        }
 
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)
@@ -190,6 +213,23 @@ pub mod MockContract {
 
         fn assign_executor_permission_pub(ref self: ContractState, member: ContractAddress) {
             self.permission_control.assign_executor_permission(member);
+        }
+
+        fn propose_nft_transaction_pub(
+            ref self: ContractState,
+            nft_contract: ContractAddress,
+            token_id: u256,
+            recipient: ContractAddress
+        ) -> u256 {
+            self.nft_transaction.propose_nft_transaction(nft_contract, token_id, recipient)
+        }
+        fn get_nft_transaction_pub(ref self: ContractState, id: u256) -> NFTTransactionData {
+            self.nft_transaction.get_nft_transaction(id)
+        }
+
+        fn nft_transaction_list_pub(ref self: ContractState) -> Array<NFTTransactionData> {
+            let transaction_list = self.nft_transaction.nft_transaction_list();
+            transaction_list
         }
     }
 

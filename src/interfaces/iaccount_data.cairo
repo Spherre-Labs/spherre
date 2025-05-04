@@ -14,4 +14,6 @@ pub trait IAccountData<TContractState> {
     fn get_number_of_voters(self: @TContractState) -> u64;
     fn get_number_of_proposers(self: @TContractState) -> u64;
     fn get_number_of_executors(self: @TContractState) -> u64;
+    fn approve_transaction(ref self: TContractState, tx_id: u256);
+    fn reject_transaction(ref self: TContractState, tx_id: u256);
 }
