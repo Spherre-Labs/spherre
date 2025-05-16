@@ -98,3 +98,8 @@ pub struct MemberAddData {
     pub member: ContractAddress,
     pub permissions: Array<PermissionEnum>
 }
+
+pub mod SpherreAdminRoles {
+    pub const SUPERADMIN: felt252 = selector!("SUPERADMIN");
+    pub const STAFF: felt252 = selector!("STAFF");
+}

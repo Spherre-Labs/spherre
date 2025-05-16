@@ -8,16 +8,11 @@ pub mod Spherre {
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
+    use spherre::types::SpherreAdminRoles;
     use starknet::{ContractAddress, get_caller_address};
 
-    // Roles
-    const PROPOSER_ROLE: felt252 = 'PR';
-    const EXECUTOR_ROLE: felt252 = 'ER';
-    const VOTER_ROLE: felt252 = 'VR';
 
     // Interface IDs
-    const IACCESS_CONTROL_ID: felt252 =
-        0x23700be02858dbe2ac4dc9c9f66d0b6b0ed81ec7f970ca6844500a56ff61751;
 
     #[storage]
     struct Storage {
@@ -83,12 +78,10 @@ pub mod Spherre {
         // Note: PausableComponent doesn't require an initializer
         // Note: ReentrancyGuardComponent doesn't require an initializer
 
-        // Register interfaces with SRC5
-        self.src5.register_interface(IACCESS_CONTROL_ID);
-
         // Initialize AccessControl and grant DEFAULT_ADMIN_ROLE to owner
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
+        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner);
         // Register interfaces with SRC5
     // Note: SRC5 doesn't have an initializer method
     // Instead, register the interfaces you support
@@ -97,90 +90,52 @@ pub mod Spherre {
     // Implement the ISpherre interface
     #[abi(embed_v0)]
     pub impl SpherreImpl of ISpherre<ContractState> {
-        fn owner(self: @ContractState) -> ContractAddress {
-            self.ownable.owner()
+        fn grant_superadmin_role(ref self: ContractState, account: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            assert_only_owner_custom(@self);
-            self.ownable.transfer_ownership(new_owner);
+        fn grant_staff_role(ref self: ContractState, account: ContractAddress) {
+            self.assert_only_superadmin();
+            self.access_control._grant_role(SpherreAdminRoles::STAFF, account);
         }
-
-        fn renounce_ownership(ref self: ContractState) {
-            assert_only_owner_custom(@self);
-            self.ownable.renounce_ownership();
+        fn revoke_superadmin_role(ref self: ContractState, account: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-
-        // Pausable implementation
-        fn is_paused(self: @ContractState) -> bool {
-            self.pausable.is_paused()
+        fn revoke_staff_role(ref self: ContractState, account: ContractAddress) {
+            self.assert_only_superadmin();
+            self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-
+        fn has_staff_role(self: @ContractState, account: ContractAddress) -> bool {
+            self.access_control.has_role(SpherreAdminRoles::STAFF, account)
+        }
+        fn has_superadmin_role(self: @ContractState, account: ContractAddress) -> bool {
+            self.access_control.has_role(SpherreAdminRoles::SUPERADMIN, account)
+        }
         fn pause(ref self: ContractState) {
-            assert_only_owner_custom(@self);
+            self.assert_only_superadmin();
             self.pausable.pause();
         }
 
         fn unpause(ref self: ContractState) {
-            assert_only_owner_custom(@self);
+            self.assert_only_superadmin();
             self.pausable.unpause();
-        }
-
-        // ReentrancyGuard implementation
-        fn reentrancy_guard_start(ref self: ContractState) {
-            self.reentrancy_guard.start();
-        }
-
-        fn reentrancy_guard_end(ref self: ContractState) {
-            self.reentrancy_guard.end();
-        }
-
-        // AccessControl implementation
-        fn has_role(self: @ContractState, role: felt252, account: ContractAddress) -> bool {
-            self.access_control.has_role(role, account)
-        }
-
-        fn get_role_admin(self: @ContractState, role: felt252) -> felt252 {
-            self.access_control.get_role_admin(role)
-        }
-
-        fn grant_role(ref self: ContractState, role: felt252, account: ContractAddress) {
-            // Use the custom owner check to ensure consistent error messages
-            assert_only_owner_custom(@self);
-            self.access_control.grant_role(role, account);
-        }
-
-        fn revoke_role(ref self: ContractState, role: felt252, account: ContractAddress) {
-            // Use the custom owner check to ensure consistent error messages
-            assert_only_owner_custom(@self);
-            self.access_control.revoke_role(role, account);
-        }
-
-        fn renounce_role(ref self: ContractState, role: felt252, account: ContractAddress) {
-            // Make sure the caller is the account that is renouncing the role
-            let caller = get_caller_address();
-            assert(caller == account, Errors::INVALID_CALLER);
-            self.access_control.renounce_role(role, account);
-        }
-
-        // SRC5 implementation
-        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
-            self.src5.supports_interface(interface_id)
         }
     }
 
-    // Custom helper methods for the contract
-    fn assert_only_owner_custom(self: @ContractState) {
-        let caller = get_caller_address();
-        if caller != self.ownable.owner() {
-            // Panic with the full expected error tuple that matches OpenZeppelin v0.18.0 format
-            let error_data = array![
-                Errors::ERR_NOT_OWNER_SELECTOR,
-                Errors::ERR_NOT_OWNER_PADDING,
-                Errors::ERR_NOT_OWNER_MESSAGE,
-                Errors::ERR_NOT_OWNER_MARKER
-            ];
-            panic(error_data);
+
+    #[generate_trait]
+    pub impl InternalImpl of InternalTrait {
+        fn assert_only_staff(self: @ContractState) {
+            let caller = get_caller_address();
+            assert(
+                self.has_staff_role(caller) || self.has_superadmin_role(caller),
+                Errors::ERR_NOT_A_STAFF
+            )
+        }
+        fn assert_only_superadmin(self: @ContractState) {
+            let caller = get_caller_address();
+            assert(self.has_superadmin_role(caller), Errors::ERR_NOT_A_SUPERADMIN)
         }
     }
 }
