@@ -14,8 +14,6 @@ pub mod Spherre {
 
     // Interface IDs
 
-
-
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -80,7 +78,6 @@ pub mod Spherre {
         // Note: PausableComponent doesn't require an initializer
         // Note: ReentrancyGuardComponent doesn't require an initializer
 
-
         // Initialize AccessControl and grant DEFAULT_ADMIN_ROLE to owner
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
@@ -93,26 +90,26 @@ pub mod Spherre {
     // Implement the ISpherre interface
     #[abi(embed_v0)]
     pub impl SpherreImpl of ISpherre<ContractState> {
-        fn grant_superadmin_role(ref self: ContractState, account: ContractAddress){
+        fn grant_superadmin_role(ref self: ContractState, account: ContractAddress) {
             self.ownable.assert_only_owner();
             self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-        fn grant_staff_role(ref self: ContractState, account: ContractAddress){
+        fn grant_staff_role(ref self: ContractState, account: ContractAddress) {
             self.assert_only_superadmin();
             self.access_control._grant_role(SpherreAdminRoles::STAFF, account);
         }
-        fn revoke_superadmin_role(ref self: ContractState, account: ContractAddress){
+        fn revoke_superadmin_role(ref self: ContractState, account: ContractAddress) {
             self.ownable.assert_only_owner();
             self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-        fn revoke_staff_role(ref self: ContractState, account: ContractAddress){
+        fn revoke_staff_role(ref self: ContractState, account: ContractAddress) {
             self.assert_only_superadmin();
             self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
         }
-        fn has_staff_role(self: @ContractState, account: ContractAddress) -> bool{
+        fn has_staff_role(self: @ContractState, account: ContractAddress) -> bool {
             self.access_control.has_role(SpherreAdminRoles::STAFF, account)
         }
-        fn has_superadmin_role(self: @ContractState, account: ContractAddress) -> bool{
+        fn has_superadmin_role(self: @ContractState, account: ContractAddress) -> bool {
             self.access_control.has_role(SpherreAdminRoles::SUPERADMIN, account)
         }
         fn pause(ref self: ContractState) {
@@ -126,23 +123,19 @@ pub mod Spherre {
         }
     }
 
-    
 
     #[generate_trait]
-    pub impl InternalImpl of InternalTrait{
-        fn assert_only_staff(self: @ContractState){
+    pub impl InternalImpl of InternalTrait {
+        fn assert_only_staff(self: @ContractState) {
             let caller = get_caller_address();
             assert(
                 self.has_staff_role(caller) || self.has_superadmin_role(caller),
                 Errors::ERR_NOT_A_STAFF
             )
         }
-        fn assert_only_superadmin(self: @ContractState){
+        fn assert_only_superadmin(self: @ContractState) {
             let caller = get_caller_address();
-            assert(
-                self.has_superadmin_role(caller),
-                Errors::ERR_NOT_A_SUPERADMIN
-            )
+            assert(self.has_superadmin_role(caller), Errors::ERR_NOT_A_SUPERADMIN)
         }
-    }  
+    }
 }
