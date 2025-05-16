@@ -23,12 +23,8 @@ pub mod Errors {
     pub const ERR_INVALID_NFT_TRANSACTION: felt252 = 'Invalid NFT transaction';
     pub const ERR_INVALID_TOKEN_ID: felt252 = 'Token ID is invalid';
 
-    // Constants for the Ownable error format
-    pub const ERR_NOT_OWNER_SELECTOR: felt252 =
-        0x46a6158a16a947e5916b2a2ca68501a45e93d7110e81aa2d6438b1c57c879a3;
-    pub const ERR_NOT_OWNER_PADDING: felt252 = 0x0;
-    pub const ERR_NOT_OWNER_MESSAGE: felt252 = 0x43616c6c6572206973206e6f7420746865206f776e6572;
-    pub const ERR_NOT_OWNER_MARKER: felt252 = 0x17;
+    pub const ERR_NOT_A_STAFF: felt252 = 'Caller is not a staff';
+    pub const ERR_NOT_A_SUPERADMIN: felt252 = 'Caller is not a superadmin';
 
     // Constants for token transaction
     pub const ERR_NON_ZERO_ADDRESS_TOKEN: felt252 = 'Token address is zero';
