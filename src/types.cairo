@@ -30,6 +30,25 @@ pub enum PermissionEnum {
     EXECUTOR,
 }
 
+pub trait PermissionTrait {
+    fn to_mask(self: PermissionEnum) -> u8;
+    fn has_permission_from_mask(self: PermissionEnum, mask: u8) -> bool;
+}
+
+pub impl PermissionEmumImpl of PermissionTrait {
+    fn to_mask(self: PermissionEnum) -> u8 {
+        match self {
+            PermissionEnum::PROPOSER => 1_u8, // 1 << 0
+            PermissionEnum::VOTER => 2_u8, // 1 << 1
+            PermissionEnum::EXECUTOR => 4_u8, // 1 << 2
+        }
+    }
+    fn has_permission_from_mask(self: PermissionEnum, mask: u8) -> bool {
+        let permission_bit = self.to_mask();
+        (mask & permission_bit) != 0_u8
+    }
+}
+
 pub mod Permissions {
     pub const PROPOSER: felt252 = selector!("PROPOSER");
     pub const VOTER: felt252 = selector!("VOTER");

@@ -75,16 +75,11 @@ pub mod Spherre {
     pub fn constructor(ref self: ContractState, owner: ContractAddress) {
         // Initialize Ownable
         self.ownable.initializer(owner);
-        // Note: PausableComponent doesn't require an initializer
-        // Note: ReentrancyGuardComponent doesn't require an initializer
 
         // Initialize AccessControl and grant DEFAULT_ADMIN_ROLE to owner
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
-        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner);
-        // Register interfaces with SRC5
-    // Note: SRC5 doesn't have an initializer method
-    // Instead, register the interfaces you support
+        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner)
     }
 
     // Implement the ISpherre interface
