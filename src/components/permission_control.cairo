@@ -2,7 +2,9 @@
 pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
     use spherre::interfaces::ipermission_control::IPermissionControl;
-    use spherre::types::{Permissions, PermissionEnum}; // Import permission constants
+    use spherre::types::{
+        Permissions, PermissionEnum, PermissionTrait
+    }; // Import permission constants
     use starknet::ContractAddress;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
@@ -61,19 +63,58 @@ pub mod PermissionControl {
         fn get_member_permissions(
             self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> Array<PermissionEnum> {
-            let mut permisions: Array<PermissionEnum> = array![];
+            let mut permissions: Array<PermissionEnum> = array![];
 
             if self.has_permission(member, Permissions::PROPOSER) {
-                permisions.append(PermissionEnum::PROPOSER);
+                permissions.append(PermissionEnum::PROPOSER);
             }
             if self.has_permission(member, Permissions::EXECUTOR) {
-                permisions.append(PermissionEnum::EXECUTOR);
+                permissions.append(PermissionEnum::EXECUTOR);
             }
             if self.has_permission(member, Permissions::VOTER) {
-                permisions.append(PermissionEnum::VOTER);
+                permissions.append(PermissionEnum::VOTER);
             }
 
-            return permisions;
+            return permissions;
+        }
+        /// Convert the array of permissions to an integer mask value
+        /// @param Array<PermissionEnum> The array of permissions
+        /// @returns u8 The mask value
+        fn permissions_to_mask(
+            self: @ComponentState<TContractState>, permissions: Array<PermissionEnum>
+        ) -> u8 {
+            let mut mask: u8 = 0;
+            for index in 0..permissions.len() {
+                mask = mask | (*permissions.at(index)).to_mask();
+            };
+            mask
+        }
+        /// Convert the integer mask value to an array of permissions.
+        /// @param The mask value
+        /// @returns Array<PermissionEnum> The array of permissions
+        ///
+        fn permissions_from_mask(
+            self: @ComponentState<TContractState>, mask: u8
+        ) -> Array<PermissionEnum> {
+            let mut permissions_array: Array<PermissionEnum> = array![];
+            if PermissionEnum::PROPOSER.has_permission_from_mask(mask) {
+                permissions_array.append(PermissionEnum::PROPOSER);
+            }
+            if PermissionEnum::VOTER.has_permission_from_mask(mask) {
+                permissions_array.append(PermissionEnum::VOTER);
+            }
+            if PermissionEnum::EXECUTOR.has_permission_from_mask(mask) {
+                permissions_array.append(PermissionEnum::EXECUTOR);
+            }
+            permissions_array
+        }
+        /// Check if a mask value is valid
+        /// @param The mask value
+        /// @returns bool true if valid, false otherwise
+        fn is_valid_mask(self: @ComponentState<TContractState>, mask: u8) -> bool {
+            (PermissionEnum::PROPOSER.has_permission_from_mask(mask)
+                || PermissionEnum::VOTER.has_permission_from_mask(mask)
+                || PermissionEnum::EXECUTOR.has_permission_from_mask(mask))
         }
     }
     /// Internal implementation.

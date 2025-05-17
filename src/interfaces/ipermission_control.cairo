@@ -12,4 +12,14 @@ pub trait IPermissionControl<TContractState> {
     fn get_member_permissions(
         self: @TContractState, member: ContractAddress,
     ) -> Array<PermissionEnum>;
+    /// Returns a mask representing the permissions.
+    /// @param The Array of permissions.
+    fn permissions_to_mask(self: @TContractState, permissions: Array<PermissionEnum>) -> u8;
+    /// Returns the permissions from a mask.
+    /// @param The mask.
+    fn permissions_from_mask(self: @TContractState, mask: u8) -> Array<PermissionEnum>;
+    /// Check whether the mask is a valid permission mask
+    /// Returns true if valid
+    /// @param The mask
+    fn is_valid_mask(self: @TContractState, mask: u8) -> bool;
 }

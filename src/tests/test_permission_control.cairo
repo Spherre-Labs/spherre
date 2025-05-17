@@ -1,10 +1,12 @@
 use MockPermissionContract::InternalTrait;
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
 use spherre::components::permission_control::PermissionControl;
-use spherre::interfaces::ipermission_control::{IPermissionControl, IPermissionControlDispatcher};
+use spherre::interfaces::ipermission_control::{
+    IPermissionControl, IPermissionControlDispatcher, IPermissionControlDispatcherTrait
+};
 
 use spherre::tests::utils::{MEMBER_ONE};
-use spherre::types::{Permissions, PermissionEnum};
+use spherre::types::{Permissions, PermissionEnum, PermissionTrait};
 #[starknet::contract]
 pub mod MockPermissionContract {
     use spherre::components::permission_control::PermissionControl;
@@ -255,4 +257,57 @@ fn test_revoke_all_permissions() {
     assert(!state.has_permission(member, Permissions::PROPOSER), 'proposer permission found');
     assert(!state.has_permission(member, Permissions::EXECUTOR), 'executor permission found');
     assert(!state.has_permission(member, Permissions::VOTER), 'voter permission found');
+}
+
+
+#[test]
+fn test_permission_to_mask() {
+    let contract_dispatcher = deploy_contract();
+    // this value represents having the PROPOSER and VOTER PERMISSION
+    let mask_for_proposer_voter: u8 = 3;
+    let permissions: Array<PermissionEnum> = array![
+        PermissionEnum::PROPOSER, PermissionEnum::VOTER
+    ];
+
+    let mask = contract_dispatcher.permissions_to_mask(permissions);
+    assert(mask == mask_for_proposer_voter, 'Invalid mask value');
+
+    let permissions: Array<PermissionEnum> = array![PermissionEnum::PROPOSER];
+    let mask = contract_dispatcher.permissions_to_mask(permissions);
+    assert(mask != mask_for_proposer_voter, 'Mask should be different');
+    assert(mask == PermissionEnum::PROPOSER.to_mask(), 'Mask should be different');
+}
+
+#[test]
+fn test_permission_from_mask() {
+    let contract_dispatcher = deploy_contract();
+    // this value represents having the PROPOSER, VOTER and EXECUTOR PERMISSION
+    let mask_for_proposer_voter_executor: u8 = 7;
+
+    let permissions: Array<PermissionEnum> = contract_dispatcher
+        .permissions_from_mask(mask_for_proposer_voter_executor);
+    assert(permissions.len() == 3, 'Invalid Permissions Length');
+    assert(*permissions.at(0) == PermissionEnum::PROPOSER, 'wrong permission at index 0');
+    assert(*permissions.at(1) == PermissionEnum::VOTER, 'wrong permission at index 1');
+    assert(*permissions.at(2) == PermissionEnum::EXECUTOR, 'wrong permission at index 2');
+
+    // this value represents having the PROPOSER and EXECUTOR PERMISSION
+    let mask_for_proposer_executor: u8 = 5;
+
+    let permissions: Array<PermissionEnum> = contract_dispatcher
+        .permissions_from_mask(mask_for_proposer_executor);
+    assert(permissions.len() == 2, 'Invalid Permissions Length');
+    assert(*permissions.at(0) == PermissionEnum::PROPOSER, 'wrong permission at index 0');
+    assert(*permissions.at(1) == PermissionEnum::EXECUTOR, 'wrong permission at index 1');
+}
+
+#[test]
+fn test_is_valid_mask() {
+    // this value represents having the VOTER and EXECUTOR PERMISSION
+    let valid_mask: u8 = 6;
+    let invalid_mask: u8 = 8;
+
+    let contract_dispatcher = deploy_contract();
+    assert(contract_dispatcher.is_valid_mask(valid_mask), 'Mask should be valid');
+    assert(!contract_dispatcher.is_valid_mask(invalid_mask), 'Mask should be invalid');
 }
