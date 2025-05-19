@@ -278,8 +278,12 @@ fn test_get_nft_transaction_fail_if_non_existent() {
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
- #[test]
+    #[test]
     fn test_execute_with_sufficient_approvals() {
+
+    call!(account, tx_contract.add_member(account.address())).assert_success();
+    call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let nft_contract = deploy!(env, "MockERC721" {});
@@ -305,6 +309,10 @@ fn test_get_nft_transaction_fail_if_non_existent() {
 
     #[test]
     fn test_execute_fails_without_approvals() {
+
+        call!(account, tx_contract.add_member(account.address())).assert_success();
+        call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let nft_contract = deploy!(env, "MockERC721" {});
@@ -326,6 +334,10 @@ fn test_get_nft_transaction_fail_if_non_existent() {
 
     #[test]
     fn test_execute_twice_should_fail() {
+
+        call!(account, tx_contract.add_member(account.address())).assert_success();
+        call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let nft_contract = deploy!(env, "MockERC721" {});
@@ -350,6 +362,11 @@ fn test_get_nft_transaction_fail_if_non_existent() {
 
     #[test]
     fn test_execute_canceled_transaction_should_fail() {
+
+        call!(account, tx_contract.add_member(account.address())).assert_success();
+        call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let nft_contract = deploy!(env, "MockERC721" {});
@@ -373,6 +390,10 @@ fn test_get_nft_transaction_fail_if_non_existent() {
 
     #[test]
     fn test_non_executor_cannot_execute() {
+
+        call!(account, tx_contract.add_member(account.address())).assert_success();
+        call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let attacker = env.get_account(2);
@@ -397,6 +418,10 @@ fn test_get_nft_transaction_fail_if_non_existent() {
 
     #[test]
     fn test_event_emitted_on_execution() {
+
+        call!(account, tx_contract.add_member(account.address())).assert_success();
+        call!(account, tx_contract.assign_proposer_permission(account.address())).assert_success();
+
         let env = StarknetEnv::new();
         let account = env.get_account(0);
         let nft_contract = deploy!(env, "MockERC721" {});

@@ -29,8 +29,8 @@ pub mod NFTTransaction {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        NFTTransactionCreated: NFTTransactionCreated
-        NFTTransactionExecuted: NFTTransactionExecuted
+        NFTTransactionCreated: NFTTransactionCreated,
+        NFTTransactionExecuted: NFTTransactionExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -143,8 +143,8 @@ pub mod NFTTransaction {
     self.assert_is_valid_nft_transaction(id);
 
     // Prevent duplicate execution
-    let already_executed = self.executed_nft_transactions.entry(id).read_or_default();
-    assert(already_executed == false, Errors::ERR_ALREADY_EXECUTED);
+    let already_executed = self.executed_nft_transactions.entry(id).read();
+    assert(!already_executed, Errors::ERR_ALREADY_EXECUTED);
 
     let nft_transaction = self.get_nft_transaction(id);
     let caller = get_caller_address();
