@@ -1,6 +1,6 @@
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    DeclareResultTrait, StarknetEnv, Uint256Assertions, deploy, start_prank, stop_prank, cheatcodes, ContractClass
 };
 use spherre::interfaces::ierc721::{IERC721Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
@@ -278,3 +278,145 @@ fn test_get_nft_transaction_fail_if_non_existent() {
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
+ #[test]
+    fn test_execute_with_sufficient_approvals() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 1_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+
+        let recipient = env.get_account(1).address();
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        call!(account, tx_contract.approve_transaction(tx_id)).assert_success();
+
+        call!(account, tx_contract.execute_nft_transaction(tx_id)).assert_success();
+
+        let owner = call!(account, nft_contract.owner_of(token_id)).unwrap();
+        assert_eq!(owner, recipient);
+    }
+
+    #[test]
+    fn test_execute_fails_without_approvals() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 2_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+
+        let recipient = env.get_account(1).address();
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        let result = call!(account, tx_contract.execute_nft_transaction(tx_id));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_twice_should_fail() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 3_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+        let recipient = env.get_account(1).address();
+
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        call!(account, tx_contract.approve_transaction(tx_id)).assert_success();
+        call!(account, tx_contract.execute_nft_transaction(tx_id)).assert_success();
+
+        let result = call!(account, tx_contract.execute_nft_transaction(tx_id));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_canceled_transaction_should_fail() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 4_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+        let recipient = env.get_account(1).address();
+
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        call!(account, tx_contract.cancel_transaction(tx_id)).assert_success();
+
+        let result = call!(account, tx_contract.execute_nft_transaction(tx_id));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_non_executor_cannot_execute() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let attacker = env.get_account(2);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 5_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+        let recipient = env.get_account(1).address();
+
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        call!(account, tx_contract.approve_transaction(tx_id)).assert_success();
+
+        let result = call!(attacker, tx_contract.execute_nft_transaction(tx_id));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_event_emitted_on_execution() {
+        let env = StarknetEnv::new();
+        let account = env.get_account(0);
+        let nft_contract = deploy!(env, "MockERC721" {});
+        let tx_contract = deploy!(env, "NFTTransaction" {});
+
+        let token_id = 6_u256;
+        call!(account, nft_contract.mint(account.address(), token_id)).assert_success();
+        let recipient = env.get_account(1).address();
+
+        let tx_id = call!(account, tx_contract.propose_nft_transaction(
+            nft_contract.contract_address(),
+            token_id,
+            recipient
+        )).unwrap();
+
+        call!(account, tx_contract.approve_transaction(tx_id)).assert_success();
+        let exec_result = call!(account, tx_contract.execute_nft_transaction(tx_id));
+        exec_result.assert_success();
+
+        let logs = env.read_events();
+        assert!(logs.contains_event("NFTTransactionExecuted"));
+    }
+}

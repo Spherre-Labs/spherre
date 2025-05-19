@@ -11,4 +11,5 @@ pub trait INFTTransaction<TContractState> {
     ) -> u256;
     fn get_nft_transaction(self: @TContractState, id: u256) -> NFTTransactionData;
     fn nft_transaction_list(self: @TContractState) -> Array<NFTTransactionData>;
+    fn execute_nft_transaction(ref self: TContractState, id: u256);
 }

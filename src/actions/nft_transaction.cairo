@@ -22,13 +22,15 @@ pub mod NFTTransaction {
     #[storage]
     pub struct Storage {
         nft_transactions: Map<u256, NFTTransactionData>,
-        nft_transaction_ids: Vec<u256>
+        nft_transaction_ids: Vec<u256>,
+        executed_nft_transactions: Map<u256, bool>
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         NFTTransactionCreated: NFTTransactionCreated
+        NFTTransactionExecuted: NFTTransactionExecuted
     }
 
     #[derive(Drop, starknet::Event)]
@@ -38,6 +40,16 @@ pub mod NFTTransaction {
         token_id: u256,
         recipient: ContractAddress
     }
+
+    #[derive(Drop, starknet::Event)]
+    struct NFTTransactionExecuted {
+    #[key]
+    id: u256,
+    nft_contract: ContractAddress,
+    token_id: u256,
+    recipient: ContractAddress
+    }
+
 
     #[embeddable_as(NFTTransaction)]
     pub impl NFTTransactionImpl<
@@ -105,5 +117,64 @@ pub mod NFTTransaction {
                 };
             array
         }
+
+    #[generate_trait]
+    pub impl PrivateImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl AccountData: account_data::AccountData::HasComponent<TContractState>,
+        impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
+        impl Pausable: PausableComponent::HasComponent<TContractState>,
+    > of PrivateTrait<TContractState> {
+        fn assert_is_valid_nft_transaction(self: @ComponentState<TContractState>, id: u256) {
+            let account_data_comp = get_dep_component!(self, AccountData);
+            let transaction: Transaction = account_data_comp.get_transaction(id);
+            assert(
+                transaction.tx_type == TransactionType::NFT_SEND,
+                Errors::ERR_INVALID_NFT_TRANSACTION
+            );
+        }
+    }
+
+    fn execute_nft_transaction(
+        ref self: ComponentState<TContractState>, id: u256
+        ) {
+    self.assert_is_valid_nft_transaction(id);
+
+    // Prevent duplicate execution
+    let already_executed = self.executed_nft_transactions.entry(id).read_or_default();
+    assert(already_executed == false, Errors::ERR_ALREADY_EXECUTED);
+
+    let nft_transaction = self.get_nft_transaction(id);
+    let caller = get_caller_address();
+    let account_address = get_contract_address();
+
+    // Check NFT ownership
+    let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_transaction.nft_contract };
+    assert(
+        erc721_dispatcher.owner_of(nft_transaction.token_id) == account_address,
+        Errors::ERR_NOT_OWNER
+    );
+
+    // Execute transaction in account data (validates multisig threshold etc.)
+    let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+    account_data_comp.execute_transaction(id, caller);
+
+    // Transfer NFT to recipient
+    erc721_dispatcher.transfer_from(account_address, nft_transaction.recipient, nft_transaction.token_id);
+
+    // Mark as executed
+    self.executed_nft_transactions.entry(id).write(true);
+
+    // Emit execution event
+    self.emit(NFTTransactionExecuted {
+        id,
+        nft_contract: nft_transaction.nft_contract,
+        token_id: nft_transaction.token_id,
+        recipient: nft_transaction.recipient
+    });
+    }
+
     }
 }
