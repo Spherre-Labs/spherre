@@ -1,6 +1,22 @@
-// use spherre::errors::ThresholdError;
+use spherre::types::AccountDetails;
+use starknet::{ContractAddress};
+
+#[starknet::interface]
+pub trait IAccountV2<TState> {
+    // Existing functions from V1
+    fn get_name(self: @TState) -> ByteArray;
+    fn get_description(self: @TState) -> ByteArray;
+    fn get_account_details(self: @TState) -> AccountDetails;
+    fn get_deployer(self: @TState) -> ContractAddress;
+    fn pause(ref self: TState);
+    fn unpause(ref self: TState);
+
+    // New V2 functions
+    fn get_version(self: @TState) -> u8;
+}
+
 #[starknet::contract]
-pub mod SpherreAccount {
+pub mod SpherreAccountV2 {
     use AccountData::InternalTrait;
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_security::pausable::PausableComponent;
@@ -15,12 +31,13 @@ pub mod SpherreAccount {
             member_remove_transaction::MemberRemoveTransaction, nft_transaction::NFTTransaction,
             token_transaction::TokenTransaction,
         },
-        {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
+        {errors::Errors}, types::AccountDetails,
     };
     use starknet::{
         {ContractAddress, get_caller_address, contract_address_const, ClassHash},
         {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
     };
+    use super::IAccountV2;
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
@@ -162,8 +179,10 @@ pub mod SpherreAccount {
         // Initialize Ownable component
         self.ownable.initializer(deployer);
     }
+
     #[abi(embed_v0)]
-    pub impl AccountImpl of IAccount<ContractState> {
+    impl AccountImpl of IAccountV2<ContractState> {
+        // Existing V1 functions
         fn get_name(self: @ContractState) -> ByteArray {
             self.name.read()
         }
@@ -192,8 +211,14 @@ pub mod SpherreAccount {
             assert(caller == deployer, Errors::ERR_NOT_DEPLOYER);
             self.pausable.unpause();
         }
+
+        // New V2 functions
+        fn get_version(self: @ContractState) -> u8 {
+            2 // Return the version number of the contract
+        }
     }
 
+    // Upgrade function
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
