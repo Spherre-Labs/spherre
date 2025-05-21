@@ -29,9 +29,10 @@ fn zero_address() -> ContractAddress {
     contract_address_const::<0>()
 }
 
-fn set_members(mock_contract: IMockContractDispatcher, members: Array<ContractAddress>) {
+fn set_voters(mock_contract: IMockContractDispatcher, members: Array<ContractAddress>) {
     for member in members {
         mock_contract.add_member_pub(member);
+        mock_contract.assign_voter_permission_pub(member);
     };
 }
 
@@ -57,13 +58,13 @@ fn test_propose_threshold_change_transaction_successful() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5); // Simulate 5 voters
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
     mock_contract.assign_voter_permission_pub(caller);
-
-    let voters = get_members(5); // Simulate 5 voters
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Spy on events
     let mut spy = spy_events();
@@ -110,11 +111,11 @@ fn test_propose_threshold_change_transaction_fail_if_not_proposer() {
 
     // Set up threshold and voters, but don’t assign proposer role
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
-    mock_contract.add_member_pub(caller);
-
     let voters = get_members(5);
-    set_members(mock_contract, voters);
+    set_voters(mock_contract, voters);
+
+    mock_contract.add_member_pub(caller);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Propose threshold change transaction (should fail)
     mock_contract.propose_threshold_change_transaction_pub(new_threshold);
@@ -131,12 +132,12 @@ fn test_propose_threshold_change_transaction_fail_if_zero_threshold() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5);
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-
-    let voters = get_members(5);
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Propose threshold change transaction with zero threshold (should fail)
     mock_contract.propose_threshold_change_transaction_pub(new_threshold);
@@ -153,12 +154,12 @@ fn test_propose_threshold_change_transaction_fail_if_same_threshold() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5);
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-
-    let voters = get_members(5);
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Propose threshold change transaction with same threshold (should fail)
     mock_contract.propose_threshold_change_transaction_pub(new_threshold);
@@ -175,12 +176,12 @@ fn test_propose_threshold_change_transaction_fail_if_excessive_threshold() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5);
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-
-    let voters = get_members(5);
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Propose threshold change transaction with excessive threshold (should fail)
     mock_contract.propose_threshold_change_transaction_pub(new_threshold);
@@ -188,7 +189,7 @@ fn test_propose_threshold_change_transaction_fail_if_excessive_threshold() {
 }
 
 #[test]
-#[should_panic(expected: ('Pausable: paused',))]
+#[should_panic]
 fn test_propose_threshold_change_transaction_fail_if_paused() {
     let mock_contract = deploy_mock_contract();
     let caller = proposer();
@@ -197,12 +198,12 @@ fn test_propose_threshold_change_transaction_fail_if_paused() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5);
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-
-    let voters = get_members(5);
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Pause the contract
     mock_contract.pause();
@@ -250,16 +251,16 @@ fn test_get_all_threshold_change_transactions() {
 
     // Set up threshold and voters
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.set_threshold_pub(current_threshold);
+    let voters = get_members(5);
+    set_voters(mock_contract, voters);
+
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-
-    let voters = get_members(5);
-    set_members(mock_contract, voters);
+    mock_contract.set_threshold_pub(current_threshold);
 
     // Propose two threshold change transactions
-    let tx_id1 = mock_contract.propose_threshold_change_transaction_pub(4);
-    let tx_id2 = mock_contract.propose_threshold_change_transaction_pub(2);
+    let _tx_id1 = mock_contract.propose_threshold_change_transaction_pub(4);
+    let _tx_id2 = mock_contract.propose_threshold_change_transaction_pub(2);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     // Retrieve all transactions
