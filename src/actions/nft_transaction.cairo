@@ -22,8 +22,7 @@ pub mod NFTTransaction {
     #[storage]
     pub struct Storage {
         nft_transactions: Map<u256, NFTTransactionData>,
-        nft_transaction_ids: Vec<u256>,
-        executed_nft_transactions: Map<u256, bool>
+        nft_transaction_ids: Vec<u256>
     }
 
     #[event]
@@ -118,6 +117,46 @@ pub mod NFTTransaction {
             array
         }
 
+        fn execute_nft_transaction(
+        ref self: ComponentState<TContractState>, id: u256
+        ) {
+            self.assert_is_valid_nft_transaction(id);
+
+            // Prevent duplicate execution
+            let already_executed = self.executed_nft_transactions.entry(id).read();
+            assert(!already_executed, Errors::ERR_ALREADY_EXECUTED);
+
+            let nft_transaction = self.get_nft_transaction(id);
+            let caller = get_caller_address();
+            let account_address = get_contract_address();
+
+            // Check NFT ownership
+            let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_transaction.nft_contract };
+            assert(
+                erc721_dispatcher.owner_of(nft_transaction.token_id) == account_address,
+                Errors::ERR_NOT_OWNER
+            );
+
+            // Execute transaction in account data (validates multisig threshold etc.)
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+            account_data_comp.execute_transaction(id, caller);
+            erc721_dispatcher.approve(nft_transaction.recipient, nft_transaction.token_id);
+
+            // Transfer NFT to recipient
+            erc721_dispatcher.transfer_from(account_address, nft_transaction.recipient, nft_transaction.token_id);
+
+            // Mark as executed
+            self.executed_nft_transactions.entry(id).write(true);
+
+            // Emit execution event
+            self.emit(NFTTransactionExecuted {
+                id,
+                nft_contract: nft_transaction.nft_contract,
+                token_id: nft_transaction.token_id,
+                recipient: nft_transaction.recipient
+            });
+        }
+
     #[generate_trait]
     pub impl PrivateImpl<
         TContractState,
@@ -136,45 +175,5 @@ pub mod NFTTransaction {
             );
         }
     }
-
-    fn execute_nft_transaction(
-        ref self: ComponentState<TContractState>, id: u256
-        ) {
-    self.assert_is_valid_nft_transaction(id);
-
-    // Prevent duplicate execution
-    let already_executed = self.executed_nft_transactions.entry(id).read();
-    assert(!already_executed, Errors::ERR_ALREADY_EXECUTED);
-
-    let nft_transaction = self.get_nft_transaction(id);
-    let caller = get_caller_address();
-    let account_address = get_contract_address();
-
-    // Check NFT ownership
-    let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_transaction.nft_contract };
-    assert(
-        erc721_dispatcher.owner_of(nft_transaction.token_id) == account_address,
-        Errors::ERR_NOT_OWNER
-    );
-
-    // Execute transaction in account data (validates multisig threshold etc.)
-    let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
-    account_data_comp.execute_transaction(id, caller);
-
-    // Transfer NFT to recipient
-    erc721_dispatcher.transfer_from(account_address, nft_transaction.recipient, nft_transaction.token_id);
-
-    // Mark as executed
-    self.executed_nft_transactions.entry(id).write(true);
-
-    // Emit execution event
-    self.emit(NFTTransactionExecuted {
-        id,
-        nft_contract: nft_transaction.nft_contract,
-        token_id: nft_transaction.token_id,
-        recipient: nft_transaction.recipient
-    });
-    }
-
     }
 }
