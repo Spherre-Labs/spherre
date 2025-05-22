@@ -7,8 +7,11 @@ use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
-
-use spherre::types::{TransactionType};
+use spherre::{
+    actions::nft_transaction::NFTTransaction,
+    interfaces::inft_tx::INFTTransaction,
+    types::TransactionStatus,
+};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_nft() -> IERC721Dispatcher {
@@ -38,7 +41,7 @@ fn zero_address() -> ContractAddress {
 }
 
 #[test]
-fn test_propose_nft_transaction_successful() {
+fn test_propose_nft_transaction() {
     let mock_contract = deploy_mock_contract();
     let nft_contract = deploy_mock_nft();
     let token_id: u256 = 1;
@@ -68,10 +71,9 @@ fn test_propose_nft_transaction_successful() {
     assert(nft_transaction.recipient == receiver, 'Recipient Invalid');
 }
 
-
 #[test]
 #[should_panic(expected: 'Caller is not a proposer')]
-fn test_propose_nft_transaction_fail_if_not_proposer() {
+fn test_propose_nft_transaction_not_proposer() {
     let mock_contract = deploy_mock_contract();
     let nft_contract = deploy_mock_nft();
     let token_id: u256 = 1;

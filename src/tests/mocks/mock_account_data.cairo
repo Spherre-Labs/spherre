@@ -2,6 +2,24 @@ use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData
 };
 use starknet::ContractAddress;
+use openzeppelin::security::pausable::PausableComponent;
+use spherre::{
+    account_data::AccountData,
+    components::permission_control::PermissionControl,
+    actions::{
+        token_transaction::TokenTransaction,
+        nft_transaction::NFTTransaction,
+    },
+    interfaces::{
+        iaccount_data::IAccountData,
+        itoken_tx::ITokenTransaction,
+        inft_tx::INFTTransaction,
+    },
+};
+use starknet::{
+    get_caller_address,
+    storage::{StoragePathEntry, StoragePointerWriteAccess},
+};
 
 #[starknet::interface]
 pub trait IMockContract<TContractState> {

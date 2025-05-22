@@ -9,6 +9,10 @@ use spherre::tests::mocks::mock_account_data::{
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{TransactionType, TransactionStatus};
 use starknet::{ContractAddress, contract_address_const};
+use spherre::{
+    actions::token_transaction::TokenTransaction,
+    interfaces::itoken_tx::ITokenTransaction,
+};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -198,4 +202,15 @@ fn test_execute_token_transaction_successful() {
 
     // check that the balance of the token in the receiver is the token transaction balance
     assert(token.balance_of(receiver) == amount_to_send, 'Invalid balance');
+}
+
+#[test]
+fn test_propose_token_transaction() {
+    // Test implementation
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a proposer')]
+fn test_propose_token_transaction_not_proposer() {
+    // Test implementation
 }
