@@ -1,18 +1,16 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
+use spherre::actions::token_transaction::TokenTransaction;
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+use spherre::interfaces::itoken_tx::ITokenTransaction;
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
-use spherre::{
-    actions::token_transaction::TokenTransaction,
-    interfaces::itoken_tx::ITokenTransaction,
-};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -93,7 +91,7 @@ fn test_propose_transaction_fail_if_not_proposer() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
@@ -116,7 +114,7 @@ fn test_propose_transaction_fail_if_balance_is_insufficient() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
@@ -139,7 +137,7 @@ fn test_propose_transaction_fail_if_recipient_is_account() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
@@ -206,11 +204,76 @@ fn test_execute_token_transaction_successful() {
 
 #[test]
 fn test_propose_token_transaction() {
-    // Test implementation
+    // Setup the test environment
+    let mock_contract = deploy_mock_contract();
+    let token = deploy_mock_token();
+    let amount_to_mint: u256 = 10000000;
+    let amount_to_send: u256 = 100000;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Mint tokens for the contract
+    let mock_token = IMockTokenDispatcher { contract_address: token.contract_address };
+    mock_token.mint(mock_contract.contract_address, amount_to_mint);
+
+    // Setup access control - Focus on proper role assignment
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+
+    // Add member
+    mock_contract.add_member_pub(caller);
+
+    // Verify caller doesn't have proposer role yet
+    let has_proposer_role = mock_contract.is_proposer_pub(caller);
+    assert(!has_proposer_role, 'Should not have proposer role yet');
+
+    // Assign Proposer Role - this is the key access control step
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Verify caller now has proposer role
+    let has_proposer_role = mock_contract.is_proposer_pub(caller);
+    assert(has_proposer_role, 'Should have proposer role now');
+
+    // Propose Transaction
+    let tx_id = mock_contract
+        .propose_token_transaction_pub(token.contract_address, amount_to_send, receiver);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify transaction was created with correct parameters
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_type == TransactionType::TOKEN_SEND, 'Invalid Transaction type');
+
+    let token_transaction = mock_contract.get_token_transaction_pub(tx_id);
+    assert(token_transaction.token == token.contract_address, 'Wrong token address');
+    assert(token_transaction.amount == amount_to_send, 'Wrong amount');
+    assert(token_transaction.recipient == receiver, 'Wrong recipient');
+
+    // Verify transaction status is PROPOSED
+    assert(transaction.tx_status == TransactionStatus::PROPOSED, 'Wrong transaction status');
 }
 
 #[test]
 #[should_panic(expected: 'Caller is not a proposer')]
 fn test_propose_token_transaction_not_proposer() {
-    // Test implementation
+    // Setup the test environment
+    let mock_contract = deploy_mock_contract();
+    let token = deploy_mock_token();
+    let amount_to_send: u256 = 100000;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Setup access control - Deliberately NOT assigning proposer role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+
+    // Add member but don't assign proposer role
+    mock_contract.add_member_pub(caller);
+
+    // Verify caller doesn't have proposer role
+    let has_proposer_role = mock_contract.is_proposer_pub(caller);
+    assert(!has_proposer_role, 'Should not have proposer role');
+
+    // Attempt to propose transaction without proposer role - should fail
+    mock_contract.propose_token_transaction_pub(token.contract_address, amount_to_send, receiver);
+
+    // This line should not be reached due to the panic
+    stop_cheat_caller_address(mock_contract.contract_address);
 }

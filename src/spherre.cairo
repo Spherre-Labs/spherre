@@ -1,7 +1,6 @@
 #[starknet::contract]
 pub mod Spherre {
-    use openzeppelin::access::accesscontrol::AccessControlComponent;
-    use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
+    use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
@@ -47,7 +46,7 @@ pub mod Spherre {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(
-        path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
+        path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent,
     );
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -125,7 +124,7 @@ pub mod Spherre {
             let caller = get_caller_address();
             assert(
                 self.has_staff_role(caller) || self.has_superadmin_role(caller),
-                Errors::ERR_NOT_A_STAFF
+                Errors::ERR_NOT_A_STAFF,
             )
         }
         fn assert_only_superadmin(self: @ContractState) {
