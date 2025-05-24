@@ -44,6 +44,7 @@ pub mod tests {
         pub mod mock_token;
     }
     pub mod actions {
+        pub mod test_change_threshold_transaction;
         pub mod test_nft_transaction;
         pub mod test_token_transaction;
     }
