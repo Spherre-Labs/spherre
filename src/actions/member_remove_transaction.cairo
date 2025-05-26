@@ -1,13 +1,13 @@
 #[starknet::component]
 pub mod MemberRemoveTransaction {
-    use spherre::account_data::AccountData::InternalImpl as AccountDataInternalImpl;
-    use spherre::account_data;
-    use spherre::interfaces::iaccount_data::IAccountData;
-    use spherre::interfaces::imember_tx::IMemberRemoveTransaction;
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
+    use spherre::account_data::AccountData::InternalImpl as AccountDataInternalImpl;
+    use spherre::account_data;
     use spherre::components::permission_control;
     use spherre::errors::Errors;
+    use spherre::interfaces::iaccount_data::IAccountData;
+    use spherre::interfaces::imember_tx::IMemberRemoveTransaction;
     use spherre::types::MemberRemoveData;
     use spherre::types::TransactionType;
     use starknet::storage::{
