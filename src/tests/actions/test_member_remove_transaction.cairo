@@ -2,13 +2,13 @@ use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
     DeclareResultTrait
 };
+use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
-use spherre::interfaces::ierc20::{IERC20Dispatcher};
+use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{TransactionType, MemberRemoveData};
 use starknet::{ContractAddress, contract_address_const};
-use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -41,7 +41,7 @@ fn zero_address() -> ContractAddress {
 }
 
 #[test]
-fn test_propose_member_successful(){
+fn test_propose_member_successful() {
     let mock_contract = deploy_mock_contract();
 
     let caller: ContractAddress = proposer();
@@ -124,9 +124,9 @@ fn test_get_member_removal_transaction_nonexistent_transaction() {
 #[test]
 fn test_member_removal_transaction_list_empty() {
     let mock_contract = deploy_mock_contract();
-    
+
     let result = mock_contract.member_removal_transaction_list_pub();
-    
+
     assert(result.len() == 0, 'List should be empty');
 }
 
@@ -161,7 +161,7 @@ fn test_member_removal_transaction_list_multiple_transactions() {
 
 #[test]
 #[should_panic(expected: ('Cannot remove yourself',))]
-fn test_propose_member_removing_self(){
+fn test_propose_member_removing_self() {
     let mock_contract = deploy_mock_contract();
 
     let caller: ContractAddress = proposer();
@@ -175,5 +175,4 @@ fn test_propose_member_removing_self(){
     // Propose member removal transaction
     let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
     stop_cheat_caller_address(mock_contract.contract_address);
-
 }

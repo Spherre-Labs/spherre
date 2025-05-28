@@ -9,8 +9,8 @@ pub mod MemberRemoveTransaction {
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::imember_tx::IMemberRemoveTransaction;
     use spherre::types::MemberRemoveData;
-    use spherre::types::{Transaction};
     use spherre::types::TransactionType;
+    use spherre::types::{Transaction};
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, Map, StoragePathEntry, Vec, VecTrait,
         MutableVecTrait
@@ -66,18 +66,15 @@ pub mod MemberRemoveTransaction {
                 .create_transaction(TransactionType::MEMBER_REMOVE);
 
             // Create the member removal transaction
-            let member_removal_transaction = MemberRemoveData {
-                member_address,
-            };
+            let member_removal_transaction = MemberRemoveData { member_address, };
 
             // Store the transaction
             self
                 .member_removal_transactions
                 .entry(transaction_id)
                 .write(member_removal_transaction);
-            
-            self.member_transaction_ids.append().write(transaction_id);
 
+            self.member_transaction_ids.append().write(transaction_id);
 
             // Emit event
             self
@@ -99,15 +96,14 @@ pub mod MemberRemoveTransaction {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(transaction_id);
 
-            assert(
-                transaction.tx_type == TransactionType::MEMBER_REMOVE,
-                Errors::MEMBER_NOT_FOUND
-            );
+            assert(transaction.tx_type == TransactionType::MEMBER_REMOVE, Errors::MEMBER_NOT_FOUND);
 
             self.member_removal_transactions.entry(transaction_id).read()
         }
 
-        fn member_removal_transaction_list(self: @ComponentState<TContractState>) -> Array<MemberRemoveData> {
+        fn member_removal_transaction_list(
+            self: @ComponentState<TContractState>
+        ) -> Array<MemberRemoveData> {
             let mut array: Array<MemberRemoveData> = array![];
             let range_stop = self.member_transaction_ids.len();
 
@@ -120,5 +116,4 @@ pub mod MemberRemoveTransaction {
             array
         }
     }
-
 }

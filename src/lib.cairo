@@ -45,8 +45,8 @@ pub mod tests {
     }
     pub mod actions {
         pub mod test_change_threshold_transaction;
+        pub mod test_member_remove_transaction;
         pub mod test_nft_transaction;
         pub mod test_token_transaction;
-        pub mod test_member_remove_transaction;
     }
 }
