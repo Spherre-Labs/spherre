@@ -55,11 +55,10 @@ pub mod MemberRemoveTransaction {
         ) -> u256 {
             let caller = get_caller_address();
 
-            // Validate caller cannot remove themselves
-            assert(caller != member_address, Errors::CANNOT_REMOVE_SELF);
-
             // Get the component states
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+
+            assert(account_data_comp.is_member(member_address), Errors::ERR_NOT_MEMBER);
 
             // Create transaction through AccountData component
             let transaction_id = account_data_comp
@@ -96,7 +95,10 @@ pub mod MemberRemoveTransaction {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(transaction_id);
 
-            assert(transaction.tx_type == TransactionType::MEMBER_REMOVE, Errors::MEMBER_NOT_FOUND);
+            assert(
+                transaction.tx_type == TransactionType::MEMBER_REMOVE,
+                Errors::INVALID_MEMBER_REMOVE_TRANSACTION
+            );
 
             self.member_removal_transactions.entry(transaction_id).read()
         }

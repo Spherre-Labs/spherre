@@ -38,8 +38,7 @@ pub mod Errors {
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
 
     pub const MEMBER_NOT_FOUND: felt252 = 'Member does not exist';
-    pub const MEMBER_ALREADY_PENDING_REMOVAL: felt252 = 'Member already pending removal';
+    pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
     pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
     pub const TRANSACTION_NOT_FOUND: felt252 = 'Transaction not found';
-    pub const CANNOT_REMOVE_SELF: felt252 = 'Cannot remove yourself';
 }

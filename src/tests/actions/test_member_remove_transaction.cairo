@@ -41,7 +41,7 @@ fn zero_address() -> ContractAddress {
 }
 
 #[test]
-fn test_propose_member_successful() {
+fn test_member_remove_proposal_successful() {
     let mock_contract = deploy_mock_contract();
 
     let caller: ContractAddress = proposer();
@@ -85,7 +85,25 @@ fn test_get_member_removal_transaction_success() {
 
 
 #[test]
-#[should_panic(expected: ('Member does not exist',))]
+#[should_panic(expected: ('Caller is not a member',))]
+fn test_member_remove_proposal_not_member() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = proposer();
+    let member: ContractAddress = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Propose member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+}
+
+#[test]
+#[should_panic(expected: ('Not member remove proposal',))]
 fn test_get_member_removal_transaction_wrong_type() {
     let mock_contract = deploy_mock_contract();
     let caller = proposer();
@@ -159,20 +177,3 @@ fn test_member_removal_transaction_list_multiple_transactions() {
     assert(*result.at(2).member_address == member3, 'Wrong third member');
 }
 
-#[test]
-#[should_panic(expected: ('Cannot remove yourself',))]
-fn test_propose_member_removing_self() {
-    let mock_contract = deploy_mock_contract();
-
-    let caller: ContractAddress = proposer();
-    let member: ContractAddress = member_to_remove();
-
-    start_cheat_caller_address(mock_contract.contract_address, member);
-    mock_contract.add_member_pub(caller);
-    mock_contract.add_member_pub(member);
-    mock_contract.assign_proposer_permission_pub(caller);
-
-    // Propose member removal transaction
-    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
-    stop_cheat_caller_address(mock_contract.contract_address);
-}
