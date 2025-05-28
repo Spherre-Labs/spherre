@@ -9,5 +9,5 @@ pub trait IMemberRemoveTransaction<TContractState> {
     fn get_member_removal_transaction(
         self: @TContractState, transaction_id: u256
     ) -> MemberRemoveData;
-    fn member_removal_transaction_list(self: @TContractState) -> Array<u256>;
+    fn member_removal_transaction_list(self: @TContractState) -> Array<MemberRemoveData>;
 }
