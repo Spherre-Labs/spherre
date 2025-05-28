@@ -107,9 +107,9 @@ pub struct EditPermissionData {
     pub permissions: Array<PermissionEnum>
 }
 
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct MemberRemoveData {
-    pub member: ContractAddress
+    pub member_address: ContractAddress,
 }
 
 #[derive(Drop, Serde)]

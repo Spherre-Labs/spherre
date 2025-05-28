@@ -36,4 +36,9 @@ pub mod Errors {
     pub const ERR_RECIPIENT_CANNOT_BE_ACCOUNT: felt252 = 'Recipient cannot be account';
     pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
+
+    pub const MEMBER_NOT_FOUND: felt252 = 'Member does not exist';
+    pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
+    pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
+    pub const TRANSACTION_NOT_FOUND: felt252 = 'Transaction not found';
 }
