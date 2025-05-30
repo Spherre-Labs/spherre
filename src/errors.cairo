@@ -21,6 +21,10 @@ pub mod Errors {
     pub const ERR_NON_ZERO_ADDRESS_NFT_CONTRACT: felt252 = 'NFT contract address is zero';
     pub const ERR_NO_PROPOSER_PERMISSION: felt252 = 'Caller is not a proposer';
     pub const ERR_INVALID_NFT_TRANSACTION: felt252 = 'Invalid NFT transaction';
+    
+    pub const ERR_THRESHOLD_UNCHANGED: felt252 = 'Threshold is unchanged';
+    pub const ERR_THRESHOLD_EXCEEDS_VOTERS: felt252 = 'Threshold exceeds total voters';
+    pub const ERR_INVALID_THRESHOLD_TRANSACTION: felt252 = 'Invalid threshold transaction';
 
     pub const ERR_NOT_A_STAFF: felt252 = 'Caller is not a staff';
     pub const ERR_NOT_A_SUPERADMIN: felt252 = 'Caller is not a superadmin';
@@ -32,4 +36,9 @@ pub mod Errors {
     pub const ERR_RECIPIENT_CANNOT_BE_ACCOUNT: felt252 = 'Recipient cannot be account';
     pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
+
+    pub const MEMBER_NOT_FOUND: felt252 = 'Member does not exist';
+    pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
+    pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
+    pub const TRANSACTION_NOT_FOUND: felt252 = 'Transaction not found';
 }

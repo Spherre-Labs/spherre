@@ -33,15 +33,19 @@ pub mod actions {
 pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
+    pub mod test_account_upgrade;
     pub mod test_permission_control;
     pub mod test_spherre;
     pub mod utils;
     pub mod mocks {
+        pub mod mock_accountV2;
         pub mod mock_account_data;
         pub mod mock_nft;
         pub mod mock_token;
     }
     pub mod actions {
+        pub mod test_change_threshold_transaction;
+        pub mod test_member_remove_transaction;
         pub mod test_nft_transaction;
         pub mod test_token_transaction;
     }
