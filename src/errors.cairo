@@ -21,7 +21,7 @@ pub mod Errors {
     pub const ERR_NON_ZERO_ADDRESS_NFT_CONTRACT: felt252 = 'NFT contract address is zero';
     pub const ERR_NO_PROPOSER_PERMISSION: felt252 = 'Caller is not a proposer';
     pub const ERR_INVALID_NFT_TRANSACTION: felt252 = 'Invalid NFT transaction';
-    pub const ERR_INVALID_TOKEN_ID: felt252 = 'Token ID is invalid';
+
     pub const ERR_THRESHOLD_UNCHANGED: felt252 = 'Threshold is unchanged';
     pub const ERR_THRESHOLD_EXCEEDS_VOTERS: felt252 = 'Threshold exceeds total voters';
     pub const ERR_INVALID_THRESHOLD_TRANSACTION: felt252 = 'Invalid threshold transaction';
