@@ -305,7 +305,7 @@ fn test_non_superadmin_grant_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"), account: to_be_staff, sender: random_guy
                         },
                     )
                 )
@@ -458,7 +458,7 @@ fn test_non_superadmin_revoke_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleRevoked(
                         AccessControlComponent::RoleRevoked {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"), account: to_be_staff, sender: not_superadmin
                         },
                     )
                 )
