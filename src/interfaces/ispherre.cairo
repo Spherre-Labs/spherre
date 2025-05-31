@@ -10,4 +10,12 @@ pub trait ISpherre<TContractState> {
     fn has_superadmin_role(self: @TContractState, account: ContractAddress) -> bool;
     fn pause(ref self: TContractState);
     fn unpause(ref self: TContractState);
+    fn deploy_account(
+        ref self: TContractState,
+        owner: ContractAddress,
+        name: ByteArray,
+        description: ByteArray,
+        members: Array<ContractAddress>,
+        threshold: u64
+    ) -> ContractAddress;
 }

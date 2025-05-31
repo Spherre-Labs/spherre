@@ -1,5 +1,9 @@
 #[starknet::contract]
 pub mod Spherre {
+    use core::poseidon::PoseidonTrait;
+    use core::hash::{HashStateTrait, HashStateExTrait};
+    use core::serde::Serde;
+    use core::num::traits::Zero;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -9,14 +13,25 @@ pub mod Spherre {
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::SpherreAdminRoles;
-    use starknet::{ContractAddress, get_caller_address};
-
+    use starknet::ClassHash;
+    use starknet::storage::{
+        Vec, MutableVecTrait, VecTrait, Map, StoragePathEntry, StoragePointerReadAccess,
+        StoragePointerWriteAccess
+    };
+    use starknet::syscalls::deploy_syscall;
+    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp, get_block_number};
 
     // Interface IDs
 
     #[storage]
     struct Storage {
         owner: ContractAddress,
+        // Class hash of the multisig account contract to be deployed
+        account_class_hash: ClassHash,
+        // Array to store all deployed account contract addresses
+        accounts: Vec<ContractAddress>,
+        // Mapping to quickly check if an address is a deployed account
+        is_account: Map<ContractAddress, bool>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -32,6 +47,7 @@ pub mod Spherre {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        AccountDeployed: AccountDeployed,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -43,6 +59,7 @@ pub mod Spherre {
         #[flat]
         SRC5Event: SRC5Component::Event,
     }
+
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
@@ -70,6 +87,18 @@ pub mod Spherre {
     // Implement SRC5 mixin
     impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
     impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
+
+    #[derive(Drop, starknet::Event)]
+    struct AccountDeployed {
+        account_address: ContractAddress,
+        owner: ContractAddress,
+        name: ByteArray,
+        description: ByteArray,
+        members: Array<ContractAddress>,
+        threshold: u64,
+        deployer: ContractAddress,
+        date_deployed: u64
+    }
 
     #[constructor]
     pub fn constructor(ref self: ContractState, owner: ContractAddress) {
@@ -115,6 +144,61 @@ pub mod Spherre {
         fn unpause(ref self: ContractState) {
             self.assert_only_superadmin();
             self.pausable.unpause();
+        }
+
+        fn deploy_account(
+            ref self: ContractState,
+            owner: ContractAddress,
+            name: ByteArray,
+            description: ByteArray,
+            members: Array<ContractAddress>,
+            threshold: u64
+        ) -> ContractAddress {
+            self.pausable.assert_not_paused();
+            let class_hash = self.account_class_hash.read();
+            // Check that the Classhash is set
+            assert(!class_hash.is_zero(), Errors::ERR_ACCOUNT_CLASSHASH_UNKNOWN);
+            // Generate unique salt from blocktimestamp and block number
+            let salt = PoseidonTrait::new()
+                .update_with(get_block_timestamp())
+                .update_with(get_block_number())
+                .finalize();
+            
+            // TODO: Add the functionality to collect deployment fees
+
+            // Serialize the argument for the deployment
+            let mut calldata: Array<felt252> = array![];
+            let deployer = get_contract_address();
+            deployer.serialize(ref calldata);
+            owner.serialize(ref calldata);
+            name.serialize(ref calldata);
+            description.serialize(ref calldata);
+            members.serialize(ref calldata);
+            threshold.serialize(ref calldata);
+
+            let (account_address, _) = deploy_syscall(
+                class_hash,
+                salt,
+                calldata.span(),
+                true
+            ).unwrap();
+            // Add account to deployed addresses list
+            self.accounts.append().write(account_address);
+            self.is_account.entry(account_address).write(true);
+
+            // Emit AccountDeployed event
+            let event = AccountDeployed {
+                account_address,
+                owner,
+                name,
+                description,
+                members,
+                threshold,
+                deployer,
+                date_deployed: get_block_timestamp()
+            };
+            self.emit(event);
+            account_address
         }
     }
 
