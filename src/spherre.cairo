@@ -99,7 +99,7 @@ pub mod Spherre {
         }
         fn revoke_staff_role(ref self: ContractState, account: ContractAddress) {
             self.assert_only_superadmin();
-            self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
+            self.access_control._revoke_role(SpherreAdminRoles::STAFF, account);
         }
         fn has_staff_role(self: @ContractState, account: ContractAddress) -> bool {
             self.access_control.has_role(SpherreAdminRoles::STAFF, account)
