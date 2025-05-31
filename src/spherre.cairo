@@ -1,15 +1,16 @@
 #[starknet::contract]
 pub mod Spherre {
-    use core::poseidon::PoseidonTrait;
     use core::hash::{HashStateTrait, HashStateExTrait};
-    use core::serde::Serde;
     use core::num::traits::Zero;
+    use core::poseidon::PoseidonTrait;
+    use core::serde::Serde;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use spherre::account::SpherreAccount;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::SpherreAdminRoles;
@@ -19,7 +20,10 @@ pub mod Spherre {
         StoragePointerWriteAccess
     };
     use starknet::syscalls::deploy_syscall;
-    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp, get_block_number};
+    use starknet::{
+        ContractAddress, get_caller_address, get_contract_address, get_block_timestamp,
+        get_block_number
+    };
 
     // Interface IDs
 
@@ -155,15 +159,17 @@ pub mod Spherre {
             threshold: u64
         ) -> ContractAddress {
             self.pausable.assert_not_paused();
+
             let class_hash = self.account_class_hash.read();
             // Check that the Classhash is set
+
             assert(!class_hash.is_zero(), Errors::ERR_ACCOUNT_CLASSHASH_UNKNOWN);
             // Generate unique salt from blocktimestamp and block number
             let salt = PoseidonTrait::new()
                 .update_with(get_block_timestamp())
                 .update_with(get_block_number())
                 .finalize();
-            
+
             // TODO: Add the functionality to collect deployment fees
 
             // Serialize the argument for the deployment
@@ -176,12 +182,8 @@ pub mod Spherre {
             members.serialize(ref calldata);
             threshold.serialize(ref calldata);
 
-            let (account_address, _) = deploy_syscall(
-                class_hash,
-                salt,
-                calldata.span(),
-                true
-            ).unwrap();
+            let (account_address, _) = deploy_syscall(class_hash, salt, calldata.span(), true)
+                .unwrap();
             // Add account to deployed addresses list
             self.accounts.append().write(account_address);
             self.is_account.entry(account_address).write(true);
@@ -199,6 +201,9 @@ pub mod Spherre {
             };
             self.emit(event);
             account_address
+        }
+        fn is_deployed_account(self: @ContractState, account: ContractAddress) -> bool {
+            self.is_account.entry(account).read()
         }
     }
 

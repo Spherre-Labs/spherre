@@ -18,4 +18,5 @@ pub trait ISpherre<TContractState> {
         members: Array<ContractAddress>,
         threshold: u64
     ) -> ContractAddress;
+    fn is_deployed_account(self: @TContractState, account: ContractAddress) -> bool;
 }
