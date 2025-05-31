@@ -41,4 +41,6 @@ pub mod Errors {
     pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
     pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
     pub const TRANSACTION_NOT_FOUND: felt252 = 'Transaction not found';
+
+    pub const ERR_ACCOUNT_CLASSHASH_UNKNOWN: felt252 = 'Account Classhash not set';
 }
