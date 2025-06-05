@@ -37,11 +37,11 @@ fn deploy_contract(owner: ContractAddress) -> ContractAddress {
     contract_address
 }
 
- // deploy spherre account to get classhash
- fn get_spherre_account_class_hash() -> ClassHash {
+// deploy spherre account to get classhash
+fn get_spherre_account_class_hash() -> ClassHash {
     let contract_class = declare("SpherreAccount").unwrap().contract_class();
     contract_class.class_hash.clone()
- }
+}
 
 fn OWNER() -> ContractAddress {
     contract_address_const::<'Owner'>()
@@ -65,7 +65,7 @@ fn test_deploy_account() {
     cheat_set_account_class_hash(spherre_contract, classhash, owner);
 
     // Call the deploy account function
-    
+
     let name: ByteArray = "Test Spherre Account";
     let description: ByteArray = "Test Spherre Account Description";
     let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
