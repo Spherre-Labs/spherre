@@ -145,6 +145,8 @@ pub mod SpherreAccount {
         assert(threshold > 0, Errors::NON_ZERO_THRESHOLD);
         assert((members.len()).into() >= threshold, Errors::ERR_INVALID_MEMBER_THRESHOLD);
 
+        //TODO: add assertion check to check that owner is in members array.
+
         self.name.write(name);
         self.description.write(description);
         let len_member = members.len();
