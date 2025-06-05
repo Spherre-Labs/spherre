@@ -50,8 +50,9 @@ pub mod Spherre {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         AccountDeployed: AccountDeployed,
+        AccountClassHashUpdated: AccountClassHashUpdated,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -64,6 +65,12 @@ pub mod Spherre {
         SRC5Event: SRC5Component::Event,
     }
 
+    #[derive(Drop, starknet::Event)]
+    pub struct AccountClassHashUpdated {
+        pub old_class_hash: ClassHash,
+        pub new_class_hash: ClassHash,
+        pub caller: ContractAddress,
+    }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
@@ -112,7 +119,7 @@ pub mod Spherre {
         // Initialize AccessControl and grant DEFAULT_ADMIN_ROLE to owner
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
-        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner)
+        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner);
     }
 
     // Implement the ISpherre interface
@@ -132,7 +139,7 @@ pub mod Spherre {
         }
         fn revoke_staff_role(ref self: ContractState, account: ContractAddress) {
             self.assert_only_superadmin();
-            self.access_control._revoke_role(SpherreAdminRoles::SUPERADMIN, account);
+            self.access_control._revoke_role(SpherreAdminRoles::STAFF, account);
         }
         fn has_staff_role(self: @ContractState, account: ContractAddress) -> bool {
             self.access_control.has_role(SpherreAdminRoles::STAFF, account)
@@ -205,8 +212,36 @@ pub mod Spherre {
         fn is_deployed_account(self: @ContractState, account: ContractAddress) -> bool {
             self.is_account.entry(account).read()
         }
-    }
 
+        fn update_account_class_hash(ref self: ContractState, new_class_hash: ClassHash) {
+            // Ensure only superadmin can call this function
+            self.assert_only_superadmin();
+
+            // Validate that the new class hash is not zero
+            assert(!new_class_hash.is_zero(), Errors::ERR_INVALID_CLASS_HASH);
+
+            // Get current class hash for event emission
+            let old_class_hash = self.account_class_hash.read();
+
+            // Prevent updating to the same class hash
+            assert(new_class_hash != old_class_hash, Errors::ERR_SAME_CLASS_HASH);
+
+            // Update the storage
+            self.account_class_hash.write(new_class_hash);
+
+            // Emit event
+            self
+                .emit(
+                    AccountClassHashUpdated {
+                        old_class_hash, new_class_hash, caller: get_caller_address(),
+                    }
+                );
+        }
+
+        fn get_account_class_hash(self: @ContractState) -> ClassHash {
+            self.account_class_hash.read()
+        }
+    }
 
     #[generate_trait]
     pub impl InternalImpl of InternalTrait {
