@@ -1,3 +1,6 @@
+use crate::account::{SpherreAccount};
+use crate::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
+use crate::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 use crate::interfaces::ispherre::{ISpherre, ISpherreDispatcher, ISpherreDispatcherTrait};
 use crate::spherre::Spherre::Event::{AccountClassHashUpdated};
 use crate::spherre::Spherre::{SpherreImpl};
@@ -5,7 +8,7 @@ use crate::spherre::Spherre;
 use openzeppelin::access::accesscontrol::{DEFAULT_ADMIN_ROLE, AccessControlComponent};
 use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
-    EventSpyAssertionsTrait, DeclareResultTrait
+    EventSpyAssertionsTrait, DeclareResultTrait, get_class_hash
 };
 use spherre::types::SpherreAdminRoles;
 use starknet::class_hash::class_hash_const;
@@ -34,6 +37,140 @@ fn deploy_contract(owner: ContractAddress) -> ContractAddress {
     contract_address
 }
 
+// deploy spherre account to get classhash
+fn get_spherre_account_class_hash() -> ClassHash {
+    let contract_class = declare("SpherreAccount").unwrap().contract_class();
+    contract_class.class_hash.clone()
+}
+
+fn OWNER() -> ContractAddress {
+    contract_address_const::<'Owner'>()
+}
+fn MEMBER_ONE() -> ContractAddress {
+    contract_address_const::<'Member_one'>()
+}
+fn MEMBER_TWO() -> ContractAddress {
+    contract_address_const::<'Member_two'>()
+}
+
+// TODO: Wait for classhash setter function in order to conplete the test case
+
+#[test]
+fn test_deploy_account() {
+    let spherre_contract = deploy_contract(OWNER());
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+    // Test newly deployed spherre contract
+    assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
+    let spherre_account_data_dispatcher = IAccountDataDispatcher {
+        contract_address: account_address
+    };
+    let spherre_account_dispatcher = IAccountDispatcher { contract_address: account_address };
+    // Check member statuss
+    assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
+    // Check the threshold
+    let (account_threshold, num_of_members) = spherre_account_data_dispatcher.get_threshold();
+    assert(account_threshold == threshold, 'Invalid threshold');
+    assert(num_of_members == 3, 'Invalid members number');
+    // check name
+    let account_name = spherre_account_dispatcher.get_name();
+    assert(account_name == "Test Spherre Account", 'Invalid account name');
+
+    let account_deployer = spherre_account_dispatcher.get_deployer();
+    assert(account_deployer == spherre_contract, 'Invalid deployer');
+}
+
+#[test]
+#[should_panic(expected: 'Members must meet threshold')]
+fn test_deploy_account_fail_with_invalid_threshold() {
+    let spherre_contract = deploy_contract(OWNER());
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 4; // invalid threshold. threshold is greater than number of members
+    // should panic
+    spherre_dispatcher.deploy_account(owner, name, description, members, threshold);
+}
+#[test]
+#[should_panic(expected: 'Threshold must be > 0')]
+fn test_deploy_account_fail_with_zero_threshold() {
+    let spherre_contract = deploy_contract(OWNER());
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 0; // zero threshold. threshold should not be zero
+    // should panic
+    spherre_dispatcher.deploy_account(owner, name, description, members, threshold);
+}
+
+#[test]
+#[should_panic(expected: 'Members count must be > 0')]
+fn test_deploy_account_fail_with_zero_members() {
+    let spherre_contract = deploy_contract(OWNER());
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![]; // No members.
+    let threshold: u64 = 1;
+    // should panic
+    spherre_dispatcher.deploy_account(owner, name, description, members, threshold);
+}
+
+#[test]
+#[should_panic(expected: 'Owner should not be zero')]
+fn test_deploy_account_fail_with_zero_owner() {
+    let spherre_contract = deploy_contract(OWNER());
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let zero_owner: ContractAddress = 0.try_into().unwrap();
+    // should panic
+    spherre_dispatcher.deploy_account(zero_owner, name, description, members, threshold);
+}
 
 fn cheat_set_account_class_hash(
     contract_address: ContractAddress, new_hash: ClassHash, superadmin: ContractAddress,
