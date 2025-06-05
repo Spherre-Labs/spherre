@@ -8,7 +8,7 @@ use crate::spherre::Spherre;
 use openzeppelin::access::accesscontrol::{DEFAULT_ADMIN_ROLE, AccessControlComponent};
 use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
-    EventSpyAssertionsTrait, DeclareResultTrait
+    EventSpyAssertionsTrait, DeclareResultTrait, get_class_hash
 };
 use spherre::types::SpherreAdminRoles;
 use starknet::class_hash::class_hash_const;
@@ -37,6 +37,12 @@ fn deploy_contract(owner: ContractAddress) -> ContractAddress {
     contract_address
 }
 
+ // deploy spherre account to get classhash
+ fn get_spherre_account_class_hash() -> ClassHash {
+    let contract_class = declare("SpherreAccount").unwrap().contract_class();
+    contract_class.class_hash.clone()
+ }
+
 fn OWNER() -> ContractAddress {
     contract_address_const::<'Owner'>()
 }
@@ -53,8 +59,13 @@ fn MEMBER_TWO() -> ContractAddress {
 fn test_deploy_account() {
     let spherre_contract = deploy_contract(OWNER());
     let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
-    // Call the deploy account function
     let owner = OWNER();
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Call the deploy account function
+    
     let name: ByteArray = "Test Spherre Account";
     let description: ByteArray = "Test Spherre Account Description";
     let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
