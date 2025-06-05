@@ -1,4 +1,4 @@
-use starknet::ContractAddress;
+use starknet::{ContractAddress, ClassHash};
 
 #[starknet::interface]
 pub trait ISpherre<TContractState> {
@@ -10,4 +10,7 @@ pub trait ISpherre<TContractState> {
     fn has_superadmin_role(self: @TContractState, account: ContractAddress) -> bool;
     fn pause(ref self: TContractState);
     fn unpause(ref self: TContractState);
+    // New functions for class hash management
+    fn update_account_class_hash(ref self: TContractState, new_class_hash: ClassHash);
+    fn get_account_class_hash(self: @TContractState) -> ClassHash;
 }

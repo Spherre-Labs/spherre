@@ -1,5 +1,6 @@
 #[starknet::contract]
 pub mod Spherre {
+    use core::num::traits::Zero;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -9,7 +10,8 @@ pub mod Spherre {
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::SpherreAdminRoles;
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::storage::{StoragePointerWriteAccess, StoragePointerReadAccess};
+    use starknet::{ContractAddress, ClassHash, get_caller_address};
 
 
     // Interface IDs
@@ -17,6 +19,8 @@ pub mod Spherre {
     #[storage]
     struct Storage {
         owner: ContractAddress,
+        // Class hash of the multisig account
+        account_class_hash: ClassHash,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -31,7 +35,8 @@ pub mod Spherre {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
+        AccountClassHashUpdated: AccountClassHashUpdated,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -42,6 +47,13 @@ pub mod Spherre {
         AccessControlEvent: AccessControlComponent::Event,
         #[flat]
         SRC5Event: SRC5Component::Event,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct AccountClassHashUpdated {
+        pub old_class_hash: ClassHash,
+        pub new_class_hash: ClassHash,
+        pub caller: ContractAddress,
     }
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -79,7 +91,7 @@ pub mod Spherre {
         // Initialize AccessControl and grant DEFAULT_ADMIN_ROLE to owner
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
-        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner)
+        self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner);
     }
 
     // Implement the ISpherre interface
@@ -116,8 +128,36 @@ pub mod Spherre {
             self.assert_only_superadmin();
             self.pausable.unpause();
         }
-    }
 
+        fn update_account_class_hash(ref self: ContractState, new_class_hash: ClassHash) {
+            // Ensure only superadmin can call this function
+            self.assert_only_superadmin();
+
+            // Validate that the new class hash is not zero
+            assert(!new_class_hash.is_zero(), Errors::ERR_INVALID_CLASS_HASH);
+
+            // Get current class hash for event emission
+            let old_class_hash = self.account_class_hash.read();
+
+            // Prevent updating to the same class hash
+            assert(new_class_hash != old_class_hash, Errors::ERR_SAME_CLASS_HASH);
+
+            // Update the storage
+            self.account_class_hash.write(new_class_hash);
+
+            // Emit event
+            self
+                .emit(
+                    AccountClassHashUpdated {
+                        old_class_hash, new_class_hash, caller: get_caller_address(),
+                    }
+                );
+        }
+
+        fn get_account_class_hash(self: @ContractState) -> ClassHash {
+            self.account_class_hash.read()
+        }
+    }
 
     #[generate_trait]
     pub impl InternalImpl of InternalTrait {

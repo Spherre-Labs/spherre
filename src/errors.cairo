@@ -41,4 +41,8 @@ pub mod Errors {
     pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
     pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
     pub const TRANSACTION_NOT_FOUND: felt252 = 'Transaction not found';
+
+    // New errors for class hash functionality
+    pub const ERR_INVALID_CLASS_HASH: felt252 = 'Invalid class hash';
+    pub const ERR_SAME_CLASS_HASH: felt252 = 'Class hash unchanged';
 }
