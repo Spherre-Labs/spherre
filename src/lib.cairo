@@ -9,8 +9,9 @@ pub mod interfaces {
     pub mod ichange_threshold_tx;
     pub mod ierc20;
     pub mod ierc721;
+    pub mod imember_add_tx;
     pub mod imember_permission_tx;
-    pub mod imember_tx;
+    pub mod imember_remove_tx;
     pub mod inft_tx;
     pub mod ipermission_control;
     pub mod ispherre;

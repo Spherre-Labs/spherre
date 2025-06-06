@@ -112,10 +112,10 @@ pub struct MemberRemoveData {
     pub member_address: ContractAddress,
 }
 
-#[derive(Drop, Serde)]
+#[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct MemberAddData {
     pub member: ContractAddress,
-    pub permissions: Array<PermissionEnum>
+    pub permissions: u8
 }
 
 pub mod SpherreAdminRoles {
