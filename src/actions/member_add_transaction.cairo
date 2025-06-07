@@ -55,6 +55,8 @@ pub mod MemberAddTransaction {
         fn propose_member_add_transaction(
             ref self: ComponentState<TContractState>, member: ContractAddress, permissions: u8
         ) -> u256 {
+            // validate that member is not zero
+            assert(member.is_non_zero(), Errors::ERR_NON_ZERO_MEMBER_ADDRESS);
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             // Validate the provided permission
             assert(
