@@ -249,10 +249,7 @@ pub mod Spherre {
         fn get_account_class_hash(self: @ContractState) -> ClassHash {
             self.account_class_hash.read()
         }
-    }
 
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // This function can only be called by super_admin
             self.assert_only_superadmin();
