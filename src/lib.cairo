@@ -9,8 +9,9 @@ pub mod interfaces {
     pub mod ichange_threshold_tx;
     pub mod ierc20;
     pub mod ierc721;
+    pub mod imember_add_tx;
     pub mod imember_permission_tx;
-    pub mod imember_tx;
+    pub mod imember_remove_tx;
     pub mod inft_tx;
     pub mod ipermission_control;
     pub mod ispherre;
@@ -45,6 +46,7 @@ pub mod tests {
     }
     pub mod actions {
         pub mod test_change_threshold_transaction;
+        pub mod test_member_add_transaction;
         pub mod test_member_remove_transaction;
         pub mod test_nft_transaction;
         pub mod test_token_transaction;

@@ -1,6 +1,6 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData,
+    ThresholdChangeData, MemberRemoveData, MemberAddData
 };
 use starknet::ContractAddress;
 
@@ -44,6 +44,11 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_member_removal_transaction_pub(self: @TContractState, id: u256) -> MemberRemoveData;
     fn member_removal_transaction_list_pub(self: @TContractState) -> Array<MemberRemoveData>;
+    fn propose_member_add_transaction_pub(
+        ref self: TContractState, member: ContractAddress, permissions: u8
+    ) -> u256;
+    fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
+    fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
 }
 
 
@@ -53,6 +58,7 @@ pub mod MockContract {
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::account_data::AccountData;
     use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
+    use spherre::actions::member_add_transaction::MemberAddTransaction;
     use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
     use spherre::actions::token_transaction::TokenTransaction;
@@ -60,7 +66,7 @@ pub mod MockContract {
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData,
+        ThresholdChangeData, MemberRemoveData, MemberAddData
     };
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
@@ -74,6 +80,7 @@ pub mod MockContract {
         path: ChangeThresholdTransaction, storage: change_threshold, event: ChangeThresholdEvent
     );
     component!(path: MemberRemoveTransaction, storage: member_remove, event: MemberRemoveEvent);
+    component!(path: MemberAddTransaction, storage: member_add, event: MemberAddEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -103,6 +110,10 @@ pub mod MockContract {
     pub impl MemberRemovalTransactionImpl =
         MemberRemoveTransaction::MemberRemoveTransaction<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl MemberAddTransactionImpl =
+        MemberAddTransaction::MemberAddTransaction<ContractState>;
+
 
     #[storage]
     pub struct Storage {
@@ -120,6 +131,8 @@ pub mod MockContract {
         pub change_threshold: ChangeThresholdTransaction::Storage,
         #[substorage(v0)]
         pub member_remove: MemberRemoveTransaction::Storage,
+        #[substorage(v0)]
+        pub member_add: MemberAddTransaction::Storage,
     }
 
     #[event]
@@ -139,6 +152,8 @@ pub mod MockContract {
         ChangeThresholdEvent: ChangeThresholdTransaction::Event,
         #[flat]
         MemberRemoveEvent: MemberRemoveTransaction::Event,
+        #[flat]
+        MemberAddEvent: MemberAddTransaction::Event,
     }
 
     #[abi(embed_v0)]
@@ -255,6 +270,19 @@ pub mod MockContract {
 
         fn member_removal_transaction_list_pub(self: @ContractState) -> Array<MemberRemoveData> {
             self.member_remove.member_removal_transaction_list()
+        }
+        fn propose_member_add_transaction_pub(
+            ref self: ContractState, member: ContractAddress, permissions: u8
+        ) -> u256 {
+            self.member_add.propose_member_add_transaction(member, permissions)
+        }
+        fn get_member_add_transaction_pub(
+            self: @ContractState, transaction_id: u256
+        ) -> MemberAddData {
+            self.member_add.get_member_add_transaction(transaction_id)
+        }
+        fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
+            self.member_add.member_add_transaction_list()
         }
     }
 
