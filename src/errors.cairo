@@ -46,4 +46,10 @@ pub mod Errors {
     // New errors for class hash functionality
     pub const ERR_INVALID_CLASS_HASH: felt252 = 'Invalid class hash';
     pub const ERR_SAME_CLASS_HASH: felt252 = 'Class hash unchanged';
+
+    // errors for member add transaction
+    pub const ERR_INVALID_MEMBER_ADD_TRANSACTION: felt252 = 'Invalid member add transaction';
+    pub const ERR_INVALID_PERMISSION_MASK: felt252 = 'Permission mask is invalid';
+    pub const ERR_ALREADY_A_MEMBER: felt252 = 'Address is already a member';
+    pub const ERR_NON_ZERO_MEMBER_ADDRESS: felt252 = 'Member address is zero';
 }

@@ -7,7 +7,7 @@ pub mod MemberRemoveTransaction {
     use spherre::components::permission_control;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
-    use spherre::interfaces::imember_tx::IMemberRemoveTransaction;
+    use spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction;
     use spherre::types::MemberRemoveData;
     use spherre::types::TransactionType;
     use spherre::types::{Transaction};
