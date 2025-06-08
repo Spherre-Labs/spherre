@@ -49,6 +49,12 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
+    fn propose_member_permission_transaction_pub(
+        ref self: TContractState, member: ContractAddress, new_permissions: u8
+    ) -> u256;
+    fn get_member_permission_transaction_pub(
+        self: @TContractState, transaction_id: u256
+    ) -> (ContractAddress, u8);
 }
 
 
@@ -70,6 +76,8 @@ pub mod MockContract {
     };
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
+    use spherre::actions::member_permission_tx::MemberPermissionTransaction;
+    use spherre::types::{EditPermissionTransaction};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
@@ -81,6 +89,7 @@ pub mod MockContract {
     );
     component!(path: MemberRemoveTransaction, storage: member_remove, event: MemberRemoveEvent);
     component!(path: MemberAddTransaction, storage: member_add, event: MemberAddEvent);
+    component!(path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent);
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -114,6 +123,9 @@ pub mod MockContract {
     pub impl MemberAddTransactionImpl =
         MemberAddTransaction::MemberAddTransaction<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl MemberPermissionTransactionImpl =
+        MemberPermissionTransaction::MemberPermissionTransaction<ContractState>;
 
     #[storage]
     pub struct Storage {
@@ -133,6 +145,8 @@ pub mod MockContract {
         pub member_remove: MemberRemoveTransaction::Storage,
         #[substorage(v0)]
         pub member_add: MemberAddTransaction::Storage,
+        #[substorage(v0)]
+        pub member_permission: MemberPermissionTransaction::Storage,
     }
 
     #[event]
@@ -154,6 +168,8 @@ pub mod MockContract {
         MemberRemoveEvent: MemberRemoveTransaction::Event,
         #[flat]
         MemberAddEvent: MemberAddTransaction::Event,
+        #[flat]
+        MemberPermissionEvent: MemberPermissionTransaction::Event,
     }
 
     #[abi(embed_v0)]
@@ -283,6 +299,16 @@ pub mod MockContract {
         }
         fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
             self.member_add.member_add_transaction_list()
+        }
+        fn propose_member_permission_transaction_pub(
+            ref self: ContractState, member: ContractAddress, new_permissions: u8
+        ) -> u256 {
+            self.member_permission.propose_member_permission_transaction(member, new_permissions)
+        }
+        fn get_member_permission_transaction_pub(
+            self: @ContractState, transaction_id: u256
+        ) -> (ContractAddress, u8) {
+            self.member_permission.get_member_permission_transaction(transaction_id)
         }
     }
 

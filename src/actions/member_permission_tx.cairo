@@ -23,7 +23,7 @@ pub mod MemberPermissionTransaction {
         member_permission_transactions: Map<u256, EditPermissionTransaction>,
         member_permission_transaction_ids: Vec<u256>,
         member_permission_transaction_ids_len: u256,
-        tx_count: u256
+        member_permission_tx_count: u256
     }
 
     #[event]
@@ -79,12 +79,12 @@ pub mod MemberPermissionTransaction {
             let transaction = EditPermissionTransaction { member, new_permissions };
 
             // Store transaction and update IDs
-            let tx_id = self.tx_count.read();
+            let tx_id = self.member_permission_tx_count.read();
             self.member_permission_transactions.write(tx_id, transaction);
             let len = self.member_permission_transaction_ids_len.read();
             self.member_permission_transaction_ids.push(tx_id);
             self.member_permission_transaction_ids_len.write(len + 1);
-            self.tx_count.write(tx_id + 1);
+            self.member_permission_tx_count.write(tx_id + 1);
 
             // Emit event
             self.emit(PermissionEditProposed { transaction_id: tx_id, member, new_permissions });
@@ -93,7 +93,7 @@ pub mod MemberPermissionTransaction {
         }
 
         fn get_member_permission_transaction(self: @ComponentState<TContractState>, transaction_id: u256) -> (ContractAddress, u8) {
-            let max_id = self.tx_count.read();
+            let max_id = self.member_permission_tx_count.read();
             assert(transaction_id < max_id, Errors::TRANSACTION_NOT_FOUND);
 
             let transaction = self.member_permission_transactions.read(transaction_id);

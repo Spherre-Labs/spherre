@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 
+#[starknet::interface]
 pub trait IMemberPermissionTransaction<TContractState> {
 fn propose_member_permission_transaction(
     ref self: TContractState,

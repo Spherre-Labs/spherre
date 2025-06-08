@@ -41,7 +41,7 @@ fn test_propose_member_permission_transaction_successful() {
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
-    assert(transaction.tx_type == TransactionType::MEMBER_PERMISSION, 'Invalid Transaction Type');
+    assert(transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type');
 
     let (stored_member, stored_permissions) = mock_contract.get_member_permission_transaction_pub(tx_id);
     assert(stored_member == member, 'Member Address Invalid');
