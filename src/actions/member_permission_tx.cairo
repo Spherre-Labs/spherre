@@ -93,6 +93,9 @@ pub mod MemberPermissionTransaction {
         }
 
         fn get_member_permission_transaction(self: @ComponentState<TContractState>, transaction_id: u256) -> (ContractAddress, u8) {
+            let max_id = self.tx_count.read();
+            assert(transaction_id < max_id, Errors::TRANSACTION_NOT_FOUND);
+
             let transaction = self.member_permission_transactions.read(transaction_id);
             (transaction.member, transaction.new_permissions)
         }
