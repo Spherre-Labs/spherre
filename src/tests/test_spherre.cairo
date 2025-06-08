@@ -5,7 +5,7 @@ use crate::interfaces::ispherre::{ISpherre, ISpherreDispatcher, ISpherreDispatch
 use crate::spherre::Spherre::Event::{AccountClassHashUpdated};
 use crate::spherre::Spherre::{SpherreImpl};
 use crate::spherre::Spherre;
-use openzeppelin::access::accesscontrol::{DEFAULT_ADMIN_ROLE, AccessControlComponent};
+use openzeppelin_access::accesscontrol::{DEFAULT_ADMIN_ROLE, AccessControlComponent};
 use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
     EventSpyAssertionsTrait, DeclareResultTrait, get_class_hash

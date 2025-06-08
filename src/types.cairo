@@ -122,3 +122,9 @@ pub mod SpherreAdminRoles {
     pub const SUPERADMIN: felt252 = selector!("SUPERADMIN");
     pub const STAFF: felt252 = selector!("STAFF");
 }
+
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct EditPermissionTransaction {
+    pub member: ContractAddress,
+    pub new_permissions: u8
+}

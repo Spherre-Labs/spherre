@@ -4,12 +4,12 @@ pub mod Spherre {
     use core::num::traits::Zero;
     use core::poseidon::PoseidonTrait;
     use core::serde::Serde;
-    use openzeppelin::access::accesscontrol::AccessControlComponent;
-    use openzeppelin::access::accesscontrol::DEFAULT_ADMIN_ROLE;
-    use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::introspection::src5::SRC5Component;
-    use openzeppelin::security::pausable::PausableComponent;
-    use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin_access::accesscontrol::AccessControlComponent;
+    use openzeppelin_access::accesscontrol::DEFAULT_ADMIN_ROLE;
+    use openzeppelin_access::ownable::OwnableComponent;
+    use openzeppelin_introspection::src5::SRC5Component;
+    use openzeppelin_security::pausable::PausableComponent;
+    use openzeppelin_security::reentrancyguard::ReentrancyGuardComponent;
     use spherre::account::SpherreAccount;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
