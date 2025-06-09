@@ -8,7 +8,5 @@ pub trait IMemberAddTransaction<TContractState> {
     ) -> u256;
     fn get_member_add_transaction(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list(self: @TContractState) -> Array<MemberAddData>;
-    fn execute_member_add_transaction(
-        ref self: TContractState, transaction_id: u256
-    );
+    fn execute_member_add_transaction(ref self: TContractState, transaction_id: u256);
 }

@@ -119,22 +119,26 @@ pub mod MemberAddTransaction {
         }
         fn execute_member_add_transaction(
             ref self: ComponentState<TContractState>, transaction_id: u256
-        ) {   
+        ) {
             let caller = get_caller_address();
             let account_data_comp = get_dep_component_mut!(ref self, AccountData);
             let permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
             let member_add_data = self.get_member_add_transaction(transaction_id);
-            assert(!account_data_comp.is_member(member_add_data.member), Errors::ERR_ALREADY_A_MEMBER);
+            assert(
+                !account_data_comp.is_member(member_add_data.member), Errors::ERR_ALREADY_A_MEMBER
+            );
             assert(
                 permission_control_comp.is_valid_mask(member_add_data.permissions),
                 Errors::ERR_INVALID_PERMISSION_MASK
             );
-            // Execute the transaction (error occurs if threshold is not met or caller is not an executor)
+            // Execute the transaction (error occurs if threshold is not met or caller is not an
+            // executor)
             account_data_comp.account_data_comp.execute_transaction(id, caller);
 
             // Convert mask to permissions
-            let permissions = permission_control_comp.permissions_from_mask(member_add_data.permissions);
-            
+            let permissions = permission_control_comp
+                .permissions_from_mask(member_add_data.permissions);
+
             // add the member
             account_data_comp.add_member(member_add_data.member);
 
@@ -142,8 +146,14 @@ pub mod MemberAddTransaction {
             permission_control.assign_permissions_from_enums(member_add_data.member, permissions);
 
             // emit event
-            self.emit(MemberAddTransactionExecuted { transaction_id, member: member_add_data.member, permissions: member_add_data.permissions});
-
+            self
+                .emit(
+                    MemberAddTransactionExecuted {
+                        transaction_id,
+                        member: member_add_data.member,
+                        permissions: member_add_data.permissions
+                    }
+                );
         }
     }
 }
