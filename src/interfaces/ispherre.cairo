@@ -22,4 +22,5 @@ pub trait ISpherre<TContractState> {
     // New functions for class hash management
     fn update_account_class_hash(ref self: TContractState, new_class_hash: ClassHash);
     fn get_account_class_hash(self: @TContractState) -> ClassHash;
+    fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }
