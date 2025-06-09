@@ -139,7 +139,7 @@ pub mod MemberAddTransaction {
             account_data_comp.add_member(member_add_data.member);
 
             // Assign Permission
-            permission_control.assign_permissions_from_enums(permissions);
+            permission_control.assign_permissions_from_enums(member_add_data.member, permissions);
 
             // emit event
             self.emit(MemberAddTransactionExecuted { transaction_id, member: member_add_data.member, permissions: member_add_data.permissions});
