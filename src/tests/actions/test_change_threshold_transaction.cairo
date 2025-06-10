@@ -92,7 +92,7 @@ fn test_propose_threshold_change_transaction_successful() {
                     MockContract::Event::ChangeThresholdEvent(
                         ChangeThresholdTransaction::Event::ThresholdChangeProposed(
                             ChangeThresholdTransaction::ThresholdChangeProposed {
-                                id: tx_id, proposer: caller, new_threshold
+                                id: tx_id, new_threshold
                             }
                         )
                     )
@@ -268,4 +268,57 @@ fn test_get_all_threshold_change_transactions() {
     assert(transactions.len() == 2, 'Incorrect transaction count');
     assert(*transactions.at(0).new_threshold == 4, 'Incorrect first threshold');
     assert(*transactions.at(1).new_threshold == 2, 'Incorrect second threshold');
+}
+
+#[test]
+fn test_execute_change_threshold_successful() {
+    let mock_contract = deploy_mock_contract();
+    let caller: ContractAddress = proposer();
+    let new_threshold: u64 = 3;
+    let members = get_members(5);
+    set_voters(mock_contract, members); // Set up voters
+
+    //
+    // propose transaction functionality
+    //
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
+    mock_contract.set_threshold_pub(1);
+    // Propose Transaction
+    let tx_id = mock_contract.propose_threshold_change_transaction_pub(new_threshold);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    // get transaction
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction type is type TOKEN::SEND
+    assert(transaction.tx_type == TransactionType::THRESHOLD_CHANGE, 'Invalid Transaction');
+    let change_threshold_transaction = mock_contract.get_threshold_change_transaction_pub(tx_id);
+    assert(change_threshold_transaction.new_threshold == new_threshold, 'Invalid New Threshold');
+
+    // Approve Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Execute the transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.execute_threshold_change_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction status is EXECUTED
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
+
+    // check that the threshold has been updated
+    let (updated_threshold, _) = mock_contract.get_threshold_pub();
+    assert(updated_threshold == new_threshold, 'Threshold not updated correctly');
 }
