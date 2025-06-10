@@ -52,4 +52,11 @@ pub mod Errors {
     pub const ERR_INVALID_PERMISSION_MASK: felt252 = 'Permission mask is invalid';
     pub const ERR_ALREADY_A_MEMBER: felt252 = 'Address is already a member';
     pub const ERR_NON_ZERO_MEMBER_ADDRESS: felt252 = 'Member address is zero';
+
+
+    // errors for member remove transaction
+    pub const ERR_CANNOT_REMOVE_LAST_VOTER: felt252 = 'Cannot remove last voter';
+    pub const ERR_CANNOT_REMOVE_LAST_PROPOSER: felt252 = 'Cannot remove last proposer';
+    pub const ERR_CANNOT_REMOVE_LAST_EXECUTOR: felt252 = 'Cannot remove last executor';
+    pub const ERR_CANNOT_REMOVE_MEMBER_WITH_THRESHOLD: felt252 = 'lower threshold';
 }
