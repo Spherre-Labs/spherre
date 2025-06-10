@@ -6,11 +6,15 @@ use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
 
-use spherre::types::{TransactionType, MemberAddData};
+use spherre::types::{TransactionType, Permissions, TransactionStatus};
 use starknet::{ContractAddress, contract_address_const};
 
 fn proposer() -> ContractAddress {
     contract_address_const::<'proposer'>()
+}
+
+fn owner() -> ContractAddress {
+    contract_address_const::<'owner'>()
 }
 
 fn member_to_add() -> ContractAddress {
@@ -101,4 +105,67 @@ fn test_propose_member_add_transaction_fail_with_adding_account_member() {
     // Propose member add transaction
     // should panic
     mock_contract.propose_member_add_transaction_pub(member, permission);
+}
+
+#[test]
+fn test_execute_member_add_transaction_successful() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = owner();
+    let new_member: ContractAddress = member_to_add();
+    let permissions: u8 = 6; // VOTER and EXECUTOR
+    //
+    // propose transaction functionality
+    //
+    // add member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
+    mock_contract.set_threshold_pub(1);
+    // Propose Member Add Transaction
+    let tx_id = mock_contract.propose_member_add_transaction_pub(new_member, permissions);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    // get transaction
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction type is type TOKEN::SEND
+    assert(transaction.tx_type == TransactionType::MEMBER_ADD, 'Invalid Transaction');
+    let member_add_transaction = mock_contract.get_member_add_transaction_pub(tx_id);
+    assert(member_add_transaction.member == new_member, 'Member is Invalid');
+    assert(member_add_transaction.permissions == permissions, 'Invalid Permissions');
+
+    // Approve Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Execute the transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.execute_member_add_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction status is EXECUTED
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
+
+    // check that new member is member
+    assert(mock_contract.is_member_pub(new_member), 'New member should be a member');
+
+    // check that the new member has the permissions
+    assert(
+        mock_contract.has_permission_pub(new_member, Permissions::VOTER),
+        'Voter permission not found'
+    );
+    assert(
+        mock_contract.has_permission_pub(new_member, Permissions::EXECUTOR),
+        'Executor permission not found'
+    );
 }
