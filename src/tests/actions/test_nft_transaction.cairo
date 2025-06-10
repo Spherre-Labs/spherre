@@ -8,7 +8,7 @@ use spherre::tests::mocks::mock_account_data::{
 };
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
 
-use spherre::types::{TransactionType};
+use spherre::types::{TransactionType, TransactionStatus};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_nft() -> IERC721Dispatcher {
@@ -268,28 +268,54 @@ fn test_execute_nft_transaction_successful() {
     let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
     mock_nft.mint(mock_contract.contract_address, token_id);
 
-    // Add member and assign proposer role
+    //
+    // propose transaction functionality
+    //
+    // add member
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
+    // Assign Proposer Role
     mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
     mock_contract.assign_voter_permission_pub(caller);
+    // Assign Executor Role
     mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
     mock_contract.set_threshold_pub(1);
-
-    // Propose NFT transaction
-    let tx_id = mock_contract
-        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
-
-    // Approve the transaction
-    mock_contract.approve_transaction_pub(tx_id, caller);
-
-    // Execute the NFT transaction
-    mock_contract.execute_nft_transaction_pub(tx_id);
-
-    // Verify ownership transfer
-    assert(mock_nft.owner_of(token_id) == receiver, 'NFT not transferred');
-
+    // Propose Transaction
+    let tx_id = mock_contract.propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
     stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    // get transaction
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction type is type TOKEN::SEND
+    assert(transaction.tx_type == TransactionType::NFT_SEND, 'Invalid Transaction');
+    let nft_transaction = mock_contract.get_nft_transaction_pub(tx_id);
+    assert(nft_transaction.nft_contract == nft_contract.contract_address, 'NFT Contract Invalid');
+    assert(nft_transaction.token_id == token_id, 'Token ID Invalid');
+    assert(nft_transaction.recipient == receiver, 'Recipient Invalid');
+
+    // Approve Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Execute the transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction status is EXECUTED
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
+
+    // check that the balance of the token in the receiver is the token transaction balance
+    assert(mock_nft.owner_of(token_id) == receiver, 'NFT not transferred');
+    
+
+    
 }
 
 
@@ -323,6 +349,7 @@ fn test_execute_nft_transaction_fail_if_not_approved() {
 }
 
 #[test]
+#[should_panic(expected: 'Caller is not an executor')]
 fn test_execute_nft_transaction_fail_if_not_executor() {
     let mock_contract = deploy_mock_contract();
     let nft_contract = deploy_mock_nft();
