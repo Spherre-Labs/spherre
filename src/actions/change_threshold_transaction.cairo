@@ -127,13 +127,14 @@ pub mod ChangeThresholdTransaction {
             assert(threshold_change_data.new_threshold <= total_voters, Errors::ERR_THRESHOLD_EXCEEDS_VOTERS);
 
             // Execute the transaction (All validation will be done)
-            account_data_comp.execute_transaction(id);
+            let caller = get_caller_address();
+            account_data_comp.execute_transaction(id, caller);
 
             // Update threshold in AccountData
-            account_data_comp.set_threshold(new_threshold);
+            account_data_comp.set_threshold(threshold_change_data.new_threshold);
 
             // Emit event
-            self.emit(ThresholdChangeExecuted { id: tx_id, new_threshold, });
+            self.emit(ThresholdChangeExecuted { id, new_threshold: threshold_change_data.new_threshold, });
         }
     }
 }

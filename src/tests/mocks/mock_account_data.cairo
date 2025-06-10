@@ -49,6 +49,10 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
+    fn execute_threshold_change_transaction_pub(
+        ref self: TContractState, transaction_id: u256
+    );
+    fn get_threshold_pub(self: @TContractState) -> (u64, u64);
 }
 
 
@@ -283,6 +287,14 @@ pub mod MockContract {
         }
         fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
             self.member_add.member_add_transaction_list()
+        }
+        fn execute_threshold_change_transaction_pub(
+            ref self: ContractState, transaction_id: u256
+        ) {
+            self.change_threshold.execute_threshold_change_transaction(transaction_id);
+        }
+        fn get_threshold_pub(self: @ContractState) -> (u64, u64) {
+            self.account_data.get_threshold()
         }
     }
 
