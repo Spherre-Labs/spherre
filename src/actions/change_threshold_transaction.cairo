@@ -9,13 +9,12 @@ pub mod ChangeThresholdTransaction {
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction;
-    use spherre::interfaces::ipermission_control::IPermissionControl;
-    use spherre::types::{ThresholdChangeData, Transaction, TransactionType, Permissions};
+    use spherre::types::{ThresholdChangeData, Transaction, TransactionType};
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -68,7 +67,6 @@ pub mod ChangeThresholdTransaction {
             let total_voters = account_data_comp.get_number_of_voters();
             assert(new_threshold <= total_voters, Errors::ERR_THRESHOLD_EXCEEDS_VOTERS);
 
-
             // Create transaction in AccountData
             let mut account_data_comp = get_dep_component_mut!(ref self, AccData);
             let tx_id = account_data_comp.create_transaction(TransactionType::THRESHOLD_CHANGE);
@@ -117,14 +115,20 @@ pub mod ChangeThresholdTransaction {
             pausable.assert_not_paused();
 
             let mut account_data_comp = get_dep_component_mut!(ref self, AccData);
-            
+
             // Validate transaction data
             let threshold_change_data = self.get_threshold_change_transaction(id);
-        
+
             let (current_threshold, _) = account_data_comp.get_threshold();
-            assert(threshold_change_data.new_threshold != current_threshold, Errors::ERR_THRESHOLD_UNCHANGED);
+            assert(
+                threshold_change_data.new_threshold != current_threshold,
+                Errors::ERR_THRESHOLD_UNCHANGED
+            );
             let total_voters = account_data_comp.get_number_of_voters();
-            assert(threshold_change_data.new_threshold <= total_voters, Errors::ERR_THRESHOLD_EXCEEDS_VOTERS);
+            assert(
+                threshold_change_data.new_threshold <= total_voters,
+                Errors::ERR_THRESHOLD_EXCEEDS_VOTERS
+            );
 
             // Execute the transaction (All validation will be done)
             let caller = get_caller_address();
@@ -134,7 +138,12 @@ pub mod ChangeThresholdTransaction {
             account_data_comp.set_threshold(threshold_change_data.new_threshold);
 
             // Emit event
-            self.emit(ThresholdChangeExecuted { id, new_threshold: threshold_change_data.new_threshold, });
+            self
+                .emit(
+                    ThresholdChangeExecuted {
+                        id, new_threshold: threshold_change_data.new_threshold,
+                    }
+                );
         }
     }
 }

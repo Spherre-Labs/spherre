@@ -278,7 +278,6 @@ fn test_execute_change_threshold_successful() {
     let members = get_members(5);
     set_voters(mock_contract, members); // Set up voters
 
-
     //
     // propose transaction functionality
     //
@@ -304,7 +303,6 @@ fn test_execute_change_threshold_successful() {
     let change_threshold_transaction = mock_contract.get_threshold_change_transaction_pub(tx_id);
     assert(change_threshold_transaction.new_threshold == new_threshold, 'Invalid New Threshold');
 
-
     // Approve Transaction
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.approve_transaction_pub(tx_id, caller);
@@ -323,6 +321,4 @@ fn test_execute_change_threshold_successful() {
     // check that the threshold has been updated
     let (updated_threshold, _) = mock_contract.get_threshold_pub();
     assert(updated_threshold == new_threshold, 'Threshold not updated correctly');
-
-    
 }
