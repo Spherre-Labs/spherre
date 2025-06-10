@@ -28,12 +28,12 @@ pub mod NFTTransaction {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        NFTTransactionCreated: NFTTransactionCreated,
+        NFTTransactionProposed: NFTTransactionProposed,
         NFTTransactionExecuted: NFTTransactionExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct NFTTransactionCreated {
+    struct NFTTransactionProposed {
         id: u256,
         nft_contract: ContractAddress,
         token_id: u256,
@@ -83,7 +83,7 @@ pub mod NFTTransaction {
             self.nft_transactions.entry(tx_id).write(nft_tx_data);
             self.nft_transaction_ids.append().write(tx_id);
             // Emit event
-            self.emit(NFTTransactionCreated { id: tx_id, nft_contract, token_id, recipient });
+            self.emit(NFTTransactionProposed { id: tx_id, nft_contract, token_id, recipient });
             tx_id
         }
 
