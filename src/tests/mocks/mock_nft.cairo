@@ -3,14 +3,6 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IMockNFT<TContractState> {
     fn mint(ref self: TContractState, recipient: ContractAddress, token_id: u256) -> bool;
-    fn owner_of(self: @TContractState, token_id: u256) -> ContractAddress;
-    fn approve(ref self: TContractState, operator: ContractAddress, token_id: u256);
-    fn transfer_from(
-        ref self: TContractState,
-        from: ContractAddress,
-        to: ContractAddress,
-        token_id: u256
-    );
 }
 
 
@@ -66,23 +58,5 @@ pub mod MockNFT {
             true
         }
 
-        fn owner_of(self: @ContractState, token_id: u256) -> ContractAddress {
-            self.erc721.owner_of(token_id)
-        }
-        fn approve(
-            ref self: ContractState,
-            operator: ContractAddress,
-            token_id: u256
-        ) {
-            self.erc721.approve(operator, token_id);
-        }
-        fn transfer_from(
-            ref self: ContractState,
-            from: ContractAddress,
-            to: ContractAddress,
-            token_id: u256
-        ) {
-            self.erc721.transfer_from(from, to, token_id);
-        }
     }
 }
