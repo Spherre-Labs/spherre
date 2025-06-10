@@ -2,7 +2,7 @@ use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
     DeclareResultTrait
 };
-use spherre::interfaces::ierc721::{IERC721Dispatcher};
+use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
@@ -312,7 +312,7 @@ fn test_execute_nft_transaction_successful() {
     assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
 
     // check that the balance of the token in the receiver is the token transaction balance
-    assert(mock_nft.owner_of(token_id) == receiver, 'NFT not transferred');
+    assert(nft_contract.owner_of(token_id) == receiver, 'NFT not transferred');
     
 
     
