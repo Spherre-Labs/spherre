@@ -53,6 +53,7 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
+    fn execute_remove_member_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn execute_member_add_transaction_pub(ref self: TContractState, transaction_id: u256);
 }
 
@@ -296,6 +297,9 @@ pub mod MockContract {
         }
         fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
             self.member_add.member_add_transaction_list()
+        }
+        fn execute_remove_member_transaction_pub(ref self: ContractState, transaction_id: u256) {
+            self.member_remove.execute_remove_member_transaction(transaction_id);
         }
         fn execute_member_add_transaction_pub(ref self: ContractState, transaction_id: u256) {
             self.member_add.execute_member_add_transaction(transaction_id);
