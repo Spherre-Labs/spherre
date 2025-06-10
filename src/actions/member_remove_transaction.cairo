@@ -27,6 +27,7 @@ pub mod MemberRemoveTransaction {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         MemberRemovalProposed: MemberRemovalProposed,
+        MemberRemovalExecuted: MemberRemovalExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -34,10 +35,14 @@ pub mod MemberRemoveTransaction {
         #[key]
         pub transaction_id: u256,
         #[key]
-        pub member_to_remove: ContractAddress,
+        pub member: ContractAddress
+    }
+    #[derive(Drop, starknet::Event)]
+    pub struct MemberRemovalExecuted {
         #[key]
-        pub proposer: ContractAddress,
-        pub timestamp: u64,
+        pub transaction_id: u256,
+        #[key]
+        pub member: ContractAddress
     }
 
 
@@ -53,8 +58,6 @@ pub mod MemberRemoveTransaction {
         fn propose_remove_member_transaction(
             ref self: ComponentState<TContractState>, member_address: ContractAddress
         ) -> u256 {
-            let caller = get_caller_address();
-
             // Get the component states
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
 
@@ -80,9 +83,7 @@ pub mod MemberRemoveTransaction {
                 .emit(
                     MemberRemovalProposed {
                         transaction_id,
-                        member_to_remove: member_address,
-                        proposer: caller,
-                        timestamp: get_block_timestamp(),
+                        member: member_address
                     }
                 );
 
@@ -116,6 +117,36 @@ pub mod MemberRemoveTransaction {
                     array.append(tx);
                 };
             array
+        }
+        fn execute_remove_member_transaction(
+            ref self: ComponentState<TContractState>, transaction_id: u256
+        ) {
+            // Get the transaction (error is thrown if it does not exist or is not a member removal)
+            let member_removal_data = self.get_member_removal_transaction(transaction_id);
+
+            // Get the account data component
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+
+            assert(account_data_comp.is_member(member_removal_data.member_address), Errors::ERR_NOT_MEMBER);
+
+            // Execute the transaction (error is thrown if caller is not an executor
+            // or if transaction is already executed or if transaction is not approved or if contract is paused)
+            let caller = get_caller_address();
+            account_data_comp.execute_transaction(
+                transaction_id,
+                caller
+            );
+
+            // Remove the member from the account data component
+            // TODO: add logic to remove member in account data component
+            // account_data_comp.remove_member(member_removal_data.member_address);
+            // Emit event for member removal
+            self.emit(
+                MemberRemovalExecuted {
+                    transaction_id,
+                    member: member_removal_data.member_address,
+                }
+            );
         }
     }
 }
