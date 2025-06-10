@@ -17,7 +17,7 @@ pub mod NFTTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_contract_address};
+    use starknet::{ContractAddress, get_contract_address, get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -28,16 +28,26 @@ pub mod NFTTransaction {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        NFTTransactionCreated: NFTTransactionCreated
+        NFTTransactionProposed: NFTTransactionProposed,
+        NFTTransactionExecuted: NFTTransactionExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct NFTTransactionCreated {
+    struct NFTTransactionProposed {
         id: u256,
         nft_contract: ContractAddress,
         token_id: u256,
         recipient: ContractAddress
     }
+
+    #[derive(Drop, starknet::Event)]
+    struct NFTTransactionExecuted {
+        id: u256,
+        nft_contract: ContractAddress,
+        token_id: u256,
+        recipient: ContractAddress
+    }
+
 
     #[embeddable_as(NFTTransaction)]
     pub impl NFTTransactionImpl<
@@ -73,7 +83,7 @@ pub mod NFTTransaction {
             self.nft_transactions.entry(tx_id).write(nft_tx_data);
             self.nft_transaction_ids.append().write(tx_id);
             // Emit event
-            self.emit(NFTTransactionCreated { id: tx_id, nft_contract, token_id, recipient });
+            self.emit(NFTTransactionProposed { id: tx_id, nft_contract, token_id, recipient });
             tx_id
         }
 
@@ -102,6 +112,43 @@ pub mod NFTTransaction {
                     array.append(tx);
                 };
             array
+        }
+        fn execute_nft_transaction(ref self: ComponentState<TContractState>, id: u256) {
+            // Get the NFT transaction data (validation carried out)
+            let nft_tx_data = self.get_nft_transaction(id);
+            let caller = get_caller_address();
+
+            let account_address = get_contract_address();
+            // Get the ERC721 dispatcher for the NFT contract
+            let erc721_dispatcher = IERC721Dispatcher {
+                contract_address: nft_tx_data.nft_contract
+            };
+            assert(
+                erc721_dispatcher.owner_of(nft_tx_data.token_id) == account_address,
+                Errors::ERR_NOT_OWNER
+            );
+
+            // Execute the transaction
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+            account_data_comp.execute_transaction(id, caller);
+
+            // Approve the NFT transfer
+            erc721_dispatcher.approve(nft_tx_data.recipient, nft_tx_data.token_id);
+
+            // Transfer the NFT to the recipient
+            erc721_dispatcher
+                .transfer_from(account_address, nft_tx_data.recipient, nft_tx_data.token_id);
+
+            // Emit event for successful execution
+            self
+                .emit(
+                    NFTTransactionExecuted {
+                        id,
+                        nft_contract: nft_tx_data.nft_contract,
+                        token_id: nft_tx_data.token_id,
+                        recipient: nft_tx_data.recipient
+                    }
+                );
         }
     }
 }

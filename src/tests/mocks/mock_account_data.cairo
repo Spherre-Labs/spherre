@@ -57,6 +57,7 @@ pub trait IMockContract<TContractState> {
     fn get_threshold_pub(self: @TContractState) -> (u64, u64);
     fn execute_remove_member_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn execute_member_add_transaction_pub(ref self: TContractState, transaction_id: u256);
+    fn execute_nft_transaction_pub(ref self: TContractState, id: u256);
 }
 
 
@@ -311,6 +312,9 @@ pub mod MockContract {
         }
         fn execute_member_add_transaction_pub(ref self: ContractState, transaction_id: u256) {
             self.member_add.execute_member_add_transaction(transaction_id);
+        }
+        fn execute_nft_transaction_pub(ref self: ContractState, id: u256) {
+            self.nft_transaction.execute_nft_transaction(id);
         }
     }
 
