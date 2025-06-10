@@ -6,7 +6,8 @@ pub mod MemberPermissionTransaction {
     };
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
-    use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl, InternalTrait};
+    use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl};
+    use spherre::account_data::AccountData::InternalTrait as AccountDataInternalTrait;
     use spherre::account_data;
     use spherre::account_data::AccountData::AccountDataImpl;
     use spherre::interfaces::iaccount_data::IAccountData;
@@ -62,6 +63,7 @@ pub mod MemberPermissionTransaction {
             assert(permission_control.is_valid_mask(new_permissions), Errors::ERR_INVALID_PERMISSION_MASK);
 
             // Check if member exists
+            let account_data = get_dep_component!(@self, AccountData);
             let account_data_impl = AccountDataImpl(@account_data);
             assert(account_data_impl.is_member(member), Errors::MEMBER_NOT_FOUND);
 
@@ -74,9 +76,10 @@ pub mod MemberPermissionTransaction {
             let transaction = EditPermissionTransaction { member, new_permissions };
 
             // Create transaction and get ID    
-            let mut account_data_internal = AccountDataInternalImpl(@account_data);
+            let mut account_data_internal = get_dep_component_mut!(ref self, AccountData);
             let tx_id = account_data_internal.create_transaction(TransactionType::MEMBER_PERMISSION_EDIT);
             self.member_permission_transactions.write(tx_id, transaction);
+            self.member_permission_transaction_ids.push(tx_id);
 
             // Emit event
             self.emit(PermissionEditProposed { transaction_id: tx_id, member, new_permissions });
@@ -85,10 +88,8 @@ pub mod MemberPermissionTransaction {
         }
 
         fn get_edit_permission_transaction(self: @ComponentState<TContractState>, transaction_id: u256) -> EditPermissionTransaction {
-            let max_id = self.member_permission_transaction_ids.len().try_into().unwrap();
-            assert(transaction_id < max_id, Errors::TRANSACTION_NOT_FOUND);
-
             let transaction = self.member_permission_transactions.read(transaction_id);
+            assert(!transaction.member.is_zero(), Errors::TRANSACTION_NOT_FOUND);
             transaction
         }
 
