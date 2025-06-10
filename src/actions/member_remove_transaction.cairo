@@ -138,8 +138,7 @@ pub mod MemberRemoveTransaction {
             );
 
             // Remove the member from the account data component
-            // TODO: add logic to remove member in account data component
-            // account_data_comp.remove_member(member_removal_data.member_address);
+            account_data_comp.remove_member(member_removal_data.member_address);
             // Emit event for member removal
             self.emit(
                 MemberRemovalExecuted {
