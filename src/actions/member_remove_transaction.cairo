@@ -5,6 +5,7 @@ pub mod MemberRemoveTransaction {
     use spherre::account_data::AccountData::InternalImpl as AccountDataInternalImpl;
     use spherre::account_data;
     use spherre::components::permission_control;
+    use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction;
@@ -139,6 +140,9 @@ pub mod MemberRemoveTransaction {
 
             // Remove the member from the account data component
             account_data_comp.remove_member(member_removal_data.member_address);
+            // Remove all permissions that the member has
+            let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
+            permission_control_comp.revoke_all_permissions(member_removal_data.member_address);
             // Emit event for member removal
             self.emit(
                 MemberRemovalExecuted {
