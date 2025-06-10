@@ -113,17 +113,20 @@ pub mod NFTTransaction {
                 };
             array
         }
-        fn execute_nft_transaction(
-            ref self: ComponentState<TContractState>, id: u256
-        ) {
+        fn execute_nft_transaction(ref self: ComponentState<TContractState>, id: u256) {
             // Get the NFT transaction data (validation carried out)
             let nft_tx_data = self.get_nft_transaction(id);
             let caller = get_caller_address();
 
             let account_address = get_contract_address();
             // Get the ERC721 dispatcher for the NFT contract
-            let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_tx_data.nft_contract };
-            assert(erc721_dispatcher.owner_of(nft_tx_data.token_id) == account_address, Errors::ERR_NOT_OWNER);
+            let erc721_dispatcher = IERC721Dispatcher {
+                contract_address: nft_tx_data.nft_contract
+            };
+            assert(
+                erc721_dispatcher.owner_of(nft_tx_data.token_id) == account_address,
+                Errors::ERR_NOT_OWNER
+            );
 
             // Execute the transaction
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -133,16 +136,19 @@ pub mod NFTTransaction {
             erc721_dispatcher.approve(nft_tx_data.recipient, nft_tx_data.token_id);
 
             // Transfer the NFT to the recipient
-            erc721_dispatcher.transfer_from(account_address, nft_tx_data.recipient, nft_tx_data.token_id);
+            erc721_dispatcher
+                .transfer_from(account_address, nft_tx_data.recipient, nft_tx_data.token_id);
 
             // Emit event for successful execution
-            self.emit(NFTTransactionExecuted{
-                id,
-                nft_contract: nft_tx_data.nft_contract,
-                token_id: nft_tx_data.token_id,
-                recipient: nft_tx_data.recipient
-            });
-            
+            self
+                .emit(
+                    NFTTransactionExecuted {
+                        id,
+                        nft_contract: nft_tx_data.nft_contract,
+                        token_id: nft_tx_data.token_id,
+                        recipient: nft_tx_data.recipient
+                    }
+                );
         }
     }
 }
