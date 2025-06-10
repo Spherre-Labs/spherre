@@ -1,5 +1,35 @@
+use starknet::{ClassHash, ContractAddress};
+
+#[starknet::interface]
+pub trait ISpherreV2<TContractState> {
+    // Existing functions from V1
+    fn grant_superadmin_role(ref self: TContractState, account: ContractAddress);
+    fn grant_staff_role(ref self: TContractState, account: ContractAddress);
+    fn revoke_superadmin_role(ref self: TContractState, account: ContractAddress);
+    fn revoke_staff_role(ref self: TContractState, account: ContractAddress);
+    fn has_staff_role(self: @TContractState, account: ContractAddress) -> bool;
+    fn has_superadmin_role(self: @TContractState, account: ContractAddress) -> bool;
+    fn pause(ref self: TContractState);
+    fn unpause(ref self: TContractState);
+    fn deploy_account(
+        ref self: TContractState,
+        owner: ContractAddress,
+        name: ByteArray,
+        description: ByteArray,
+        members: Array<ContractAddress>,
+        threshold: u64,
+    ) -> ContractAddress;
+    fn is_deployed_account(self: @TContractState, account: ContractAddress) -> bool;
+    // New functions for class hash management
+    fn update_account_class_hash(ref self: TContractState, new_class_hash: ClassHash);
+    fn get_account_class_hash(self: @TContractState) -> ClassHash;
+
+    // New V2 functions
+    fn get_version(self: @TContractState) -> u8;
+}
+
 #[starknet::contract]
-pub mod Spherre {
+pub mod SpherreV2 {
     use core::hash::{HashStateExTrait, HashStateTrait};
     use core::num::traits::Zero;
     use core::poseidon::PoseidonTrait;
@@ -11,27 +41,30 @@ pub mod Spherre {
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use spherre::account::SpherreAccount;
     use spherre::errors::Errors;
-    use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::SpherreAdminRoles;
     use starknet::storage::{
         Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
-        Vec, VecTrait,
+        Vec,
     };
     use starknet::syscalls::deploy_syscall;
     use starknet::{
         ClassHash, ContractAddress, get_block_number, get_block_timestamp, get_caller_address,
         get_contract_address,
     };
+    use super::ISpherreV2;
 
     // Interface IDs
 
     #[storage]
     struct Storage {
         owner: ContractAddress,
-        // Class hash of the multisig account
+        // Class hash of the multisig account contract to be deployed
         account_class_hash: ClassHash,
+        // Array to store all deployed account contract addresses
+        accounts: Vec<ContractAddress>,
+        // Mapping to quickly check if an address is a deployed account
+        is_account: Map<ContractAddress, bool>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -49,6 +82,7 @@ pub mod Spherre {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
+        AccountDeployed: AccountDeployed,
         AccountClassHashUpdated: AccountClassHashUpdated,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
@@ -95,12 +129,12 @@ pub mod Spherre {
     impl AccessControlMixinImpl = AccessControlComponent::AccessControlMixinImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
+    // Upgradeable component implementation
+    pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
     // Implement SRC5 mixin
     impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
     impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
-
-    // Upgradeable component implementation
-    pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[derive(Drop, starknet::Event)]
     struct AccountDeployed {
@@ -127,7 +161,7 @@ pub mod Spherre {
 
     // Implement the ISpherre interface
     #[abi(embed_v0)]
-    pub impl SpherreImpl of ISpherre<ContractState> {
+    pub impl SpherreImpl of ISpherreV2<ContractState> {
         fn grant_superadmin_role(ref self: ContractState, account: ContractAddress) {
             self.ownable.assert_only_owner();
             self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, account);
@@ -245,6 +279,14 @@ pub mod Spherre {
             self.account_class_hash.read()
         }
 
+        // New V2 functions
+        fn get_version(self: @ContractState) -> u8 {
+            2 // Return the version number of the contract
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // This function can only be called by super_admin
             self.assert_only_superadmin();

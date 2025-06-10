@@ -269,5 +269,20 @@ pub mod PermissionControl {
             self.revoke_voter_permission(member);
             self.revoke_executor_permission(member);
         }
+        fn assign_permissions_from_enums(
+            ref self: ComponentState<TContractState>,
+            member: ContractAddress,
+            permissions: Array<PermissionEnum>
+        ) {
+            for index in 0
+                ..permissions
+                    .len() {
+                        match *permissions.at(index) {
+                            PermissionEnum::PROPOSER => self.assign_proposer_permission(member),
+                            PermissionEnum::VOTER => self.assign_voter_permission(member),
+                            PermissionEnum::EXECUTOR => self.assign_executor_permission(member),
+                        }
+                    };
+        }
     }
 }

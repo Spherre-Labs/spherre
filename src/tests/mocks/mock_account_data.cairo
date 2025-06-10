@@ -11,6 +11,10 @@ pub trait IMockContract<TContractState> {
     fn reject_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
     fn update_transaction_status(ref self: TContractState, tx_id: u256, status: TransactionStatus);
     fn add_member_pub(ref self: TContractState, member: ContractAddress);
+    fn is_member_pub(self: @TContractState, member: ContractAddress) -> bool;
+    fn has_permission_pub(
+        self: @TContractState, member: ContractAddress, permission: felt252
+    ) -> bool;
     fn assign_proposer_permission_pub(ref self: TContractState, member: ContractAddress);
     fn assign_voter_permission_pub(ref self: TContractState, member: ContractAddress);
     fn get_transaction_pub(self: @TContractState, id: u256) -> Transaction;
@@ -49,6 +53,10 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
+    fn execute_threshold_change_transaction_pub(ref self: TContractState, transaction_id: u256);
+    fn get_threshold_pub(self: @TContractState) -> (u64, u64);
+    fn execute_remove_member_transaction_pub(ref self: TContractState, transaction_id: u256);
+    fn execute_member_add_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn propose_member_permission_transaction_pub(
         ref self: TContractState, member: ContractAddress, new_permissions: u8
     ) -> u256;
@@ -193,6 +201,14 @@ pub mod MockContract {
         fn add_member_pub(ref self: ContractState, member: ContractAddress) {
             self.account_data._add_member(member);
         }
+        fn is_member_pub(self: @ContractState, member: ContractAddress) -> bool {
+            self.account_data.is_member(member)
+        }
+        fn has_permission_pub(
+            self: @ContractState, member: ContractAddress, permission: felt252
+        ) -> bool {
+            self.permission_control.has_permission(member, permission)
+        }
         fn assign_proposer_permission_pub(ref self: ContractState, member: ContractAddress) {
             self.permission_control.assign_proposer_permission(member);
         }
@@ -299,6 +315,18 @@ pub mod MockContract {
         }
         fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
             self.member_add.member_add_transaction_list()
+        }
+        fn execute_threshold_change_transaction_pub(ref self: ContractState, transaction_id: u256) {
+            self.change_threshold.execute_threshold_change_transaction(transaction_id);
+        }
+        fn get_threshold_pub(self: @ContractState) -> (u64, u64) {
+            self.account_data.get_threshold()
+        }
+        fn execute_remove_member_transaction_pub(ref self: ContractState, transaction_id: u256) {
+            self.member_remove.execute_remove_member_transaction(transaction_id);
+        }
+        fn execute_member_add_transaction_pub(ref self: ContractState, transaction_id: u256) {
+            self.member_add.execute_member_add_transaction(transaction_id);
         }
         fn propose_edit_permission_transaction_pub(
             ref self: ContractState, member: ContractAddress, new_permissions: u8
