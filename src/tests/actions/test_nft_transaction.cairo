@@ -283,7 +283,8 @@ fn test_execute_nft_transaction_successful() {
     // Set Threshold
     mock_contract.set_threshold_pub(1);
     // Propose Transaction
-    let tx_id = mock_contract.propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     // Checks
@@ -313,9 +314,6 @@ fn test_execute_nft_transaction_successful() {
 
     // check that the balance of the token in the receiver is the token transaction balance
     assert(nft_contract.owner_of(token_id) == receiver, 'NFT not transferred');
-    
-
-    
 }
 
 
@@ -336,7 +334,6 @@ fn test_execute_nft_transaction_fail_if_not_approved() {
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-    
 
     // Propose NFT transaction
     let tx_id = mock_contract
@@ -345,7 +342,6 @@ fn test_execute_nft_transaction_fail_if_not_approved() {
     // Execute the NFT transaction
     // This should fail because the transaction is not approved
     mock_contract.execute_nft_transaction_pub(tx_id);
-
 }
 
 #[test]

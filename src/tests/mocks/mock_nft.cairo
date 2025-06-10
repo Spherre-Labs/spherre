@@ -6,13 +6,12 @@ pub trait IMockNFT<TContractState> {
 }
 
 
-
 #[starknet::contract]
 pub mod MockNFT {
-    use super::IMockNFT;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use starknet::ContractAddress;
+    use super::IMockNFT;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -40,23 +39,18 @@ pub mod MockNFT {
     }
 
     #[constructor]
-    fn constructor(
-        ref self: ContractState,
-    ) {
+    fn constructor(ref self: ContractState,) {
         let name = "MockNFT";
         let symbol = "MNFT";
         let base_uri = "https://api.example.com/v1/";
 
         self.erc721.initializer(name, symbol, base_uri);
-        
     }
     #[abi(embed_v0)]
     impl MockNFTImpl of IMockNFT<ContractState> {
         fn mint(ref self: ContractState, recipient: ContractAddress, token_id: u256) -> bool {
-
             self.erc721.mint(recipient, token_id);
             true
         }
-
     }
 }
