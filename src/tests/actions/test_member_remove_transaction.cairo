@@ -221,7 +221,6 @@ fn test_execute_remove_member_transaction_successful() {
     let member_removal_transaction = mock_contract.get_member_removal_transaction_pub(tx_id);
     assert(member_removal_transaction.member_address == member, 'Member is Invalid');
 
-
     // Approve Transaction
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.approve_transaction_pub(tx_id, caller);
@@ -238,22 +237,18 @@ fn test_execute_remove_member_transaction_successful() {
     assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
 
     // Check that the member has been removed
-    assert(
-        !mock_contract.is_member_pub(member),
-        'Member should have been removed'
-    );
+    assert(!mock_contract.is_member_pub(member), 'Member should have been removed');
     // Check that member does not have permissions
-    assert!(!mock_contract.has_permission_pub(
-        member,
-        Permissions::PROPOSER,
-    ), "Member should not have proposer permission");
-    assert!(!mock_contract.has_permission_pub(
-        member,
-        Permissions::VOTER,
-    ), "Member should not have voter permission");
-    assert!(!mock_contract.has_permission_pub(
-        member,
-        Permissions::EXECUTOR,
-    ), "Member should not have executor permission");
-
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::PROPOSER,),
+        "Member should not have proposer permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::VOTER,),
+        "Member should not have voter permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::EXECUTOR,),
+        "Member should not have executor permission"
+    );
 }

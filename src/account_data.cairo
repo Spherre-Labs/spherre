@@ -349,9 +349,15 @@ pub mod AccountData {
             // and removes the last member
             if i < current_members - 1 {
                 let last_member = self.members.entry(current_members - 1).read();
-                self.members.entry(i).write(last_member); // Overwrite the found member with the last member
+                self
+                    .members
+                    .entry(i)
+                    .write(last_member); // Overwrite the found member with the last member
             }
-            self.members.entry(current_members - 1).write(Zero::zero()); // Clear the last member's slot
+            self
+                .members
+                .entry(current_members - 1)
+                .write(Zero::zero()); // Clear the last member's slot
             // decrement the members count
             self.members_count.write(current_members - 1);
         }
