@@ -101,7 +101,7 @@ fn test_member_remove_proposal_not_member() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Propose member removal transaction
-    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+    mock_contract.propose_remove_member_transaction_pub(member);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
