@@ -1,9 +1,9 @@
 #[starknet::component]
 pub mod ChangeThresholdTransaction {
     use core::num::traits::Zero;
-    use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
-    use openzeppelin_security::pausable::PausableComponent;
-    use spherre::account_data::AccountData::{AccountDataImpl, InternalImpl};
+    use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
+    use openzeppelin::security::PausableComponent;
+    use spherre::account_data::AccountData::{AccountDataImpl, InternalImpl, InternalTrait};
     use spherre::account_data::AccountData;
     use spherre::components::permission_control::PermissionControl;
     use spherre::errors::Errors;

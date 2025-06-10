@@ -20,38 +20,109 @@ version = "0.2.0"
 source = "git+https://github.com/keep-starknet-strange/alexandria.git?tag=v0.2.0#bcc4fa417abbc8b067ae6f2d382b127006b5077c"
 
 [[package]]
+name = "openzeppelin"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_finance",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+ "openzeppelin_merkle_tree",
+ "openzeppelin_presets",
+ "openzeppelin_security",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
+
+[[package]]
 name = "openzeppelin_access"
-version = "1.0.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:a39a4ea1582916c637bf7e3aee0832c3fe1ea3a3e39191955e8dc39d08327f9b"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
 dependencies = [
  "openzeppelin_introspection",
  "openzeppelin_utils",
 ]
 
 [[package]]
+name = "openzeppelin_account"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_finance"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_token",
+]
+
+[[package]]
+name = "openzeppelin_governance"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+]
+
+[[package]]
 name = "openzeppelin_introspection"
-version = "1.0.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:34e088ecf19e0b3012481a29f1fbb20e600540cb9a5db1c3002a97ebb7f5a32a"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+
+[[package]]
+name = "openzeppelin_merkle_tree"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+
+[[package]]
+name = "openzeppelin_presets"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_finance",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
 
 [[package]]
 name = "openzeppelin_security"
-version = "1.0.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:1deb811a239c4f9cc28fc302039e2ffcb19911698a8c612487207448d70d2e6e"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+
+[[package]]
+name = "openzeppelin_token"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
+dependencies = [
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
 
 [[package]]
 name = "openzeppelin_upgrades"
-version = "1.0.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:36f7a03e7e7111577916aacf31f88ad0053de20f33ee10b0ab3804849c3aa373"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
 
 [[package]]
 name = "openzeppelin_utils"
-version = "1.0.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:fd348b31c4a4407add33adc3c2b8f26dca71dbd7431faaf726168f37a91db0c1"
+version = "0.18.0"
+source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.18.0#2f37306b490e63c0afa9e33ad192ba428141b487"
 
 [[package]]
 name = "snforge_scarb_plugin"
@@ -73,9 +144,6 @@ dependencies = [
  "alexandria_data_structures",
  "alexandria_sorting",
  "alexandria_storage",
- "openzeppelin_access",
- "openzeppelin_introspection",
- "openzeppelin_security",
- "openzeppelin_upgrades",
+ "openzeppelin",
  "snforge_std",
 ]

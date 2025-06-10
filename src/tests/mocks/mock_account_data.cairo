@@ -300,15 +300,15 @@ pub mod MockContract {
         fn member_add_transaction_list_pub(self: @ContractState) -> Array<MemberAddData> {
             self.member_add.member_add_transaction_list()
         }
-        fn propose_member_permission_transaction_pub(
+        fn propose_edit_permission_transaction_pub(
             ref self: ContractState, member: ContractAddress, new_permissions: u8
         ) -> u256 {
-            self.member_permission.propose_member_permission_transaction(member, new_permissions)
+            self.member_permission.propose_edit_permission_transaction(member, new_permissions)
         }
-        fn get_member_permission_transaction_pub(
+        fn get_edit_permission_transaction_pub(
             self: @ContractState, transaction_id: u256
-        ) -> (ContractAddress, u8) {
-            self.member_permission.get_member_permission_transaction(transaction_id)
+        ) -> EditPermissionTransaction {
+            self.member_permission.get_edit_permission_transaction(transaction_id)
         }
     }
 
