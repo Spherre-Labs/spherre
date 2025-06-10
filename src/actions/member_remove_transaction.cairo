@@ -15,7 +15,7 @@ pub mod MemberRemoveTransaction {
         StoragePointerReadAccess, StoragePointerWriteAccess, Map, StoragePathEntry, Vec, VecTrait,
         MutableVecTrait
     };
-    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+    use starknet::{ContractAddress, get_caller_address};
 
     #[storage]
     pub struct Storage {

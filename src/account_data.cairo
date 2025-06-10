@@ -329,6 +329,32 @@ pub mod AccountData {
             self.members.entry(current_members).write(address);
             self.members_count.write(current_members + 1);
         }
+        fn remove_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
+            assert(!address.is_zero(), 'Zero Address Caller');
+            let mut current_members = self.members_count.read();
+            let mut i = 0;
+            let mut found = false;
+
+            while i < current_members {
+                let current_member = self.members.entry(i).read();
+                if current_member == address {
+                    found = true;
+                    break;
+                }
+                i += 1;
+            };
+
+            assert(found, Errors::ERR_NOT_MEMBER);
+            // Swaps the found member with the last member
+            // and removes the last member
+            if i < current_members - 1 {
+                let last_member = self.members.entry(current_members - 1).read();
+                self.members.entry(i).write(last_member); // Overwrite the found member with the last member
+            }
+            self.members.entry(current_members - 1).write(Zero::zero()); // Clear the last member's slot
+            // decrement the members count
+            self.members_count.write(current_members - 1);
+        }
 
         fn _get_members_count(self: @ComponentState<TContractState>) -> u64 {
             self.members_count.read()
