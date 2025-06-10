@@ -10,4 +10,5 @@ pub trait IMemberRemoveTransaction<TContractState> {
         self: @TContractState, transaction_id: u256
     ) -> MemberRemoveData;
     fn member_removal_transaction_list(self: @TContractState) -> Array<MemberRemoveData>;
+    fn execute_remove_member_transaction(ref self: TContractState, transaction_id: u256);
 }
