@@ -181,9 +181,114 @@ fn test_member_removal_transaction_list_multiple_transactions() {
 }
 
 #[test]
+#[should_panic(expected: ('Cannot remove last voter',))]
+fn test_propose_remove_member_transaction_last_voter() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = proposer_and_executor();
+    let member: ContractAddress = member_to_remove();
+
+    // Add the caller and member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role to member
+    mock_contract.assign_voter_permission_pub(member);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
+    mock_contract.set_threshold_pub(1);
+
+    // Propose Transaction
+    mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Cannot remove last proposer',))]
+fn test_propose_remove_member_transaction_last_proposer() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = proposer_and_executor();
+    let member: ContractAddress = member_to_remove();
+
+    // Add the caller and member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
+    mock_contract.assign_voter_permission_pub(member);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
+    mock_contract.set_threshold_pub(1);
+
+    // Propose Transaction (should panic)
+    mock_contract.propose_remove_member_transaction_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Cannot remove last executor',))]
+fn test_propose_remove_member_transaction_last_executor() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = proposer_and_executor();
+    let member: ContractAddress = member_to_remove();
+
+    // Add the caller and member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(member);
+    // Set Threshold
+    mock_contract.set_threshold_pub(1);
+
+    // Propose Transaction (should panic)
+    mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('lower threshold',))]
+fn test_propose_remove_member_transaction_with_threshold_equal_to_number_of_voter() {
+    let mock_contract = deploy_mock_contract();
+
+    let caller: ContractAddress = proposer_and_executor();
+    let member: ContractAddress = member_to_remove();
+
+    // Add the caller and member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    // Assign Proposer Role
+    mock_contract.assign_proposer_permission_pub(caller);
+    // Assign Voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+    // Assign Voter Role to member
+    mock_contract.assign_voter_permission_pub(member);
+    // Assign Executor Role
+    mock_contract.assign_executor_permission_pub(caller);
+    // Set Threshold
+    mock_contract.set_threshold_pub(2);
+
+    // Propose Transaction (should panic)
+    mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
 fn test_execute_remove_member_transaction_successful() {
     let mock_contract = deploy_mock_contract();
-    let token = deploy_mock_token();
 
     let caller: ContractAddress = proposer_and_executor();
     let member: ContractAddress = member_to_remove();
@@ -228,7 +333,7 @@ fn test_execute_remove_member_transaction_successful() {
 
     // Execute the transaction
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.execute_token_transaction_pub(tx_id);
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     // Checks
@@ -252,3 +357,4 @@ fn test_execute_remove_member_transaction_successful() {
         "Member should not have executor permission"
     );
 }
+
