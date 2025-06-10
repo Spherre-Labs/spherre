@@ -29,13 +29,13 @@ pub mod TokenTransaction {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        TokenTransactionCreated: TokenTransactionCreated,
+        TokenTransactionProposed: TokenTransactionProposed,
         TokenTransactionExecuted: TokenTransactionExecuted
     }
 
 
     #[derive(Drop, starknet::Event)]
-    struct TokenTransactionCreated {
+    struct TokenTransactionProposed {
         #[key]
         id: u256,
         token: ContractAddress,
@@ -92,7 +92,7 @@ pub mod TokenTransaction {
             self.token_transaction_ids.append().write(tx_id);
 
             // emit event
-            self.emit(TokenTransactionCreated { id: tx_id, token, amount, recipient });
+            self.emit(TokenTransactionProposed { id: tx_id, token, amount, recipient });
             tx_id
         }
         fn get_token_transaction(
