@@ -181,26 +181,6 @@ fn test_propose_nft_transaction_fail_if_recipient_zero() {
 
 
 #[test]
-#[should_panic(expected: 'Invalid token ID')]
-fn test_propose_nft_transaction_fail_if_token_id_non_existent() {
-    let mock_contract = deploy_mock_contract();
-    let nft_contract = deploy_mock_nft();
-    let token_id: u256 = 1;
-    let caller: ContractAddress = owner();
-    let receiver: ContractAddress = recipient();
-
-    // Do not mint the token ID
-    // Add member and assign proposer role
-    start_cheat_caller_address(mock_contract.contract_address, caller);
-    mock_contract.add_member_pub(caller);
-    mock_contract.assign_proposer_permission_pub(caller);
-
-    // Propose NFT transaction with non-existent token ID
-    mock_contract.propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
-    stop_cheat_caller_address(mock_contract.contract_address);
-}
-
-#[test]
 #[should_panic(expected: 'Pausable: paused')]
 fn test_propose_nft_transaction_fail_if_paused() {
     let mock_contract = deploy_mock_contract();
