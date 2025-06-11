@@ -1894,7 +1894,7 @@ const deployedContracts = {
   sepolia: {
     Spherre: {
       address:
-        "0x4b3ccdb9e798270a9d720f09c69ed3b98d69ca8f8b54eed3613a83bf70ea14e",
+        "0x3bfb33ad8b7ba73a0ad00ef4291eb48962ccc8de62ea18c94792b25c529c1f4",
       abi: [
         {
           type: "impl",
@@ -2464,7 +2464,7 @@ const deployedContracts = {
     },
     SpherreAccount: {
       address:
-        "0x6b5033dffd7d1b45439694fff66b25308c02759630bc5dcc7cbffefcfaa9ead",
+        "0x43790311464bff25fb852e4e82435bb56e5ae9e09b629e696d90054bb5caf10",
       abi: [
         {
           type: "impl",
