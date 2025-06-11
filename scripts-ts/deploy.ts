@@ -3,9 +3,12 @@ import {
   executeDeployCalls,
   exportDeployments,
   deployer,
+  networkName,
 } from "./deploy-contract";
-import { green } from "./helpers/colorize-log";
-import { stark } from "starknet";
+import { green, red, yellow } from "./helpers/colorize-log";
+import { stark, constants } from "starknet";
+import path from "path";
+import fs from "fs";
 
 const deployScript = async (): Promise<void> => {
   // Deploy the Spherre contract
@@ -16,7 +19,7 @@ const deployScript = async (): Promise<void> => {
       owner: deployer.address,
     },
   });
-  // Deploy a SpherreAccount contract to get the classhash
+  // Deploy a SpherreAccount contract to get the classhash for spherre main contract
   // The members
   let mockMembers = [
     deployer.address,
@@ -38,24 +41,57 @@ const deployScript = async (): Promise<void> => {
       threshold,
     },
   });
+};
+const updateCallScript = async (): Promise<void> => {
+  const filePath = path.resolve(
+    __dirname,
+    `../deployments/${networkName}_latest.json`
+  );
+  if (!fs.existsSync(filePath)) {
+    console.log(
+      red(`No deployment file found at ${filePath}. cannot update classHash`)
+    );
+    return;
+  }
+  const content: Record<
+    string,
+    {
+      contract: string;
+      address: string;
+      classHash: string;
+    }
+  > = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const spherreAccountClassHash = content["SpherreAccount"].classHash;
+  const spherreAddress = content["Spherre"].address;
   // Update the Spherre contract with the classHash of the SpherreAccount contract
   console.log(
-    green("Updating Spherre contract with SpherreAccount classHash...")
+    yellow(
+      "Adding SpherreAccount classHash to spherre contract for proxy deployment..."
+    )
   );
-  await deployer.execute([
+  await deployer.execute(
+    [
+      {
+        contractAddress: spherreAddress,
+        entrypoint: "update_account_class_hash",
+        calldata: [spherreAccountClassHash],
+      },
+    ],
     {
-      contractAddress: address,
-      entrypoint: "update_account_class_hash",
-      calldata: [classHash],
-    },
-  ]);
+      version: constants.TRANSACTION_VERSION.V3,
+    }
+  );
+  console.log(
+    green("SpherreAccount classHash added to Spherre contract successfully!")
+  );
 };
-
 const main = async (): Promise<void> => {
   try {
     await deployScript();
     await executeDeployCalls();
     exportDeployments();
+    // Update ClassHash
+    await updateCallScript();
 
     console.log(green("All Setup Done!"));
   } catch (err) {

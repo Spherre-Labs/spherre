@@ -327,4 +327,5 @@ export {
   exportDeployments,
   executeDeployCalls,
   resetDeployments,
+  networkName,
 };
