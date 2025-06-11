@@ -10,6 +10,7 @@ import { stark } from "starknet";
 
 const deployScript = async (): Promise<void> => {
   // Deploy the Spherre contract
+  console.log(green("Deploying Spherre contract..."));
   let {address} = await deployContract({
     contract: "Spherre",
     constructorArgs: {
@@ -26,7 +27,8 @@ const deployScript = async (): Promise<void> => {
   // The threshold
   let threshold = 2;
   // Deploy the SpherreAccount contract
-  await deployContract({
+  console.log(green("Deploying SpherreAccount contract..."));
+  let {classHash} = await deployContract({
     contract: "SpherreAccount",
     constructorArgs: {
       deployer: deployer.address,
@@ -37,6 +39,15 @@ const deployScript = async (): Promise<void> => {
       threshold,
     },
   });
+  // Update the Spherre contract with the classHash of the SpherreAccount contract
+  console.log(green("Updating Spherre contract with SpherreAccount classHash..."));
+  await deployer.execute([
+    {
+      contractAddress: address,
+      entrypoint: "updateAccountClassHash",
+      calldata: [classHash],
+    },
+  ]);
 };
 
 const main = async (): Promise<void> => {

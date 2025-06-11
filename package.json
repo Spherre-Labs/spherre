@@ -1,5 +1,5 @@
 {
-  "name": "nift",
+  "name": "spherre",
   "version": "0.0.1",
   "scripts": {
     "chain": "starknet-devnet --seed 0 --account-class cairo1",
