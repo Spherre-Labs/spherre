@@ -44,7 +44,7 @@ const deployScript = async (): Promise<void> => {
   await deployer.execute([
     {
       contractAddress: address,
-      entrypoint: "updateAccountClassHash",
+      entrypoint: "update_account_class_hash",
       calldata: [classHash],
     },
   ]);
