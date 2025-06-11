@@ -78,8 +78,8 @@ pub mod MemberPermissionTransaction {
             // Create transaction and get ID    
             let mut account_data_internal = get_dep_component_mut!(ref self, AccountData);
             let tx_id = account_data_internal.create_transaction(TransactionType::MEMBER_PERMISSION_EDIT);
-            self.member_permission_transactions.write(tx_id, transaction);
             self.member_permission_transaction_ids.append().write(tx_id);
+            self.member_permission_transactions.write(tx_id, transaction);
 
             // Emit event
             self.emit(PermissionEditProposed { transaction_id: tx_id, member, new_permissions });
