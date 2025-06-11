@@ -70,7 +70,7 @@ pub mod MemberPermissionTransaction {
             // Check if new permissions differ from current
             let current_permissions = permission_control.get_member_permissions(member);
             let current_mask = permission_control.permissions_to_mask(current_permissions);
-            assert(new_permissions != current_mask, Errors::ERR_INVALID_PERMISSION_MASK);
+            assert(new_permissions != current_mask, Errors::ERR_SAME_PERMISSIONS);
 
             // Create transaction
             let transaction = EditPermissionTransaction { member, new_permissions };
@@ -79,7 +79,7 @@ pub mod MemberPermissionTransaction {
             let mut account_data_internal = get_dep_component_mut!(ref self, AccountData);
             let tx_id = account_data_internal.create_transaction(TransactionType::MEMBER_PERMISSION_EDIT);
             self.member_permission_transactions.write(tx_id, transaction);
-            self.member_permission_transaction_ids.push(tx_id);
+            self.member_permission_transaction_ids.append().write(tx_id);
 
             // Emit event
             self.emit(PermissionEditProposed { transaction_id: tx_id, member, new_permissions });

@@ -53,6 +53,7 @@ pub mod Errors {
     pub const ERR_ALREADY_A_MEMBER: felt252 = 'Address is already a member';
     pub const ERR_NON_ZERO_MEMBER_ADDRESS: felt252 = 'Member address is zero';
 
+    pub const ERR_SAME_PERMISSIONS: felt252 = 'Permission unchanged';
 
     // errors for member remove transaction
     pub const ERR_CANNOT_REMOVE_LAST_VOTER: felt252 = 'Cannot remove last voter';
