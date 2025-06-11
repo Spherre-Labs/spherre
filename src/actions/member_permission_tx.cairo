@@ -56,7 +56,7 @@ pub mod MemberPermissionTransaction {
             pausable.assert_not_paused();
 
             // Validate inputs
-            assert(member.is_non_zero(), Errors::ERR_NON_ZERO_MEMBER_ADDRESS);
+            assert(!member.is_zero(), Errors::ERR_ZERO_MEMBER_ADDRESS);
 
             // Check if permission mask is valid
             let permission_control = get_dep_component!(@self, PermissionControl);
