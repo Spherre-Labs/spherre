@@ -1,6 +1,6 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData
+    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction
 };
 use starknet::ContractAddress;
 
@@ -58,6 +58,12 @@ pub trait IMockContract<TContractState> {
     fn execute_remove_member_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn execute_member_add_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn execute_nft_transaction_pub(ref self: TContractState, id: u256);
+    fn propose_edit_permission_transaction_pub(
+        ref self: TContractState, member: ContractAddress, new_permissions: u8
+    ) -> u256;
+    fn get_edit_permission_transaction_pub(
+        self: @TContractState, transaction_id: u256
+    ) -> EditPermissionTransaction;
 }
 
 
@@ -68,6 +74,7 @@ pub mod MockContract {
     use spherre::account_data::AccountData;
     use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
     use spherre::actions::member_add_transaction::MemberAddTransaction;
+    use spherre::actions::member_permission_tx::MemberPermissionTransaction;
     use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
     use spherre::actions::token_transaction::TokenTransaction;
@@ -77,6 +84,7 @@ pub mod MockContract {
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
         ThresholdChangeData, MemberRemoveData, MemberAddData
     };
+    use spherre::types::{EditPermissionTransaction};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
 
@@ -90,6 +98,9 @@ pub mod MockContract {
     );
     component!(path: MemberRemoveTransaction, storage: member_remove, event: MemberRemoveEvent);
     component!(path: MemberAddTransaction, storage: member_add, event: MemberAddEvent);
+    component!(
+        path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent
+    );
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
@@ -123,6 +134,9 @@ pub mod MockContract {
     pub impl MemberAddTransactionImpl =
         MemberAddTransaction::MemberAddTransaction<ContractState>;
 
+    #[abi(embed_v0)]
+    pub impl MemberPermissionTransactionImpl =
+        MemberPermissionTransaction::MemberPermissionTransaction<ContractState>;
 
     #[storage]
     pub struct Storage {
@@ -142,6 +156,8 @@ pub mod MockContract {
         pub member_remove: MemberRemoveTransaction::Storage,
         #[substorage(v0)]
         pub member_add: MemberAddTransaction::Storage,
+        #[substorage(v0)]
+        pub member_permission: MemberPermissionTransaction::Storage,
     }
 
     #[event]
@@ -163,6 +179,8 @@ pub mod MockContract {
         MemberRemoveEvent: MemberRemoveTransaction::Event,
         #[flat]
         MemberAddEvent: MemberAddTransaction::Event,
+        #[flat]
+        MemberPermissionEvent: MemberPermissionTransaction::Event,
     }
 
     #[abi(embed_v0)]
@@ -315,6 +333,16 @@ pub mod MockContract {
         }
         fn execute_nft_transaction_pub(ref self: ContractState, id: u256) {
             self.nft_transaction.execute_nft_transaction(id);
+        }
+        fn propose_edit_permission_transaction_pub(
+            ref self: ContractState, member: ContractAddress, new_permissions: u8
+        ) -> u256 {
+            self.member_permission.propose_edit_permission_transaction(member, new_permissions)
+        }
+        fn get_edit_permission_transaction_pub(
+            self: @ContractState, transaction_id: u256
+        ) -> EditPermissionTransaction {
+            self.member_permission.get_edit_permission_transaction(transaction_id)
         }
     }
 
