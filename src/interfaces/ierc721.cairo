@@ -105,5 +105,8 @@ pub trait IERC721<TContractState> {
     ///
     /// # Parameters
     /// * `token_id` - The unique identifier of the token
+    ///
+    /// # Returns
+    /// * `ByteArray` The URI of the specified token as a byte array
     fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
 }
