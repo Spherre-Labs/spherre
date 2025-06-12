@@ -60,4 +60,7 @@ pub mod Errors {
     pub const ERR_CANNOT_REMOVE_LAST_PROPOSER: felt252 = 'Cannot remove last proposer';
     pub const ERR_CANNOT_REMOVE_LAST_EXECUTOR: felt252 = 'Cannot remove last executor';
     pub const ERR_CANNOT_REMOVE_MEMBER_WITH_THRESHOLD: felt252 = 'lower threshold';
+
+    // errors for member permission transaction
+    pub const ERR_INVALID_MEMBER_PERMISSION_TRANSACTION: felt252 = 'Invalid edit permission txn';
 }

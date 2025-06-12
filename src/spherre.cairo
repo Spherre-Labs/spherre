@@ -31,7 +31,7 @@ pub mod Spherre {
     struct Storage {
         owner: ContractAddress,
         // Class hash of the multisig account contract to be deployed
-        account_class_hash: ClassHash,git add 
+        account_class_hash: ClassHash,
         // Array to store all deployed account contract addresses
         accounts: Vec<ContractAddress>,
         // Mapping to quickly check if an address is a deployed account

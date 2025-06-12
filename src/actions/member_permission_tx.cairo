@@ -1,24 +1,32 @@
+//! This module implements the MemberPermissionTransaction component, which allows for proposing and
+//! managing permission edit transactions for members in a Starknet-based application.
+//! It includes methods for proposing, retrieving, and managing member permission edit transactions.
+//!
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+//! `IEditPermissionTransaction`.
+
 #[starknet::component]
 pub mod MemberPermissionTransaction {
-    use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess, StorageMapWriteAccess, StorageMapReadAccess
-    };
-    use openzeppelin::security::pausable::PausableComponent;
+    use core::num::traits::Zero;
     use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
-    use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl};
-    use spherre::account_data::AccountData::InternalTrait as AccountDataInternalTrait;
-    use spherre::account_data;
+    use openzeppelin::security::pausable::PausableComponent;
     use spherre::account_data::AccountData::AccountDataImpl;
-    use spherre::interfaces::iaccount_data::IAccountData;
+    use spherre::account_data::AccountData::InternalTrait as AccountDataInternalTrait;
+    use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl};
+    use spherre::account_data;
     use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
     use spherre::components::permission_control;
-    use spherre::types::{EditPermissionTransaction, TransactionType};
     use spherre::errors::Errors;
-    use spherre::interfaces::ipermission_control::IPermissionControl;
+    use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction;
+    use spherre::interfaces::ipermission_control::IPermissionControl;
+    use spherre::types::{EditPermissionTransaction, TransactionType};
     use starknet::ContractAddress;
-    use core::num::traits::Zero;
+    use starknet::storage::{
+        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
+        StoragePointerWriteAccess
+    };
 
     #[storage]
     pub struct Storage {
@@ -50,7 +58,9 @@ pub mod MemberPermissionTransaction {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IEditPermissionTransaction<ComponentState<TContractState>> {
-        fn propose_edit_permission_transaction(ref self: ComponentState<TContractState>, member: ContractAddress, new_permissions: u8) -> u256 {
+        fn propose_edit_permission_transaction(
+            ref self: ComponentState<TContractState>, member: ContractAddress, new_permissions: u8
+        ) -> u256 {
             // Pause guard
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
@@ -60,12 +70,14 @@ pub mod MemberPermissionTransaction {
 
             // Check if permission mask is valid
             let permission_control = get_dep_component!(@self, PermissionControl);
-            assert(permission_control.is_valid_mask(new_permissions), Errors::ERR_INVALID_PERMISSION_MASK);
+            assert(
+                permission_control.is_valid_mask(new_permissions),
+                Errors::ERR_INVALID_PERMISSION_MASK
+            );
 
             // Check if member exists
             let account_data = get_dep_component!(@self, AccountData);
-            let account_data_impl = AccountDataImpl(@account_data);
-            assert(account_data_impl.is_member(member), Errors::MEMBER_NOT_FOUND);
+            assert(account_data.is_member(member), Errors::MEMBER_NOT_FOUND);
 
             // Check if new permissions differ from current
             let current_permissions = permission_control.get_member_permissions(member);
@@ -75,11 +87,12 @@ pub mod MemberPermissionTransaction {
             // Create transaction
             let transaction = EditPermissionTransaction { member, new_permissions };
 
-            // Create transaction and get ID    
+            // Create transaction and get ID
             let mut account_data_internal = get_dep_component_mut!(ref self, AccountData);
-            let tx_id = account_data_internal.create_transaction(TransactionType::MEMBER_PERMISSION_EDIT);
+            let tx_id = account_data_internal
+                .create_transaction(TransactionType::MEMBER_PERMISSION_EDIT);
             self.member_permission_transaction_ids.append().write(tx_id);
-            self.member_permission_transactions.write(tx_id, transaction);
+            self.member_permission_transactions.entry(tx_id).write(transaction);
 
             // Emit event
             self.emit(PermissionEditProposed { transaction_id: tx_id, member, new_permissions });
@@ -87,21 +100,30 @@ pub mod MemberPermissionTransaction {
             tx_id
         }
 
-        fn get_edit_permission_transaction(self: @ComponentState<TContractState>, transaction_id: u256) -> EditPermissionTransaction {
-            let transaction = self.member_permission_transactions.read(transaction_id);
-            assert(!transaction.member.is_zero(), Errors::TRANSACTION_NOT_FOUND);
-            transaction
+        fn get_edit_permission_transaction(
+            self: @ComponentState<TContractState>, transaction_id: u256
+        ) -> EditPermissionTransaction {
+            let account_data_comp = get_dep_component!(self, AccountData);
+            let transaction = account_data_comp.get_transaction(transaction_id);
+            assert(
+                transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT,
+                Errors::ERR_INVALID_MEMBER_PERMISSION_TRANSACTION
+            );
+            self.member_permission_transactions.entry(transaction_id).read()
         }
 
-        fn get_edit_permission_transaction_list(self: @ComponentState<TContractState>) -> Array<EditPermissionTransaction> {
+        fn get_edit_permission_transaction_list(
+            self: @ComponentState<TContractState>
+        ) -> Array<EditPermissionTransaction> {
             let mut array: Array<EditPermissionTransaction> = array![];
             let range_stop = self.member_permission_transaction_ids.len();
 
-            for index in 0..range_stop {
-                let id = self.member_permission_transaction_ids.at(index).read();
-                let tx = self.member_permission_transactions.read(id);
-                array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.member_permission_transaction_ids.at(index).read();
+                    let tx = self.member_permission_transactions.entry(id).read();
+                    array.append(tx);
+                };
             array
         }
     }

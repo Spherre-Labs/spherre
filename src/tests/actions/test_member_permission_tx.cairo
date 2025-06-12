@@ -41,11 +41,13 @@ fn test_propose_member_permission_transaction_successful() {
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
-    assert(transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type');
+    assert(
+        transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type'
+    );
 
-    let (stored_member, stored_permissions) = mock_contract.get_edit_permission_transaction_pub(tx_id);
-    assert(stored_member == member, 'Member Address Invalid');
-    assert(stored_permissions == new_permissions, 'Permissions Invalid');
+    let perm_transaction = mock_contract.get_edit_permission_transaction_pub(tx_id);
+    assert(perm_transaction.member == member, 'Member Address Invalid');
+    assert(perm_transaction.new_permissions == new_permissions, 'Permissions Invalid');
 }
 
 #[test]
@@ -84,7 +86,7 @@ fn test_propose_member_permission_transaction_fail_with_invalid_permission() {
 }
 
 #[test]
-#[should_panic(expected: 'Member not found')]
+#[should_panic(expected: 'Member does not exist')]
 fn test_propose_member_permission_transaction_fail_with_non_member() {
     let mock_contract = deploy_mock_contract();
 
@@ -101,7 +103,7 @@ fn test_propose_member_permission_transaction_fail_with_non_member() {
 }
 
 #[test]
-#[should_panic(expected: 'Invalid permission mask')]
+#[should_panic(expected: 'Permission unchanged')]
 fn test_propose_member_permission_transaction_fail_with_same_permissions() {
     let mock_contract = deploy_mock_contract();
 
@@ -147,7 +149,7 @@ fn test_get_member_permission_transaction_success() {
     stop_cheat_caller_address(mock_contract.contract_address);
 
     // Test getting the member permission transaction
-    let (stored_member, stored_permissions) = mock_contract.get_edit_permission_transaction_pub(tx_id);
-    assert(stored_member == member, 'Wrong member address');
-    assert(stored_permissions == new_permissions, 'Wrong permissions');
-} 
+    let permission_transaction = mock_contract.get_edit_permission_transaction_pub(tx_id);
+    assert(permission_transaction.member == member, 'Wrong member address');
+    assert(permission_transaction.new_permissions == new_permissions, 'Wrong permissions');
+}

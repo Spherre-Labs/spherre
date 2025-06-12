@@ -1,6 +1,6 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData
+    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction
 };
 use starknet::ContractAddress;
 
@@ -63,7 +63,7 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn get_edit_permission_transaction_pub(
         self: @TContractState, transaction_id: u256
-    ) -> (ContractAddress, u8);
+    ) -> EditPermissionTransaction;
 }
 
 
@@ -74,6 +74,7 @@ pub mod MockContract {
     use spherre::account_data::AccountData;
     use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
     use spherre::actions::member_add_transaction::MemberAddTransaction;
+    use spherre::actions::member_permission_tx::MemberPermissionTransaction;
     use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
     use spherre::actions::token_transaction::TokenTransaction;
@@ -83,10 +84,9 @@ pub mod MockContract {
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
         ThresholdChangeData, MemberRemoveData, MemberAddData
     };
+    use spherre::types::{EditPermissionTransaction};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
-    use spherre::actions::member_permission_tx::MemberPermissionTransaction;
-    use spherre::types::{EditPermissionTransaction};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
@@ -98,7 +98,9 @@ pub mod MockContract {
     );
     component!(path: MemberRemoveTransaction, storage: member_remove, event: MemberRemoveEvent);
     component!(path: MemberAddTransaction, storage: member_add, event: MemberAddEvent);
-    component!(path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent);
+    component!(
+        path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent
+    );
 
     #[abi(embed_v0)]
     pub impl AccountDataImpl = AccountData::AccountData<ContractState>;
