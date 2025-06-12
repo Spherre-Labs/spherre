@@ -1,7 +1,7 @@
 # Spherre: A Decentralized Multisig Treasury Solution for StarkNet
 
 
-Spherre is an open-source, decentralized multisignature (multisig) treasury solution built for the [StarkNet](https://www.starknet.io/) ecosystem. It enables teams, individuals, and organizations to securely manage digital assets with collective control, transparency, and robust on-chain governance.
+Spherre is a decentralized multisignature (multisig) treasury solution built for the [StarkNet](https://www.starknet.io/) ecosystem. It enables teams, individuals, and organizations to securely manage digital assets with collective control, transparency, and robust on-chain governance.
 
 ---
 
