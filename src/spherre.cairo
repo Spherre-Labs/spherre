@@ -30,8 +30,12 @@ pub mod Spherre {
     #[storage]
     struct Storage {
         owner: ContractAddress,
-        // Class hash of the multisig account
-        account_class_hash: ClassHash,
+        // Class hash of the multisig account contract to be deployed
+        account_class_hash: ClassHash,git add 
+        // Array to store all deployed account contract addresses
+        accounts: Vec<ContractAddress>,
+        // Mapping to quickly check if an address is a deployed account
+        is_account: Map<ContractAddress, bool>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -49,6 +53,7 @@ pub mod Spherre {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
+        AccountDeployed: AccountDeployed,
         AccountClassHashUpdated: AccountClassHashUpdated,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
