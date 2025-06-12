@@ -1,3 +1,9 @@
+//! This module implements the MemberAddTransaction component, which allows for proposing and
+//! executing member addition transactions.
+//! It includes methods for proposing, retrieving, and executing member addition transactions.
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+
 #[starknet::component]
 pub mod MemberAddTransaction {
     use core::num::traits::Zero;

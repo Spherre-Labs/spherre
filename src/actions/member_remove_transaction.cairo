@@ -1,3 +1,10 @@
+//! This module implements the MemberRemoveTransaction component, which allows for proposing and
+//! executing member removal transactions.
+//! It includes methods for proposing, retrieving, and executing member removal transactions.
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+//! `IMemberRemoveTransaction`.
+
 #[starknet::component]
 pub mod MemberRemoveTransaction {
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
@@ -156,6 +163,15 @@ pub mod MemberRemoveTransaction {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of PrivateTrait<TContractState> {
+        /// Asserts that the member can be removed from the account.
+        ///
+        /// # Parameters
+        /// * `member` - The contract address of the member to be removed.
+        ///
+        /// # Panics
+        /// This function raises an error if the member is not a member of the account.
+        /// This function raises an error if removing the member would violate the threshold
+        /// requirements (e.g., removing the last voter, proposer, or executor).
         fn assert_can_remove_member(
             self: @ComponentState<TContractState>, member: ContractAddress
         ) {

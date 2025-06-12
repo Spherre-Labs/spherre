@@ -1,3 +1,11 @@
+//! This module implements the ChangeThresholdTransaction component.
+//! It allows for proposing and executing threshold change transactions.
+//! It includes methods for proposing, retrieving, and executing threshold change transactions.
+//!
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+//! `IChangeThresholdTransaction`.
+
 #[starknet::component]
 pub mod ChangeThresholdTransaction {
     use core::num::traits::Zero;
