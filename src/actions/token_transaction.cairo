@@ -1,3 +1,10 @@
+//! This module implements the TokenTransaction component, which allows users to propose and execute
+//! token transactions.
+//! It includes methods for proposing, retrieving, and executing token transactions.
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+//! `ITokenTransaction`.
+
 #[starknet::component]
 pub mod TokenTransaction {
     use core::num::traits::Zero;
@@ -157,6 +164,14 @@ pub mod TokenTransaction {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of PrivateTrait<TContractState> {
+        /// Asserts that the transaction with the given ID is a valid token transaction.
+        ///
+        /// # Parameters
+        /// * `id` - The ID of the transaction to validate.
+        ///
+        /// # Panics
+        /// This function raises an error if the transaction with the given ID does not exist.
+        /// This function raises an error if the transaction is not a token transaction.
         fn assert_is_valid_token_transaction(self: @ComponentState<TContractState>, id: u256) {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(id);
