@@ -1,3 +1,10 @@
+//! This module implements the NFTTransaction component, which allows users to propose and execute
+//! nft transactions.
+//! It includes methods for proposing, retrieving, and executing nft transactions.
+//!
+//! The comment documentation of the public entrypoints can be found in the interface
+//! `INFTTransaction`.
+
 #[starknet::component]
 pub mod NFTTransaction {
     use core::num::traits::Zero;

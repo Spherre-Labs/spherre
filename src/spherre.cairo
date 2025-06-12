@@ -261,6 +261,10 @@ pub mod Spherre {
 
     #[generate_trait]
     pub impl InternalImpl of InternalTrait {
+        /// Asserts that the caller has the staff role.
+        ///
+        /// # Panics
+        /// This function raises an error if the caller does not have the staff role.
         fn assert_only_staff(self: @ContractState) {
             let caller = get_caller_address();
             assert(
@@ -268,6 +272,10 @@ pub mod Spherre {
                 Errors::ERR_NOT_A_STAFF,
             )
         }
+        /// Asserts that the caller has the superadmin role.
+        ///
+        /// # Panics
+        /// This function raises an error if the caller does not have the superadmin role.
         fn assert_only_superadmin(self: @ContractState) {
             let caller = get_caller_address();
             assert(self.has_superadmin_role(caller), Errors::ERR_NOT_A_SUPERADMIN)

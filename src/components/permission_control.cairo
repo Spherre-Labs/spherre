@@ -1,3 +1,11 @@
+//! This module implements a permission control system for managing member permissions in the
+//! SpherreAccount contract. It allows for assigning and revoking permissions such as PROPOSER,
+//! VOTER, and EXECUTOR to members of the contract. The permissions are stored in a mapping that
+//! associates each member with their respective permissions. The component emits events when
+//! permissions are granted or revoked, allowing for tracking of permission changes.
+//! Also the component provides utilities for handling permissions as bit masks,
+//! enabling efficient storage and manipulation of multiple permissions at once.
+
 #[starknet::component]
 pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
@@ -45,10 +53,6 @@ pub mod PermissionControl {
     impl PermissionControlImpl<
         TContractState, +HasComponent<TContractState>
     > of IPermissionControl<ComponentState<TContractState>> {
-        /// Checks if the given member has the specified permission.
-        /// @param member The address of the member (ContractAddress).
-        /// @param permission The permission identifier (felt252).
-        /// @return true if the member has the permission, false otherwise.
         fn has_permission(
             self: @ComponentState<TContractState>, member: ContractAddress, permission: felt252
         ) -> bool {
@@ -57,9 +61,6 @@ pub mod PermissionControl {
                 .entry((permission, member))
                 .read() // Read the value from storage.
         }
-
-        /// Returns all the permissions the member has.
-        /// @param member The address of the member (ContractAddress).
         fn get_member_permissions(
             self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> Array<PermissionEnum> {
@@ -77,9 +78,6 @@ pub mod PermissionControl {
 
             return permissions;
         }
-        /// Convert the array of permissions to an integer mask value
-        /// @param Array<PermissionEnum> The array of permissions
-        /// @returns u8 The mask value
         fn permissions_to_mask(
             self: @ComponentState<TContractState>, permissions: Array<PermissionEnum>
         ) -> u8 {
@@ -89,10 +87,6 @@ pub mod PermissionControl {
             };
             mask
         }
-        /// Convert the integer mask value to an array of permissions.
-        /// @param The mask value
-        /// @returns Array<PermissionEnum> The array of permissions
-        ///
         fn permissions_from_mask(
             self: @ComponentState<TContractState>, mask: u8
         ) -> Array<PermissionEnum> {
@@ -108,9 +102,6 @@ pub mod PermissionControl {
             }
             permissions_array
         }
-        /// Check if a mask value is valid
-        /// @param The mask value
-        /// @returns bool true if valid, false otherwise
         fn is_valid_mask(self: @ComponentState<TContractState>, mask: u8) -> bool {
             (PermissionEnum::PROPOSER.has_permission_from_mask(mask)
                 || PermissionEnum::VOTER.has_permission_from_mask(mask)
@@ -124,7 +115,9 @@ pub mod PermissionControl {
     > of InternalTrait<TContractState> {
         /// Assigns the PROPOSER permission to a member.
         /// Emits a PermissionGranted event.
-        /// @param member The address of the member (ContractAddress).
+        ///
+        /// # Parameters
+        /// * `member` - The address of the member (ContractAddress).
         fn assign_proposer_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress
         ) {
@@ -145,7 +138,9 @@ pub mod PermissionControl {
 
         /// Assigns the VOTER permission to a member.
         /// Emits a PermissionGranted event.
-        /// @param member The address of the member (ContractAddress).
+        ///
+        /// # Parameters
+        /// * `member` - The address of the member (ContractAddress).
         fn assign_voter_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress
         ) {
@@ -166,7 +161,9 @@ pub mod PermissionControl {
 
         /// Assigns the EXECUTOR permission to a member.
         /// Emits a PermissionGranted event.
-        /// @param member The address of the member (ContractAddress).
+        ///
+        /// # Parameters
+        /// * `member` - The address of the member (ContractAddress).
         fn assign_executor_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress
         ) {
@@ -187,8 +184,10 @@ pub mod PermissionControl {
 
         /// Revokes a specific permission from a member.
         /// Emits a PermissionRevoked event.
-        /// @param member The address of the member (ContractAddress).
-        /// @param permission The permission identifier (felt252).
+        ///
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
+        /// - `permission` - The permission identifier (felt252).
         fn revoke_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress, permission: felt252
         ) {
@@ -220,11 +219,8 @@ pub mod PermissionControl {
 
         /// Revokes `voter permission` from `member`.
         ///
-        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
-        ///
-        /// Requirements:
-        ///
-        /// - The caller must have `role`'s admin role.
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
         fn revoke_voter_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
@@ -236,11 +232,8 @@ pub mod PermissionControl {
 
         /// Revokes `executor permission` from `member`.
         ///
-        /// If `member` has been granted `permission`, emits a `PermissionRevoked` event.
-        ///
-        /// Requirements:
-        ///
-        /// - The caller must have `role`'s admin role.
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
         fn revoke_executor_permission(
             ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
@@ -250,8 +243,12 @@ pub mod PermissionControl {
             }
         }
 
-        /// Assign all the permissions to the member.
-        /// @param member The address of the member (ContractAddress).
+        /// This function grants all permissions (PROPOSER, VOTER, EXECUTOR) to the specified
+        /// member.
+        /// Emits a PermissionGranted event for each permission granted.
+        ///
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
         fn assign_all_permissions(
             ref self: ComponentState<TContractState>, member: ContractAddress
         ) {
@@ -260,8 +257,12 @@ pub mod PermissionControl {
             self.assign_executor_permission(member);
         }
 
-        /// Revokes all the permissions the member has.
-        /// @param member The address of the member (ContractAddress).
+        /// This function revokes all permissions (PROPOSER, VOTER, EXECUTOR) from the specified
+        /// member.
+        /// Emits a PermissionRevoked event for each permission revoked.
+        ///
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
         fn revoke_all_permissions(
             ref self: ComponentState<TContractState>, member: ContractAddress
         ) {
@@ -269,6 +270,14 @@ pub mod PermissionControl {
             self.revoke_voter_permission(member);
             self.revoke_executor_permission(member);
         }
+        /// Assigns permissions to a member based on an array of PermissionEnum.
+        /// This function iterates through the provided permissions and assigns each one to the
+        /// member.
+        ///
+        /// # Parameters
+        /// - `member` - The address of the member (ContractAddress).
+        /// - `permissions` - An array of PermissionEnum representing the permissions to be
+        /// assigned.
         fn assign_permissions_from_enums(
             ref self: ComponentState<TContractState>,
             member: ContractAddress,

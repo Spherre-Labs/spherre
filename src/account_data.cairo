@@ -1,3 +1,11 @@
+//! This module contains the AccountData component of Spherre
+//! It manages account transactions, members, and voting mechanisms.
+//! It provides functionality for adding members, setting thresholds, creating and executing
+//! transactions, and handling approvals and rejections.
+//!
+//! The comment documentation of the public entrypoints can be found in the
+//! `IAccountData` interface.
+
 #[starknet::component]
 pub mod AccountData {
     use core::num::traits::Zero;
@@ -16,7 +24,9 @@ pub mod AccountData {
 
     #[storage]
     pub struct Storage {
-        pub transactions: Map::<u256, StorageTransaction>,
+        pub transactions: Map::<
+            u256, StorageTransaction
+        >, // Map(tx_id, StorageTransaction) the transactions of the account
         pub tx_count: u256, // the transaction length
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
         pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
@@ -59,7 +69,6 @@ pub mod AccountData {
         threshold: u64,
         date_updated: u64,
     }
-
 
     #[derive(Drop, starknet::Event)]
     pub struct TransactionVoted {
@@ -116,19 +125,14 @@ pub mod AccountData {
 
             members_of_account
         }
-
         fn get_members_count(self: @ComponentState<TContractState>) -> u64 {
             self.members_count.read()
         }
-
-        //This takes no arguments and returns a tuple where the first member is the threshold and
-        //the second is the members_count of the account
         fn get_threshold(self: @ComponentState<TContractState>) -> (u64, u64) {
             let threshold: u64 = self.threshold.read();
             let members_count: u64 = self.members_count.read();
             (threshold, members_count)
         }
-
         fn get_transaction(
             self: @ComponentState<TContractState>, transaction_id: u256
         ) -> Transaction {
@@ -183,8 +187,6 @@ pub mod AccountData {
                 date_executed,
             }
         }
-
-        /// Checks if a given address is a member of the account
         fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {
             let no_of_members = self.members_count.read();
             let mut i = 0;
@@ -239,7 +241,6 @@ pub mod AccountData {
                 };
             counter
         }
-
         fn approve_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
@@ -272,7 +273,6 @@ pub mod AccountData {
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
                 )
         }
-
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
@@ -323,12 +323,29 @@ pub mod AccountData {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
+        /// Adds a member to the account
+        /// This function adds a member to the account
+        ///
+        /// # Parameters
+        /// * `address` - The contract address of the member to be added
+        ///
+        /// # Panics
+        /// It raises an error if the address is zero.
         fn _add_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
             assert(!address.is_zero(), 'Zero Address Caller');
             let mut current_members = self.members_count.read();
             self.members.entry(current_members).write(address);
             self.members_count.write(current_members + 1);
         }
+        /// Removes a member from the account
+        /// This function removes a member from the account
+        ///
+        /// # Parameters
+        /// * `address` - The contract address of the member to be removed
+        ///
+        /// # Panics
+        /// It raises an error if the address is zero.
+        /// It raises an error if the address is not a member of the account.
         fn remove_member(ref self: ComponentState<TContractState>, address: ContractAddress) {
             assert(!address.is_zero(), 'Zero Address Caller');
             let mut current_members = self.members_count.read();
@@ -361,12 +378,22 @@ pub mod AccountData {
             // decrement the members count
             self.members_count.write(current_members - 1);
         }
-
+        /// Gets the number of members in the account
+        ///
+        /// # Returns
+        /// The number of members in the account
         fn _get_members_count(self: @ComponentState<TContractState>) -> u64 {
             self.members_count.read()
         }
-
-
+        /// Sets the threshold for the number of members required to approve a transaction
+        ///
+        /// # Parameters
+        /// * `threshold` - The number of members required to approve a transaction
+        ///
+        /// # Panics
+        /// It raises an error if the threshold is greater than the number of members.
+        /// It raises an error if the contract is paused.
+        /// It raises an error if the threshold is zero.
         fn set_threshold(ref self: ComponentState<TContractState>, threshold: u64) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
@@ -374,11 +401,19 @@ pub mod AccountData {
 
             let members_count: u64 = self.members_count.read();
             assert(threshold <= members_count, Errors::ThresholdError);
+            assert(threshold > 0, Errors::NON_ZERO_THRESHOLD);
             self.threshold.write(threshold);
         }
-        // Initialize a transaction with a transaction type and return the id
-        // @params tx_type: The type of the transaction
-        // Returns: (u256) The transaction id
+        /// Create (Initialize) a transaction with a transaction type and return the id
+        /// This function creates a transaction with the given type and returns the transaction id.
+        ///
+        /// # Parameters
+        /// * `tx_type` - The type of the transaction to be created
+        ///
+        /// # Panics
+        /// It raises an error if the contract is paused.
+        /// It raises an error if the caller is not a member of the account.
+        /// It raises an error if the caller does not have the proposer permission.
         fn create_transaction(
             ref self: ComponentState<TContractState>, tx_type: TransactionType
         ) -> u256 {
@@ -411,11 +446,27 @@ pub mod AccountData {
             self.tx_count.write(transaction_id);
             transaction_id
         }
-
-
+        /// Executes a transaction by its ID
+        /// This function allows a member with the executor permission to execute a transaction.
+        ///
+        /// # Parameters
+        /// * `transaction_id` - The ID of the transaction to be executed
+        /// * `caller` - The contract address of the member executing the transaction
+        ///
+        /// # Panics
+        /// It raises an error if the transaction with the given ID does not exist.
+        /// It raises an error if the transaction is not executable (not approved).
+        /// It raises an error if the caller is not a member of the account.
+        /// It raises an error if the caller does not have the executor permission.
+        /// It raises an error if the contract is paused.
         fn execute_transaction(
             ref self: ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
         ) {
+            // PAUSE GUARD
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
+            // check if the transaction is valid and executable
             self.assert_valid_transaction(transaction_id);
             let transaction = self.transactions.entry(transaction_id);
             assert(
@@ -442,7 +493,16 @@ pub mod AccountData {
                     }
                 );
         }
-
+        /// Updates the status of a transaction
+        /// This function updates the status of a transaction to the given status.
+        ///
+        /// # Parameters
+        /// * `transaction_id` - The ID of the transaction to be updated
+        /// * `status` - The new status of the transaction
+        ///
+        /// # Panics
+        /// It raises an error if the transaction with the given ID does not exist.
+        /// It raises an error if the transaction ID is zero.
         fn _update_transaction_status(
             ref self: ComponentState<TContractState>,
             transaction_id: u256,
@@ -451,12 +511,24 @@ pub mod AccountData {
             self.assert_valid_transaction(transaction_id);
             self.transactions.entry(transaction_id).tx_status.write(status);
         }
-
+        /// Asserts that a transaction is valid
+        /// This function checks if a transaction ID is valid, meaning it exists and is not zero.
+        ///
+        /// # Parameters
+        /// * `transaction_id` - The ID of the transaction to be checked
+        ///
+        /// # Panics
+        /// It raises an error if the transaction ID is not valid (greater than the current count or
+        /// zero).
+        /// It raises an error if the transaction ID is zero.
         fn assert_valid_transaction(self: @ComponentState<TContractState>, transaction_id: u256) {
             let tx_count = self.tx_count.read();
             assert(transaction_id <= tx_count, Errors::ERR_INVALID_TRANSACTION);
             assert(transaction_id != 0, Errors::ERR_INVALID_TRANSACTION);
         }
+        /// Asserts that a transaction is votable
+        /// This function checks if a transaction is in a votable state, meaning it has been
+        /// initiated and is not yet executed, approved or rejected.
         fn assert_is_votable_transaction(
             self: @ComponentState<TContractState>, transaction_id: u256
         ) {
@@ -467,6 +539,20 @@ pub mod AccountData {
                 Errors::ERR_TRANSACTION_NOT_VOTABLE
             );
         }
+        /// Asserts that the caller can vote on a transaction
+        /// This function checks if the caller is a member, has the voter permission, and has not
+        /// already voted on the transaction.
+        ///
+        /// # Parameters
+        /// * `transaction_id` - The ID of the transaction to be voted on
+        /// * `caller` - The contract address of the caller
+        ///
+        /// # Panics
+        /// It raises an error if the transaction is not valid.
+        /// It raises an error if the transaction is not votable.
+        /// It raises an error if the caller is not a member of the account.
+        /// It raises an error if the caller does not have the voter permission.
+        /// It raises an error if the caller has already voted on the transaction.
         fn assert_caller_can_vote(
             self: @ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
         ) {
