@@ -1,4 +1,7 @@
-// use spherre::errors::ThresholdError;
+//! This module defines the Spherre Account contract, which is a multi-signature account
+//! with various components for managing permissions, transactions, and account data.
+//!
+//! The comment documentation for public entrypoints can be found in the `IAccount` interface.
 #[starknet::contract]
 pub mod SpherreAccount {
     use AccountData::InternalTrait;
@@ -50,16 +53,18 @@ pub mod SpherreAccount {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
+    // AccountData component implementation
     #[abi(embed_v0)]
     impl AccountDataImpl = AccountData::AccountData<ContractState>;
     impl AccountDataInternalImpl = AccountData::InternalImpl<ContractState>;
 
+    // PermissionControl component implementation
     #[abi(embed_v0)]
     impl PermissionControlImpl =
         PermissionControl::PermissionControl<ContractState>;
     impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
 
-    // Expose external pause/unpause functions with deployer access control
+    // Pausable component implementation
     #[abi(embed_v0)]
     pub impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     pub impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
