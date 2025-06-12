@@ -52,7 +52,7 @@ pub mod Errors {
     pub const ERR_INVALID_PERMISSION_MASK: felt252 = 'Permission mask is invalid';
     pub const ERR_ALREADY_A_MEMBER: felt252 = 'Address is already a member';
     pub const ERR_NON_ZERO_MEMBER_ADDRESS: felt252 = 'Member address is zero';
-
+    pub const ERR_ZERO_MEMBER_ADDRESS: felt252 = 'Member address is zero';
     pub const ERR_SAME_PERMISSIONS: felt252 = 'Permission unchanged';
 
     // errors for member remove transaction

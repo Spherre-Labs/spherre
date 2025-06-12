@@ -37,13 +37,13 @@ fn test_propose_member_permission_transaction_successful() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Propose member permission transaction
-    let tx_id = mock_contract.propose_member_permission_transaction_pub(member, new_permissions);
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type');
 
-    let (stored_member, stored_permissions) = mock_contract.get_member_permission_transaction_pub(tx_id);
+    let (stored_member, stored_permissions) = mock_contract.get_edit_permission_transaction_pub(tx_id);
     assert(stored_member == member, 'Member Address Invalid');
     assert(stored_permissions == new_permissions, 'Permissions Invalid');
 }
@@ -62,7 +62,7 @@ fn test_propose_member_permission_transaction_fail_with_zero_member() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Propose member permission transaction - should panic
-    mock_contract.propose_member_permission_transaction_pub(member, new_permissions);
+    mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_propose_member_permission_transaction_fail_with_invalid_permission() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Propose member permission transaction - should panic
-    mock_contract.propose_member_permission_transaction_pub(member, invalid_permissions);
+    mock_contract.propose_edit_permission_transaction_pub(member, invalid_permissions);
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn test_propose_member_permission_transaction_fail_with_non_member() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Propose member permission transaction - should panic
-    mock_contract.propose_member_permission_transaction_pub(non_member, new_permissions);
+    mock_contract.propose_edit_permission_transaction_pub(non_member, new_permissions);
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn test_propose_member_permission_transaction_fail_with_same_permissions() {
     mock_contract.assign_executor_permission_pub(member);
 
     // Propose member permission transaction with same permissions - should panic
-    mock_contract.propose_member_permission_transaction_pub(member, initial_permissions);
+    mock_contract.propose_edit_permission_transaction_pub(member, initial_permissions);
 }
 
 #[test]
@@ -127,7 +127,7 @@ fn test_get_member_permission_transaction_nonexistent() {
     let nonexistent_id = 999_u256;
 
     // This should panic as the transaction doesn't exist
-    mock_contract.get_member_permission_transaction_pub(nonexistent_id);
+    mock_contract.get_edit_permission_transaction_pub(nonexistent_id);
 }
 
 #[test]
@@ -143,11 +143,11 @@ fn test_get_member_permission_transaction_success() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Create a member permission transaction
-    let tx_id = mock_contract.propose_member_permission_transaction_pub(member, new_permissions);
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     // Test getting the member permission transaction
-    let (stored_member, stored_permissions) = mock_contract.get_member_permission_transaction_pub(tx_id);
+    let (stored_member, stored_permissions) = mock_contract.get_edit_permission_transaction_pub(tx_id);
     assert(stored_member == member, 'Wrong member address');
     assert(stored_permissions == new_permissions, 'Wrong permissions');
 } 
