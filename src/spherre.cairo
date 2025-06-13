@@ -9,6 +9,7 @@ pub mod Spherre {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
+    use openzeppelin::token::erc721::ERC721ReceiverComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use spherre::account::SpherreAccount;
@@ -48,6 +49,8 @@ pub mod Spherre {
         src5: SRC5Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        erc721_receiver: ERC721ReceiverComponent::Storage,
     }
 
     #[event]
@@ -67,6 +70,8 @@ pub mod Spherre {
         SRC5Event: SRC5Component::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        ERC721ReceiverEvent: ERC721ReceiverComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -84,6 +89,7 @@ pub mod Spherre {
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: ERC721ReceiverComponent, storage: erc721_receiver, event: ERC721ReceiverEvent);
 
     // Implement Ownable mixin
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
@@ -107,6 +113,10 @@ pub mod Spherre {
     // Upgradeable component implementation
     pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+    // Implement ERC721Receiver mixin
+    impl ERC721ReceiverImpl = ERC721ReceiverComponent::ERC721ReceiverImpl<ContractState>;
+    impl ERC721ReceiverInternalImpl = ERC721ReceiverComponent::InternalImpl<ContractState>;
+
     #[derive(Drop, starknet::Event)]
     struct AccountDeployed {
         account_address: ContractAddress,
@@ -128,6 +138,9 @@ pub mod Spherre {
         self.access_control.initializer();
         self.access_control._grant_role(DEFAULT_ADMIN_ROLE, owner);
         self.access_control._grant_role(SpherreAdminRoles::SUPERADMIN, owner);
+
+        // Initialize ERC721Receiver
+        self.erc721_receiver.initializer();
     }
 
     // Implement the ISpherre interface
