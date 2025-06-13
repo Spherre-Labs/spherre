@@ -270,6 +270,16 @@ pub mod Spherre {
             // Replace the class hash, hence upgrading the contract
             self.upgradeable.upgrade(new_class_hash);
         }
+
+        fn on_erc721_received(
+            self: @ContractState,
+            operator: ContractAddress,
+            from: ContractAddress,
+            token_id: u256,
+            data: Span<felt252>,
+        ) -> felt252 {
+            self.erc721_receiver.on_erc721_received(operator, from, token_id, data)
+        }
     }
 
     #[generate_trait]
