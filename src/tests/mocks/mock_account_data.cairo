@@ -64,6 +64,9 @@ pub trait IMockContract<TContractState> {
     fn get_edit_permission_transaction_pub(
         self: @TContractState, transaction_id: u256
     ) -> EditPermissionTransaction;
+    fn execute_edit_permission_transaction_pub(
+        ref self: TContractState, transaction_id: u256
+    );
 }
 
 
@@ -343,6 +346,11 @@ pub mod MockContract {
             self: @ContractState, transaction_id: u256
         ) -> EditPermissionTransaction {
             self.member_permission.get_edit_permission_transaction(transaction_id)
+        }
+        fn execute_edit_permission_transaction_pub(
+            ref self: ContractState, transaction_id: u256
+        ) {
+            self.member_permission.execute_edit_permission_transaction(transaction_id);
         }
     }
 
