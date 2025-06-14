@@ -22,11 +22,11 @@ pub mod MemberPermissionTransaction {
     use spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{EditPermissionTransaction, TransactionType};
-    use starknet::{ContractAddress, get_caller_address};
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
+    use starknet::{ContractAddress, get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -139,7 +139,6 @@ pub mod MemberPermissionTransaction {
         fn execute_edit_permission_transaction(
             ref self: ComponentState<TContractState>, transaction_id: u256
         ) {
-
             // Get the transaction data
             let edit_permission_data = self.get_edit_permission_transaction(transaction_id);
             let member = edit_permission_data.member;
@@ -151,26 +150,17 @@ pub mod MemberPermissionTransaction {
 
             // Execute the transaction in account data
             account_data_comp.execute_transaction(transaction_id, get_caller_address());
-            
+
             // Get the permission control component
             let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
 
-
             // Convert mask to permissions
-            let permissions = permission_control_comp
-                .permissions_from_mask(new_permissions);
-
-            
+            let permissions = permission_control_comp.permissions_from_mask(new_permissions);
 
             // Assign Permission
-            permission_control_comp
-                .assign_permissions_from_enums(member, permissions);
+            permission_control_comp.assign_permissions_from_enums(member, permissions);
 
-            self.emit(PermissionEditExecuted {
-                transaction_id,
-                member,
-                new_permissions
-            });
+            self.emit(PermissionEditExecuted { transaction_id, member, new_permissions });
         }
     }
 }
