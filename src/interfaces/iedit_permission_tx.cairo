@@ -34,4 +34,19 @@ pub trait IEditPermissionTransaction<TContractState> {
     fn get_edit_permission_transaction_list(
         self: @TContractState
     ) -> Array<EditPermissionTransaction>;
+    /// Executes an edit permission transaction by its ID.
+    /// 
+    /// # Parameters
+    /// *`transaction_id`* - The ID of the transaction to execute.
+    /// 
+    /// # Panic
+    /// This function will panic if the transaction ID does not exist or if the transaction
+    /// has already been executed.
+    /// This funciton will panic if the contract is paused
+    /// This function will panic if the caller does not have the required permissions
+    /// This function will panic if the member does not exist
+    /// 
+    fn execute_edit_permission_transaction(
+        ref self: TContractState, transaction_id: u256
+    );
 }
