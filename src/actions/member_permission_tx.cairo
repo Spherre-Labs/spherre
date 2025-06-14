@@ -156,7 +156,7 @@ pub mod MemberPermissionTransaction {
 
             // Convert mask to permissions
             let permissions = permission_control_comp.permissions_from_mask(new_permissions);
-            
+
             // Revoke all permissions first
             permission_control_comp.revoke_all_permissions(member);
 
