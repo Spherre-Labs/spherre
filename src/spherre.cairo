@@ -46,11 +46,11 @@ pub mod Spherre {
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage,
+        pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
-        erc721_receiver: ERC721ReceiverComponent::Storage,
+        pub erc721_receiver: ERC721ReceiverComponent::Storage,
     }
 
     #[event]
@@ -114,7 +114,8 @@ pub mod Spherre {
     pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     // Implement ERC721Receiver mixin
-    impl ERC721ReceiverImpl = ERC721ReceiverComponent::ERC721ReceiverImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC721ReceiverMixinImpl = ERC721ReceiverComponent::ERC721ReceiverMixinImpl<ContractState>;
     impl ERC721ReceiverInternalImpl = ERC721ReceiverComponent::InternalImpl<ContractState>;
 
     #[derive(Drop, starknet::Event)]
@@ -269,16 +270,6 @@ pub mod Spherre {
 
             // Replace the class hash, hence upgrading the contract
             self.upgradeable.upgrade(new_class_hash);
-        }
-
-        fn on_erc721_received(
-            self: @ContractState,
-            operator: ContractAddress,
-            from: ContractAddress,
-            token_id: u256,
-            data: Span<felt252>,
-        ) -> felt252 {
-            self.erc721_receiver.on_erc721_received(operator, from, token_id, data)
         }
     }
 
