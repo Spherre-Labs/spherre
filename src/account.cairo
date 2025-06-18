@@ -10,7 +10,8 @@ pub mod SpherreAccount {
     use openzeppelin_upgrades::UpgradeableComponent;
     use openzeppelin_upgrades::interface::IUpgradeable;
     use spherre::{
-        account_data::AccountData, components::permission_control::PermissionControl,
+        account_data::AccountData,
+        components::{permission_control::PermissionControl, treasury_handler::TreasuryHandler,},
         actions::{
             change_threshold_transaction::ChangeThresholdTransaction,
             member_permission_tx::MemberPermissionTransaction,
@@ -27,6 +28,7 @@ pub mod SpherreAccount {
 
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
+    component!(path: TreasuryHandler, storage: treasury_handler, event: TreasuryHandlerEvent);
     component!(
         path: ChangeThresholdTransaction,
         storage: change_threshold_transaction,
@@ -63,6 +65,11 @@ pub mod SpherreAccount {
     impl PermissionControlImpl =
         PermissionControl::PermissionControl<ContractState>;
     impl PermissionControlInternalImpl = PermissionControl::InternalImpl<ContractState>;
+
+    // TreasuryHandler component implementation
+    #[abi(embed_v0)]
+    impl TreasuryHandlerImpl = TreasuryHandler::TreasuryHandler<ContractState>;
+    impl TreasuryHandlerInternalImpl = TreasuryHandler::InternalImpl<ContractState>;
 
     // Pausable component implementation
     #[abi(embed_v0)]
@@ -120,6 +127,8 @@ pub mod SpherreAccount {
         #[substorage(v0)]
         permission_control: PermissionControl::Storage,
         #[substorage(v0)]
+        treasury_handler: TreasuryHandler::Storage,
+        #[substorage(v0)]
         change_threshold_transaction: ChangeThresholdTransaction::Storage,
         #[substorage(v0)]
         member_add_transaction: MemberAddTransaction::Storage,
@@ -146,6 +155,8 @@ pub mod SpherreAccount {
         AccountDataEvent: AccountData::Event,
         #[flat]
         PermissionControlEvent: PermissionControl::Event,
+        #[flat]
+        TreasuryHandlerEvent: TreasuryHandler::Event,
         #[flat]
         ChangeThresholdEvent: ChangeThresholdTransaction::Event,
         #[flat]
