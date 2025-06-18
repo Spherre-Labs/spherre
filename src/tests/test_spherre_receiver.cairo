@@ -103,7 +103,37 @@ mod tests {
     }
 
     // --- Integration tests for ERC721 safe transfers scenarios ---
-    
+
+    #[test]
+    fn test_owner_safe_transfer_to_spherre() {
+        let erc721_contract = deploy_mock_erc721();
+        let spherre_contract = deploy_spherre();
+        let minter = OWNER();
+
+        // Mint a token to the owner
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        IMockNFTDispatcher { contract_address: erc721_contract.contract_address }
+            .mint(minter, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Verify owner is the minter initially
+        let initial_owner = erc721_contract.owner_of(TOKEN_ID);
+        assert_eq!(initial_owner, minter, "Initial owner should be minter");
+
+        // Safe transfer from to Spherre
+        let data = array![].span(); // Empty data is valid
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        erc721_contract
+            .safe_transfer_from(minter, spherre_contract.contract_address, TOKEN_ID, data);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Verify that Spherre contract now owns the token
+        let new_owner = erc721_contract.owner_of(TOKEN_ID);
+        assert_eq!(
+            new_owner, spherre_contract.contract_address, "Spherre contract should own the token"
+        );
+    }
+
     #[test]
     fn test_approved_safe_transfer_to_spherre() {
         let erc721_contract = deploy_mock_erc721();
@@ -227,9 +257,7 @@ mod tests {
         // Verify that Spherre contract now owns the token
         let new_owner = erc721_contract.owner_of(TOKEN_ID);
         assert_eq!(
-            new_owner,
-            spherre_contract.contract_address,
-            "Should receive tokens even when paused"
+            new_owner, spherre_contract.contract_address, "Should receive tokens even when paused"
         );
     }
 }
