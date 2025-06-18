@@ -9,9 +9,12 @@ mod tests {
     use openzeppelin::token::erc721::interface::{IERC721_RECEIVER_ID, IERC721Receiver,};
     use snforge_std::{
         declare, start_cheat_caller_address, get_class_hash, stop_cheat_caller_address,
-        ContractClassTrait, DeclareResultTrait, spy_events, EventSpyTrait, EventSpyAssertionsTrait
+        ContractClassTrait, DeclareResultTrait, test_address
     };
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
+    use spherre::tests::mocks::mock_account_data::{
+        IMockContractDispatcher, IMockContractDispatcherTrait
+    };
     use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
     use starknet::{ContractAddress, contract_address_const};
 
@@ -19,11 +22,9 @@ mod tests {
     fn OWNER() -> ContractAddress {
         contract_address_const::<'Owner'>()
     }
-
     fn OPERATOR() -> ContractAddress {
         contract_address_const::<'Operator'>()
     }
-
     const TOKEN_ID: u256 = 1;
 
     // Helper function to set up test contract
@@ -59,7 +60,14 @@ mod tests {
         ISpherreDispatcher { contract_address }
     }
 
-    // --- Unit tests for Spherre receiver logic ---
+    fn deploy_mock_contract() -> IMockContractDispatcher {
+        let contract_class = declare("MockContract").unwrap().contract_class();
+        let mut calldata = array![];
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+        IMockContractDispatcher { contract_address }
+    }
+
+    // --- Unit tests for core Spherre receiver functionality ---
 
     #[test]
     fn test_initial_state() {
@@ -94,9 +102,10 @@ mod tests {
         );
     }
 
-     // --- Integration tests for ERC721 transfers ---
-     #[test]
-     fn test_approved_safe_transfer_to_spherre() {
+    // --- Integration tests for ERC721 safe transfers scenarios ---
+    
+    #[test]
+    fn test_approved_safe_transfer_to_spherre() {
         let erc721_contract = deploy_mock_erc721();
         let spherre_contract = deploy_spherre();
         let minter = OWNER();
@@ -104,7 +113,8 @@ mod tests {
 
         // Mint a token to the owner
         start_cheat_caller_address(erc721_contract.contract_address, minter);
-        IMockNFTDispatcher{ contract_address: erc721_contract.contract_address }.mint(minter, TOKEN_ID);
+        IMockNFTDispatcher { contract_address: erc721_contract.contract_address }
+            .mint(minter, TOKEN_ID);
         stop_cheat_caller_address(erc721_contract.contract_address);
 
         // Verify owner is the minter initially
@@ -116,32 +126,110 @@ mod tests {
         erc721_contract.approve(operator, TOKEN_ID);
         stop_cheat_caller_address(erc721_contract.contract_address);
 
-        // Setup event spy before the transfer call
-        let mut spy = spy_events();
-
         // Safe transfer from to Spherre
         // Caller must be owner or approved
-        let data = array![123.into()].span(); // Empty data for the transfer
+        let data = array![123.into()].span(); // Empty data also transfers successfully
         start_cheat_caller_address(erc721_contract.contract_address, operator);
-        erc721_contract.safe_transfer_from(minter, spherre_contract.contract_address, TOKEN_ID, data);
+        erc721_contract
+            .safe_transfer_from(minter, spherre_contract.contract_address, TOKEN_ID, data);
         stop_cheat_caller_address(erc721_contract.contract_address);
 
         // Verify that Spherre contract now owns the token
         let new_owner = erc721_contract.owner_of(TOKEN_ID);
-        assert_eq!(new_owner, spherre_contract.contract_address, "Spherre contract should own the token");
+        assert_eq!(
+            new_owner, spherre_contract.contract_address, "Spherre contract should own the token"
+        );
+    }
 
-        // Verify the Transfer event was emitted by the ERC721 contract
-        // Event structure: Transfer { from: ContractAddress, to: ContractAddress, token_id: u256 }
-        // let expected_transfer_event = MockERC721::Event::ERC721Event(
-        //     MockERC721::ERC721Component::Event::Transfer(
-        //         MockERC721::ERC721Component::Transfer {
-        //             from: minter,
-        //             to: spherre_address,
-        //             token_id: TOKEN_ID
-        //         }
-        //     )
-        // );
-        // let expected_events = array![(erc721_address, expected_transfer_event)];
-        // spy.assert_emitted(@expected_events);
-     }
+    #[test]
+    #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND', 'ENTRYPOINT_FAILED'))]
+    fn test_approved_safe_transfer_to_invalid_receiver() {
+        let erc721_contract = deploy_mock_erc721();
+        let minter = OWNER();
+        let operator = OPERATOR();
+
+        // Mint a token to the owner
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        IMockNFTDispatcher { contract_address: erc721_contract.contract_address }
+            .mint(minter, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Approve Operator to transfer the token
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        erc721_contract.approve(operator, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Attempt to safe transfer to an invalid receiver (not implementing IERC721Receiver)
+        start_cheat_caller_address(erc721_contract.contract_address, operator);
+        let data = array![123.into()].span();
+        let invalid_receiver = deploy_mock_contract().contract_address;
+
+        erc721_contract.safe_transfer_from(minter, invalid_receiver, TOKEN_ID, data);
+    }
+
+    #[test]
+    #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND', 'ENTRYPOINT_FAILED'))]
+    fn test_approved_safe_transfer_to_spherre_no_receiver() {
+        let erc721_contract = deploy_mock_erc721();
+        let spherre_contract = test_address();
+        let minter = OWNER();
+        let operator = OPERATOR();
+
+        // Mint a token to the owner
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        IMockNFTDispatcher { contract_address: erc721_contract.contract_address }
+            .mint(minter, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Approve Operator to transfer the token
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        erc721_contract.approve(operator, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Attempt to safe transfer to Spherre contract (not implementing IERC721Receiver)
+        start_cheat_caller_address(erc721_contract.contract_address, operator);
+        let data = array![123.into()].span();
+
+        // This should panic as the receiver doesn't properly implement the interface
+        erc721_contract.safe_transfer_from(minter, spherre_contract, TOKEN_ID, data);
+    }
+
+    #[test]
+    fn test_spherre_receives_token_when_paused() {
+        let erc721_contract = deploy_mock_erc721();
+        let spherre_contract = deploy_spherre();
+        let minter = OWNER();
+        let operator = OPERATOR();
+
+        // Mint a token to the owner
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        IMockNFTDispatcher { contract_address: erc721_contract.contract_address }
+            .mint(minter, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Approve Operator to transfer the token
+        start_cheat_caller_address(erc721_contract.contract_address, minter);
+        erc721_contract.approve(operator, TOKEN_ID);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Pause the Spherre contract
+        start_cheat_caller_address(spherre_contract.contract_address, minter);
+        spherre_contract.pause();
+        stop_cheat_caller_address(spherre_contract.contract_address);
+
+        // Safe transfer from to Spherre after paused
+        let data = array![123.into()].span();
+        start_cheat_caller_address(erc721_contract.contract_address, operator);
+        erc721_contract
+            .safe_transfer_from(minter, spherre_contract.contract_address, TOKEN_ID, data);
+        stop_cheat_caller_address(erc721_contract.contract_address);
+
+        // Verify that Spherre contract now owns the token
+        let new_owner = erc721_contract.owner_of(TOKEN_ID);
+        assert_eq!(
+            new_owner,
+            spherre_contract.contract_address,
+            "Should receive tokens even when paused"
+        );
+    }
 }

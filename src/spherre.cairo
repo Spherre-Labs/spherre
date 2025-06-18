@@ -115,7 +115,8 @@ pub mod Spherre {
 
     // Implement ERC721Receiver mixin
     #[abi(embed_v0)]
-    impl ERC721ReceiverMixinImpl = ERC721ReceiverComponent::ERC721ReceiverMixinImpl<ContractState>;
+    impl ERC721ReceiverMixinImpl =
+        ERC721ReceiverComponent::ERC721ReceiverMixinImpl<ContractState>;
     impl ERC721ReceiverInternalImpl = ERC721ReceiverComponent::InternalImpl<ContractState>;
 
     #[derive(Drop, starknet::Event)]
