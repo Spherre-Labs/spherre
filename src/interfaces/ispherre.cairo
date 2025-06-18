@@ -129,25 +129,25 @@ pub trait ISpherre<TContractState> {
     /// This function raises an error if the caller does not have the superadmin role.
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
     /// Returns `IERC721_RECEIVER_ID` to confirm the receipt of an ERC721 token through safe
-    /// transfers.
-    /// This function is called when an ERC721 token is received by the Spherre contract.
-    ///
-    /// # Parameters
-    /// * `operator` - The contract address of the operator who initiated the transfer.
-    /// * `from` - The contract address of the sender of the token.
-    /// * `token_id` - The ID of the ERC721 token being transferred.
-    /// * `data` - Additional data sent with the token transfer, as an Array of felts.
-    ///
-    /// # Returns
-    /// * `felt252` - A value indicating the openzeppelin receiver (IERC721) ID.
-    ///
-    /// # Panics
-    ///
-    // fn on_erc721_received(
-    //     self: @TContractState,
-    //     operator: ContractAddress,
-    //     from: ContractAddress,
-    //     token_id: u256,
-    //     data: Span<felt252>,
-    // ) -> felt252;
+/// transfers.
+/// This function is called when an ERC721 token is received by the Spherre contract.
+///
+/// # Parameters
+/// * `operator` - The contract address of the operator who initiated the transfer.
+/// * `from` - The contract address of the sender of the token.
+/// * `token_id` - The ID of the ERC721 token being transferred.
+/// * `data` - Additional data sent with the token transfer, as an Array of felts.
+///
+/// # Returns
+/// * `felt252` - A value indicating the openzeppelin receiver (IERC721) ID.
+///
+/// # Panics
+///
+// fn on_erc721_received(
+//     self: @TContractState,
+//     operator: ContractAddress,
+//     from: ContractAddress,
+//     token_id: u256,
+//     data: Span<felt252>,
+// ) -> felt252;
 }
