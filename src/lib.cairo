@@ -34,10 +34,10 @@ pub mod actions {
 pub mod tests {
     pub mod test_account;
     pub mod test_account_data;
+    pub mod test_account_receiver;
     pub mod test_account_upgrade;
     pub mod test_permission_control;
     pub mod test_spherre;
-    pub mod test_account_receiver;
     pub mod test_spherre_upgrade;
     pub mod utils;
     pub mod mocks {

@@ -5,12 +5,12 @@
 #[starknet::contract]
 pub mod SpherreAccount {
     use AccountData::InternalTrait;
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::token::erc721::ERC721ReceiverComponent;
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_security::pausable::PausableComponent;
     use openzeppelin_upgrades::UpgradeableComponent;
     use openzeppelin_upgrades::interface::IUpgradeable;
-    use openzeppelin::token::erc721::ERC721ReceiverComponent;
-    use openzeppelin::introspection::src5::SRC5Component;
     use spherre::{
         account_data::AccountData, components::permission_control::PermissionControl,
         actions::{
@@ -194,7 +194,7 @@ pub mod SpherreAccount {
         // Initialize ERC721Receiver
         self.erc721_receiver.initializer();
     }
-    
+
     #[abi(embed_v0)]
     pub impl AccountImpl of IAccount<ContractState> {
         fn get_name(self: @ContractState) -> ByteArray {
