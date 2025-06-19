@@ -2,8 +2,8 @@
 mod tests {
     // use super::*;
     // use openzeppelin::token::erc721::ERC721Receiver;
-    use crate::interfaces::ispherre::{ISpherreDispatcher, ISpherreDispatcherTrait};
-    use crate::spherre::{Spherre, Spherre::SpherreImpl};
+    use crate::account::{SpherreAccount, SpherreAccount::AccountImpl};
+    use crate::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
     use openzeppelin::introspection::interface::ISRC5_ID;
     use openzeppelin::introspection::src5::SRC5Component::SRC5Impl;
     use openzeppelin::token::erc721::interface::{IERC721_RECEIVER_ID, IERC721Receiver,};
@@ -28,19 +28,27 @@ mod tests {
     const TOKEN_ID: u256 = 1;
 
     // Helper function to set up test contract
-    fn setup_test_contract() -> Spherre::ContractState {
+    fn setup_test_contract() -> SpherreAccount::ContractState {
         let owner = OWNER();
 
-        let mut contract_state = Spherre::contract_state_for_testing();
+        let mut contract_state = SpherreAccount::contract_state_for_testing();
 
-        Spherre::constructor(ref contract_state, owner);
+        SpherreAccount::constructor(
+            ref contract_state,
+            contract_address_const::<2>(), // deployer
+            owner, // owner
+            "TestAccount", // name
+            "TestDescription", // description
+            array![contract_address_const::<3>()], // members
+            1, // threshold
+        );
 
         contract_state
     }
 
     // setting up the contract state
-    fn CONTRACT_STATE() -> Spherre::ContractState {
-        Spherre::contract_state_for_testing()
+    fn CONTRACT_STATE() -> SpherreAccount::ContractState {
+        SpherreAccount::contract_state_for_testing()
     }
 
     fn deploy_mock_erc721() -> IERC721Dispatcher {
@@ -50,16 +58,32 @@ mod tests {
         IERC721Dispatcher { contract_address }
     }
 
-    // Helper function to deploy Spherre contract (for integration tests as a recipient)
-    fn deploy_spherre() -> ISpherreDispatcher {
-        let contract = declare("Spherre").unwrap().contract_class();
+    // Helper function to deploy SpherreAccount contract (for integration tests as a recipient)
+    fn deploy_account() -> IAccountDispatcher {
+        let contract = declare("SpherreAccount").unwrap().contract_class();
+
         let owner = OWNER();
+        let deployer: ContractAddress = contract_address_const::<'deployer'>();
+        let members: Array<ContractAddress> = array![
+            contract_address_const::<'member1'>(), contract_address_const::<'member2'>()
+        ];
+        let threshold: u64 = 1;
+        let name: ByteArray = "SpherreTestAccount";
+        let description: ByteArray = "SpherreTestingAccount";
+
         let mut constructor_calldata = array![];
+        deployer.serialize(ref constructor_calldata);
         owner.serialize(ref constructor_calldata);
+        name.serialize(ref constructor_calldata);
+        description.serialize(ref constructor_calldata);
+        members.serialize(ref constructor_calldata);
+        threshold.serialize(ref constructor_calldata);
+
         let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
-        ISpherreDispatcher { contract_address }
+        IAccountDispatcher { contract_address }
     }
 
+    // Helper function to deploy a mock contract that does not implement IERC721Receiver
     fn deploy_mock_contract() -> IMockContractDispatcher {
         let contract_class = declare("MockContract").unwrap().contract_class();
         let mut calldata = array![];
@@ -105,9 +129,9 @@ mod tests {
     // --- Integration tests for ERC721 safe transfers scenarios ---
 
     #[test]
-    fn test_owner_safe_transfer_to_spherre() {
+    fn test_owner_safe_transfer_to_spherre_account() {
         let erc721_contract = deploy_mock_erc721();
-        let spherre_contract = deploy_spherre();
+        let spherre_contract = deploy_account();
         let minter = OWNER();
 
         // Mint a token to the owner
@@ -135,9 +159,9 @@ mod tests {
     }
 
     #[test]
-    fn test_approved_safe_transfer_to_spherre() {
+    fn test_approved_safe_transfer_to_spherre_account() {
         let erc721_contract = deploy_mock_erc721();
-        let spherre_contract = deploy_spherre();
+        let spherre_contract = deploy_account();
         let minter = OWNER();
         let operator = OPERATOR();
 
@@ -199,9 +223,10 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND', 'ENTRYPOINT_FAILED'))]
-    fn test_approved_safe_transfer_to_spherre_no_receiver() {
+    fn test_approved_safe_transfer_to_spherre_account_no_receiver() {
         let erc721_contract = deploy_mock_erc721();
-        let spherre_contract = test_address();
+        let state = CONTRACT_STATE();
+        let account_contract = test_address();
         let minter = OWNER();
         let operator = OPERATOR();
 
@@ -221,13 +246,13 @@ mod tests {
         let data = array![123.into()].span();
 
         // This should panic as the receiver doesn't properly implement the interface
-        erc721_contract.safe_transfer_from(minter, spherre_contract, TOKEN_ID, data);
+        erc721_contract.safe_transfer_from(minter, account_contract, TOKEN_ID, data);
     }
 
     #[test]
-    fn test_spherre_receives_token_when_paused() {
+    fn test_spherre_account_receives_token_when_paused() {
         let erc721_contract = deploy_mock_erc721();
-        let spherre_contract = deploy_spherre();
+        let spherre_contract = deploy_account();
         let minter = OWNER();
         let operator = OPERATOR();
 
@@ -243,7 +268,8 @@ mod tests {
         stop_cheat_caller_address(erc721_contract.contract_address);
 
         // Pause the Spherre contract
-        start_cheat_caller_address(spherre_contract.contract_address, minter);
+        let deployer = spherre_contract.get_deployer();
+        start_cheat_caller_address(spherre_contract.contract_address, deployer);
         spherre_contract.pause();
         stop_cheat_caller_address(spherre_contract.contract_address);
 
