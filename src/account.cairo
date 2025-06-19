@@ -5,6 +5,8 @@
 #[starknet::contract]
 pub mod SpherreAccount {
     use AccountData::InternalTrait;
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::token::erc721::ERC721ReceiverComponent;
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_security::pausable::PausableComponent;
     use openzeppelin_upgrades::UpgradeableComponent;
@@ -54,6 +56,8 @@ pub mod SpherreAccount {
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: ERC721ReceiverComponent, storage: erc721_receiver, event: ERC721ReceiverEvent);
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
 
     // AccountData component implementation
     #[abi(embed_v0)]
@@ -83,6 +87,16 @@ pub mod SpherreAccount {
 
     // Upgradeable component implementation
     pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+    // Implement SRC5 mixin
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+    impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
+
+    // Implement ERC721Receiver mixin
+    #[abi(embed_v0)]
+    impl ERC721ReceiverMixinImpl =
+        ERC721ReceiverComponent::ERC721ReceiverMixinImpl<ContractState>;
+    impl ERC721ReceiverInternalImpl = ERC721ReceiverComponent::InternalImpl<ContractState>;
 
     // Integrate the actions components to the contract
 
@@ -146,6 +160,10 @@ pub mod SpherreAccount {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        pub erc721_receiver: ERC721ReceiverComponent::Storage,
+        #[substorage(v0)]
+        pub src5: SRC5Component::Storage,
     }
 
     #[event]
@@ -175,6 +193,10 @@ pub mod SpherreAccount {
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        ERC721ReceiverEvent: ERC721ReceiverComponent::Event,
+        #[flat]
+        SRC5Event: SRC5Component::Event,
     }
 
     #[constructor]
@@ -211,7 +233,11 @@ pub mod SpherreAccount {
 
         // Initialize Ownable component
         self.ownable.initializer(deployer);
+
+        // Initialize ERC721Receiver
+        self.erc721_receiver.initializer();
     }
+
     #[abi(embed_v0)]
     pub impl AccountImpl of IAccount<ContractState> {
         fn get_name(self: @ContractState) -> ByteArray {

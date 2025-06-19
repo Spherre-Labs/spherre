@@ -45,7 +45,7 @@ pub mod Spherre {
         #[substorage(v0)]
         access_control: AccessControlComponent::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage,
+        pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
     }
@@ -106,6 +106,7 @@ pub mod Spherre {
 
     // Upgradeable component implementation
     pub impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
 
     #[derive(Drop, starknet::Event)]
     struct AccountDeployed {
