@@ -16,9 +16,11 @@ pub mod interfaces {
     pub mod ipermission_control;
     pub mod ispherre;
     pub mod itoken_tx;
+    pub mod itreasury_handler;
 }
 pub mod components {
     pub mod permission_control;
+    pub mod treasury_handler;
 }
 pub mod actions {
     pub mod change_threshold_transaction;
@@ -38,6 +40,7 @@ pub mod tests {
     pub mod test_permission_control;
     pub mod test_spherre;
     pub mod test_spherre_upgrade;
+    pub mod test_treasury_handler;
     pub mod utils;
     pub mod mocks {
         pub mod mock_accountV2;

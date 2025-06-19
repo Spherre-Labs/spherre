@@ -21,6 +21,7 @@ pub mod Errors {
     pub const ERR_NON_ZERO_ADDRESS_NFT_CONTRACT: felt252 = 'NFT contract address is zero';
     pub const ERR_NO_PROPOSER_PERMISSION: felt252 = 'Caller is not a proposer';
     pub const ERR_INVALID_NFT_TRANSACTION: felt252 = 'Invalid NFT transaction';
+    pub const ERR_NFT_NOT_OWNED: felt252 = 'Caller does not own the NFT';
 
     pub const ERR_THRESHOLD_UNCHANGED: felt252 = 'Threshold is unchanged';
     pub const ERR_THRESHOLD_EXCEEDS_VOTERS: felt252 = 'Threshold exceeds total voters';
@@ -36,6 +37,7 @@ pub mod Errors {
     pub const ERR_RECIPIENT_CANNOT_BE_ACCOUNT: felt252 = 'Recipient cannot be account';
     pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
+    pub const ERR_ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
 
     pub const MEMBER_NOT_FOUND: felt252 = 'Member does not exist';
     pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
