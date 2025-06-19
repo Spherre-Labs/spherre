@@ -39,13 +39,6 @@ pub mod TreasuryHandler {
     impl TreasuryHandlerImpl<
         TContractState, +HasComponent<TContractState>,
     > of ITreasuryHandler<ComponentState<TContractState>> {
-        /// Returns this account’s balance of the specified ERC‑20 token.
-        ///
-        /// # Parameters
-        /// - `token_address` – The ERC‑20 token contract address.
-        ///
-        /// # Returns
-        /// - `u256` – The token balance owned by the account.
         fn get_token_balance(
             self: @ComponentState<TContractState>, token_address: ContractAddress,
         ) -> u256 {
@@ -54,15 +47,6 @@ pub mod TreasuryHandler {
             let account = get_contract_address();
             IERC20Dispatcher { contract_address: token_address }.balance_of(account)
         }
-
-        /// Checks whether this account owns a particular ERC‑721 token.
-        ///
-        /// # Parameters
-        /// - `nft_address` – The ERC‑721 token contract address.
-        /// - `token_id`    – The token identifier.
-        ///
-        /// # Returns
-        /// - `bool` – `true` if the account owns `token_id`, otherwise `false`.
         fn is_nft_owner(
             self: @ComponentState<TContractState>, nft_address: ContractAddress, token_id: u256,
         ) -> bool {
@@ -122,8 +106,9 @@ pub mod TreasuryHandler {
             assert(self.is_nft_owner(nft_address, token_id), Errors::ERR_NFT_NOT_OWNED);
 
             let account = get_contract_address();
-            IERC721Dispatcher { contract_address: nft_address }
-                .transfer_from(account, to, token_id);
+            let ierc721_dispatcher = IERC721Dispatcher { contract_address: nft_address };
+            ierc721_dispatcher.approve(to, token_id); // Approve the recipient to transfer the NFT
+            ierc721_dispatcher.transfer_from(account, to, token_id);
 
             self.emit(Event::NftTransferred(NftTransferred { nft: nft_address, to, token_id }));
         }
