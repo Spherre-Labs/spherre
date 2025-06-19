@@ -1173,6 +1173,514 @@ const deployedContracts = {
           ],
         },
         {
+          type: "impl",
+          name: "ChangeThresholdTransactionImpl",
+          interface_name:
+            "spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::ThresholdChangeData",
+          members: [
+            {
+              name: "new_threshold",
+              type: "core::integer::u64",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "new_threshold",
+                  type: "core::integer::u64",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::ThresholdChangeData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_all_threshold_change_transactions",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::ThresholdChangeData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberAddTransactionImpl",
+          interface_name:
+            "spherre::interfaces::imember_add_tx::IMemberAddTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberAddData",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "permissions",
+              type: "core::integer::u8",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::imember_add_tx::IMemberAddTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_member_add_transaction",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "permissions",
+                  type: "core::integer::u8",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_add_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberAddData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "member_add_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::MemberAddData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_member_add_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberRemoveTransactionImpl",
+          interface_name:
+            "spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberRemoveData",
+          members: [
+            {
+              name: "member_address",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_remove_member_transaction",
+              inputs: [
+                {
+                  name: "member_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_removal_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberRemoveData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "member_removal_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::MemberRemoveData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_remove_member_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberPermissionTransactionImpl",
+          interface_name:
+            "spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::EditPermissionTransaction",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "new_permissions",
+                  type: "core::integer::u8",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::EditPermissionTransaction",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_edit_permission_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::EditPermissionTransaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "NFTTransactionImpl",
+          interface_name: "spherre::interfaces::inft_tx::INFTTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::NFTTransactionData",
+          members: [
+            {
+              name: "nft_contract",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "token_id",
+              type: "core::integer::u256",
+            },
+            {
+              name: "recipient",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::inft_tx::INFTTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_nft_transaction",
+              inputs: [
+                {
+                  name: "nft_contract",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "recipient",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_nft_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::NFTTransactionData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "nft_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::NFTTransactionData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_nft_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "TokenTransactionImpl",
+          interface_name: "spherre::interfaces::itoken_tx::ITokenTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::TokenTransactionData",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "recipient",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::itoken_tx::ITokenTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_token_transaction",
+              inputs: [
+                {
+                  name: "token",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "recipient",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_token_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::TokenTransactionData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "token_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::TokenTransactionData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_token_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
           type: "constructor",
           name: "constructor",
           inputs: [
@@ -1562,9 +2070,64 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditProposed",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
           name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::Event",
           kind: "enum",
-          variants: [],
+          variants: [
+            {
+              name: "PermissionEditProposed",
+              type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditProposed",
+              kind: "nested",
+            },
+            {
+              name: "PermissionEditExecuted",
+              type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+              kind: "nested",
+            },
+          ],
         },
         {
           type: "event",
@@ -1894,7 +2457,7 @@ const deployedContracts = {
   sepolia: {
     Spherre: {
       address:
-        "0x3bfb33ad8b7ba73a0ad00ef4291eb48962ccc8de62ea18c94792b25c529c1f4",
+        "0x72e1387bbd6cdd783696ddee58b9bb69b5004ae333a48e1ae187d58a8e03974",
       abi: [
         {
           type: "impl",
@@ -2464,7 +3027,7 @@ const deployedContracts = {
     },
     SpherreAccount: {
       address:
-        "0x43790311464bff25fb852e4e82435bb56e5ae9e09b629e696d90054bb5caf10",
+        "0x3f3b1fef05ff4a85e8d00dbcd265ae1a654e2bcce6d8ad576387bc68f204a6d",
       abi: [
         {
           type: "impl",
@@ -3060,6 +3623,514 @@ const deployedContracts = {
           ],
         },
         {
+          type: "impl",
+          name: "ChangeThresholdTransactionImpl",
+          interface_name:
+            "spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::ThresholdChangeData",
+          members: [
+            {
+              name: "new_threshold",
+              type: "core::integer::u64",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "new_threshold",
+                  type: "core::integer::u64",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::ThresholdChangeData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_all_threshold_change_transactions",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::ThresholdChangeData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_threshold_change_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberAddTransactionImpl",
+          interface_name:
+            "spherre::interfaces::imember_add_tx::IMemberAddTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberAddData",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "permissions",
+              type: "core::integer::u8",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::imember_add_tx::IMemberAddTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_member_add_transaction",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "permissions",
+                  type: "core::integer::u8",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_add_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberAddData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "member_add_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::MemberAddData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_member_add_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberRemoveTransactionImpl",
+          interface_name:
+            "spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberRemoveData",
+          members: [
+            {
+              name: "member_address",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::imember_remove_tx::IMemberRemoveTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_remove_member_transaction",
+              inputs: [
+                {
+                  name: "member_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_removal_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberRemoveData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "member_removal_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::MemberRemoveData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_remove_member_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "MemberPermissionTransactionImpl",
+          interface_name:
+            "spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::EditPermissionTransaction",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "new_permissions",
+                  type: "core::integer::u8",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::EditPermissionTransaction",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_edit_permission_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::EditPermissionTransaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_edit_permission_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "NFTTransactionImpl",
+          interface_name: "spherre::interfaces::inft_tx::INFTTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::NFTTransactionData",
+          members: [
+            {
+              name: "nft_contract",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "token_id",
+              type: "core::integer::u256",
+            },
+            {
+              name: "recipient",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::inft_tx::INFTTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_nft_transaction",
+              inputs: [
+                {
+                  name: "nft_contract",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "recipient",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_nft_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::NFTTransactionData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "nft_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::NFTTransactionData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_nft_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "TokenTransactionImpl",
+          interface_name: "spherre::interfaces::itoken_tx::ITokenTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::TokenTransactionData",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "recipient",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::itoken_tx::ITokenTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_token_transaction",
+              inputs: [
+                {
+                  name: "token",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "recipient",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_token_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::TokenTransactionData",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "token_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::TokenTransactionData>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_token_transaction",
+              inputs: [
+                {
+                  name: "id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
           type: "constructor",
           name: "constructor",
           inputs: [
@@ -3449,9 +4520,64 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditProposed",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_permissions",
+              type: "core::integer::u8",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
           name: "spherre::actions::member_permission_tx::MemberPermissionTransaction::Event",
           kind: "enum",
-          variants: [],
+          variants: [
+            {
+              name: "PermissionEditProposed",
+              type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditProposed",
+              kind: "nested",
+            },
+            {
+              name: "PermissionEditExecuted",
+              type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+              kind: "nested",
+            },
+          ],
         },
         {
           type: "event",
@@ -3775,7 +4901,7 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0x5bf6deaa47784584fc815f8885fcacca41f93765a45d618e884ab7ae020c34d",
+        "0x7e76d1168d5cadb4fa75b4b289edcbf9f82bd21e4558e5afdf7d71cd1df8811",
     },
   },
 } as const;

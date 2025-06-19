@@ -22,11 +22,11 @@ pub mod MemberPermissionTransaction {
     use spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{EditPermissionTransaction, TransactionType};
-    use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
+    use starknet::{ContractAddress, get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -38,10 +38,19 @@ pub mod MemberPermissionTransaction {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         PermissionEditProposed: PermissionEditProposed,
+        PermissionEditExecuted: PermissionEditExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct PermissionEditProposed {
+        #[key]
+        pub transaction_id: u256,
+        pub member: ContractAddress,
+        pub new_permissions: u8
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct PermissionEditExecuted {
         #[key]
         pub transaction_id: u256,
         pub member: ContractAddress,
@@ -125,6 +134,36 @@ pub mod MemberPermissionTransaction {
                     array.append(tx);
                 };
             array
+        }
+
+        fn execute_edit_permission_transaction(
+            ref self: ComponentState<TContractState>, transaction_id: u256
+        ) {
+            // Get the transaction data
+            let edit_permission_data = self.get_edit_permission_transaction(transaction_id);
+            let member = edit_permission_data.member;
+            let new_permissions = edit_permission_data.new_permissions;
+
+            // check if member address is still a member
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+            assert(account_data_comp.is_member(member), Errors::MEMBER_NOT_FOUND);
+
+            // Execute the transaction in account data
+            account_data_comp.execute_transaction(transaction_id, get_caller_address());
+
+            // Get the permission control component
+            let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
+
+            // Convert mask to permissions
+            let permissions = permission_control_comp.permissions_from_mask(new_permissions);
+
+            // Revoke all permissions first
+            permission_control_comp.revoke_all_permissions(member);
+
+            // Assign New Permissions
+            permission_control_comp.assign_permissions_from_enums(member, permissions);
+
+            self.emit(PermissionEditExecuted { transaction_id, member, new_permissions });
         }
     }
 }

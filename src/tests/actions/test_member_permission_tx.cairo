@@ -5,7 +5,7 @@ use snforge_std::{
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
-use spherre::types::{TransactionType};
+use spherre::types::{TransactionType, Permissions, TransactionStatus};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_contract() -> IMockContractDispatcher {
@@ -152,4 +152,73 @@ fn test_get_member_permission_transaction_success() {
     let permission_transaction = mock_contract.get_edit_permission_transaction_pub(tx_id);
     assert(permission_transaction.member == member, 'Wrong member address');
     assert(permission_transaction.new_permissions == new_permissions, 'Wrong permissions');
+}
+
+
+#[test]
+fn test_execute_member_permission_transaction_success() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    // Assign member permissions
+    mock_contract.assign_proposer_permission_pub(member);
+    mock_contract.assign_voter_permission_pub(member);
+    mock_contract.assign_executor_permission_pub(member);
+
+    // check whether member has permissions
+    assert(
+        mock_contract.has_permission_pub(member, Permissions::PROPOSER),
+        'should have proposer permission'
+    );
+    assert(
+        mock_contract.has_permission_pub(member, Permissions::VOTER), 'should have voter permission'
+    );
+    assert(
+        mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
+        'should have executor permission'
+    );
+
+    // Create a member permission transaction
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Test getting the member permission transaction
+    let permission_transaction = mock_contract.get_edit_permission_transaction_pub(tx_id);
+    assert(permission_transaction.member == member, 'Wrong member address');
+    assert(permission_transaction.new_permissions == new_permissions, 'Wrong permissions');
+
+    // Approve the transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Execute the transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Checks
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    // check that the transaction status is EXECUTED
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Invalid Status');
+
+    assert(
+        !mock_contract.has_permission_pub(member, Permissions::PROPOSER),
+        'proposer permission found'
+    );
+    assert(
+        mock_contract.has_permission_pub(member, Permissions::VOTER), 'should have voter permission'
+    );
+    assert(
+        mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
+        'should have executor permission'
+    );
 }
