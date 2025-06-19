@@ -91,6 +91,38 @@ pub mod SpherreAccount {
         ERC721ReceiverComponent::ERC721ReceiverMixinImpl<ContractState>;
     impl ERC721ReceiverInternalImpl = ERC721ReceiverComponent::InternalImpl<ContractState>;
 
+    // Integrate the actions components to the contract
+
+    // ChangeThresholdTransaction component implementation
+    #[abi(embed_v0)]
+    impl ChangeThresholdTransactionImpl =
+        ChangeThresholdTransaction::ChangeThresholdTransaction<ContractState>;
+
+    // MemberAddTransaction component implementation
+    #[abi(embed_v0)]
+    impl MemberAddTransactionImpl =
+        MemberAddTransaction::MemberAddTransaction<ContractState>;
+
+    // MemberRemoveTransaction component implementation
+    #[abi(embed_v0)]
+    impl MemberRemoveTransactionImpl =
+        MemberRemoveTransaction::MemberRemoveTransaction<ContractState>;
+    impl MemberRemoveInternalImpl = MemberRemoveTransaction::PrivateImpl<ContractState>;
+
+    // MemberPermissionTransaction component implementation
+    #[abi(embed_v0)]
+    impl MemberPermissionTransactionImpl =
+        MemberPermissionTransaction::MemberPermissionTransaction<ContractState>;
+
+    // NFTTransaction component implementation
+    #[abi(embed_v0)]
+    impl NFTTransactionImpl = NFTTransaction::NFTTransaction<ContractState>;
+
+    // TokenTransaction component implementation
+    #[abi(embed_v0)]
+    impl TokenTransactionImpl = TokenTransaction::TokenTransaction<ContractState>;
+    impl TokenTransactionInternalImpl = TokenTransaction::PrivateImpl<ContractState>;
+
     #[storage]
     struct Storage {
         pub deployer: ContractAddress,
