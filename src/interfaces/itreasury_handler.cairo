@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use spherre::types::SmartTokenLock;
 
 /// Interface for the TreasuryHandler component
 /// This interface defines the entrypoints of the TreasuryHandler component.
@@ -24,4 +25,19 @@ pub trait ITreasuryHandler<TContractState> {
     /// # Returns
     /// * `bool` - Returns `true` if the account owns the specified token, `false` otherwise.
     fn is_nft_owner(self: @TContractState, nft_address: ContractAddress, token_id: u256) -> bool;
+
+    /// Returns all locked plans.
+    ///
+    /// # Returns
+    /// - `Array<SmartTokenLock>` – An array of all smart token lock plans.
+    fn get_all_locked_plans(self: @TContractState) -> Array<SmartTokenLock>;
+
+    /// Returns a specific locked plan by ID.
+    ///
+    /// # Parameters
+    /// - `lock_id` – The unique lock identifier.
+    ///
+    /// # Returns
+    /// - `SmartTokenLock` – The smart token lock plan.
+    fn get_locked_plan_by_id(self: @TContractState, lock_id: u256) -> SmartTokenLock;
 }
