@@ -6,8 +6,11 @@ pub mod TreasuryHandler {
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
     use spherre::types::{SmartTokenLock, LockStatus};
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess
+    };
     use starknet::{ContractAddress, get_contract_address, get_block_timestamp};
-    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     pub struct Storage {
@@ -70,9 +73,10 @@ pub mod TreasuryHandler {
             assert(!token_address.is_zero(), Errors::ERR_NON_ZERO_ADDRESS_TOKEN);
 
             let account = get_contract_address();
-            let total_balance = IERC20Dispatcher { contract_address: token_address }.balance_of(account);
+            let total_balance = IERC20Dispatcher { contract_address: token_address }
+                .balance_of(account);
             let locked_balance = self.locked_amount.read(token_address);
-            
+
             assert(total_balance >= locked_balance, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
             total_balance - locked_balance
         }
@@ -88,16 +92,20 @@ pub mod TreasuryHandler {
         fn get_all_locked_plans(self: @ComponentState<TContractState>) -> Array<SmartTokenLock> {
             let mut locked_plans = array![];
             let lock_count = self.lock_counter.read();
-            
-            for i in 1..lock_count + 1 {
-                let lock_plan = self.smart_token_locks.read(i);
-                locked_plans.append(lock_plan);
-            };
-            
+
+            for i in 1
+                ..lock_count
+                    + 1 {
+                        let lock_plan = self.smart_token_locks.read(i);
+                        locked_plans.append(lock_plan);
+                    };
+
             locked_plans
         }
 
-        fn get_locked_plan_by_id(self: @ComponentState<TContractState>, lock_id: u256) -> SmartTokenLock {
+        fn get_locked_plan_by_id(
+            self: @ComponentState<TContractState>, lock_id: u256
+        ) -> SmartTokenLock {
             self.smart_token_locks.read(lock_id)
         }
     }
@@ -126,7 +134,8 @@ pub mod TreasuryHandler {
 
             // Check that we have enough unlocked tokens for the transfer
             let account = get_contract_address();
-            let total_balance = IERC20Dispatcher { contract_address: token_address }.balance_of(account);
+            let total_balance = IERC20Dispatcher { contract_address: token_address }
+                .balance_of(account);
             let locked_balance = self.locked_amount.read(token_address);
             let available_balance = total_balance - locked_balance;
             assert(amount <= available_balance, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
@@ -188,7 +197,8 @@ pub mod TreasuryHandler {
 
             // Check that we have enough unlocked tokens to lock
             let account = get_contract_address();
-            let total_balance = IERC20Dispatcher { contract_address: token_address }.balance_of(account);
+            let total_balance = IERC20Dispatcher { contract_address: token_address }
+                .balance_of(account);
             let current_locked = self.locked_amount.read(token_address);
             let available_balance = total_balance - current_locked;
             assert(amount <= available_balance, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
@@ -196,7 +206,7 @@ pub mod TreasuryHandler {
             // Create new lock plan
             let lock_count = self.lock_counter.read();
             let new_lock_id = lock_count + 1;
-            
+
             let lock_plan = SmartTokenLock {
                 token: token_address,
                 date_locked: get_block_timestamp(),
@@ -211,14 +221,14 @@ pub mod TreasuryHandler {
             self.locked_amount.write(token_address, current_locked + amount);
 
             // Emit event
-            self.emit(
-                Event::TokenLocked(TokenLocked { 
-                    lock_id: new_lock_id, 
-                    token: token_address, 
-                    amount, 
-                    lock_duration 
-                })
-            );
+            self
+                .emit(
+                    Event::TokenLocked(
+                        TokenLocked {
+                            lock_id: new_lock_id, token: token_address, amount, lock_duration
+                        }
+                    )
+                );
 
             new_lock_id
         }
@@ -230,15 +240,18 @@ pub mod TreasuryHandler {
         /// - `lock_id` – The unique lock ID.
         fn _unlock_tokens(ref self: ComponentState<TContractState>, lock_id: u256) {
             assert(lock_id > 0, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
-            
+
             let mut lock_plan = self.smart_token_locks.read(lock_id);
-            
+
             // Check that the lock exists and is currently locked
-            assert(lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
-            
+            assert(
+                lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
+            );
+
             // Check that the lock duration has passed
             let current_time = get_block_timestamp();
-            let lock_end_time = lock_plan.date_locked + (lock_plan.lock_duration * 86400); // 86400 seconds in a day
+            let lock_end_time = lock_plan.date_locked
+                + (lock_plan.lock_duration * 86400); // 86400 seconds in a day
             assert(current_time >= lock_end_time, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
 
             // Update lock status
@@ -251,13 +264,14 @@ pub mod TreasuryHandler {
             self.locked_amount.write(lock_plan.token, current_locked - lock_plan.token_amount);
 
             // Emit event
-            self.emit(
-                Event::TokenUnlocked(TokenUnlocked { 
-                    lock_id, 
-                    token: lock_plan.token, 
-                    amount: lock_plan.token_amount 
-                })
-            );
+            self
+                .emit(
+                    Event::TokenUnlocked(
+                        TokenUnlocked {
+                            lock_id, token: lock_plan.token, amount: lock_plan.token_amount
+                        }
+                    )
+                );
         }
     }
 }

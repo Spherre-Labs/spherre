@@ -2,6 +2,10 @@ use core::num::traits::Zero;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events
 };
+use snforge_std::{
+    start_cheat_block_timestamp, stop_cheat_block_timestamp, start_cheat_caller_address,
+    stop_cheat_caller_address, test_address
+};
 use spherre::components::treasury_handler::TreasuryHandler::{
     Event, TokenTransferred, NftTransferred, TokenLocked, TokenUnlocked
 };
@@ -13,14 +17,10 @@ use spherre::interfaces::itreasury_handler::{
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::tests::utils::{TEST_USER};
-use starknet::ContractAddress;
 use spherre::types::{SmartTokenLock, LockStatus};
-use starknet::{contract_address_const, get_block_timestamp};
-use snforge_std::{
-    start_cheat_block_timestamp, stop_cheat_block_timestamp, start_cheat_caller_address,
-    stop_cheat_caller_address, test_address
-};
+use starknet::ContractAddress;
 use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+use starknet::{contract_address_const, get_block_timestamp};
 
 #[starknet::interface]
 pub trait IMockTreasuryHandler<TContractState> {
@@ -329,7 +329,7 @@ fn test_lock_tokens_success() {
 
     // Lock tokens
     let lock_amount: u256 = 500;
-    let lock_duration: u64 = 30; 
+    let lock_duration: u64 = 30;
     let lock_id = treasury.lock_tokens(token_address, lock_amount, lock_duration);
 
     // Verify lock was created
@@ -348,12 +348,7 @@ fn test_lock_tokens_success() {
 
     // Verify event was emitted
     let expected_event = Event::TokenLocked(
-        TokenLocked { 
-            lock_id: 1, 
-            token: token_address, 
-            amount: lock_amount, 
-            lock_duration 
-        }
+        TokenLocked { lock_id: 1, token: token_address, amount: lock_amount, lock_duration }
     );
     spy.assert_emitted(@array![(treasury_address, expected_event)]);
 }
@@ -387,7 +382,10 @@ fn test_lock_multiple_tokens() {
 
     // Verify available balance
     let available_balance = treasury_reader.get_token_balance(token_address);
-    assert(available_balance == initial_balance - (lock_amount_1 + lock_amount_2), 'Available balance incorrect');
+    assert(
+        available_balance == initial_balance - (lock_amount_1 + lock_amount_2),
+        'Available balance incorrect'
+    );
 }
 
 #[test]

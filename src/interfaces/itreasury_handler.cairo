@@ -1,5 +1,5 @@
-use starknet::ContractAddress;
 use spherre::types::SmartTokenLock;
+use starknet::ContractAddress;
 
 /// Interface for the TreasuryHandler component
 /// This interface defines the entrypoints of the TreasuryHandler component.
