@@ -39,5 +39,5 @@ pub trait ITreasuryHandler<TContractState> {
     ///
     /// # Returns
     /// - `SmartTokenLock` – The smart token lock plan.
-    fn get_locked_plan_by_id(self: @TContractState, lock_id: u256) -> SmartTokenLock;
+    fn get_locked_plan(self: @TContractState, lock_id: u256) -> SmartTokenLock;
 }

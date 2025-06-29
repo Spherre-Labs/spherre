@@ -77,7 +77,6 @@ pub mod TreasuryHandler {
                 .balance_of(account);
             let locked_balance = self.locked_amount.read(token_address);
 
-            assert(total_balance >= locked_balance, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
             total_balance - locked_balance
         }
 
@@ -103,7 +102,7 @@ pub mod TreasuryHandler {
             locked_plans
         }
 
-        fn get_locked_plan_by_id(
+        fn get_locked_plan(
             self: @ComponentState<TContractState>, lock_id: u256
         ) -> SmartTokenLock {
             self.smart_token_locks.read(lock_id)
