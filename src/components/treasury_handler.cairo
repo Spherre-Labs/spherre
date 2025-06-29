@@ -114,6 +114,18 @@ pub mod TreasuryHandler {
     pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
+        /// Converts duration in days to timestamp in seconds.
+        ///
+        /// # Parameters
+        /// - `duration` – The duration in days.
+        ///
+        /// # Returns
+        /// - `u64` – The duration in seconds.
+        fn convert_duration_to_timestamp(
+            self: @ComponentState<TContractState>, duration: u64
+        ) -> u64 {
+            86400 * duration
+        }
         /// Transfers `amount` of ERC‑20 `token_address` from this account to `to`.
         /// Emits a `TokenTransferred` event on success.
         ///
@@ -213,6 +225,7 @@ pub mod TreasuryHandler {
             // Update storage
             self.smart_token_locks.write(new_lock_id, lock_plan);
             self.lock_counter.write(new_lock_id);
+            let current_locked = self.locked_amount.read(token_address);
             self.locked_amount.write(token_address, current_locked + amount);
 
             // Emit event
@@ -246,7 +259,7 @@ pub mod TreasuryHandler {
             // Check that the lock duration has passed
             let current_time = get_block_timestamp();
             let lock_end_time = lock_plan.date_locked
-                + (lock_plan.lock_duration * 86400); // 86400 seconds in a day
+                + self.convert_duration_to_timestamp(lock_plan.lock_duration);
             assert(current_time >= lock_end_time, Errors::ERR_LOCK_DURATION_NOT_ELAPSED);
 
             // Update lock status

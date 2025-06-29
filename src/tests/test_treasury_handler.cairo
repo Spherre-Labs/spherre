@@ -340,7 +340,7 @@ fn test_lock_tokens_success() {
     assert(available_balance == initial_balance - lock_amount, 'Available balance incorrect');
 
     // Verify lock plan details
-    let lock_plan = treasury_reader.get_locked_plan_by_id(lock_id);
+    let lock_plan = treasury_reader.get_locked_plan(lock_id);
     assert(lock_plan.token == token_address, 'Token address incorrect');
     assert(lock_plan.token_amount == lock_amount, 'Lock amount incorrect');
     assert(lock_plan.lock_duration == lock_duration, 'Lock duration incorrect');
@@ -492,7 +492,7 @@ fn test_get_all_locked_plans() {
 }
 
 #[test]
-fn test_get_locked_plan_by_id() {
+fn test_get_locked_plan() {
     // Deploy MockTreasuryHandler
     let treasury_address = deploy_contract("MockTreasuryHandler");
     let treasury = IMockTreasuryHandlerDispatcher { contract_address: treasury_address };
@@ -510,7 +510,7 @@ fn test_get_locked_plan_by_id() {
     let lock_id = treasury.lock_tokens(token_address, lock_amount, lock_duration);
 
     // Get lock plan by ID
-    let lock_plan = treasury_reader.get_locked_plan_by_id(lock_id);
+    let lock_plan = treasury_reader.get_locked_plan(lock_id);
 
     // Verify plan details
     assert(lock_plan.token == token_address, 'Token address incorrect');
