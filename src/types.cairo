@@ -127,7 +127,7 @@ pub mod SpherreAdminRoles {
 pub enum LockStatus {
     #[default]
     LOCKED,
-    PAYEDOUT,
+    PAIDOUT,
 }
 
 #[derive(Drop, Copy, Serde, starknet::Store)]

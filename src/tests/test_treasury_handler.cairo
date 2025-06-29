@@ -420,7 +420,7 @@ fn test_lock_tokens_zero_address() {
 }
 
 #[test]
-#[should_panic(expected: ('Insufficient token amount',))]
+#[should_panic(expected: ('Lock amount cannot be zero',))]
 fn test_lock_tokens_zero_amount() {
     // Deploy MockTreasuryHandler
     let treasury_address = deploy_contract("MockTreasuryHandler");
@@ -437,7 +437,7 @@ fn test_lock_tokens_zero_amount() {
 }
 
 #[test]
-#[should_panic(expected: ('Insufficient token amount',))]
+#[should_panic(expected: ('Lock duration cannot be zero',))]
 fn test_lock_tokens_zero_duration() {
     // Deploy MockTreasuryHandler
     let treasury_address = deploy_contract("MockTreasuryHandler");

@@ -192,8 +192,8 @@ pub mod TreasuryHandler {
             lock_duration: u64,
         ) -> u256 {
             assert(!token_address.is_zero(), Errors::ERR_NON_ZERO_ADDRESS_TOKEN);
-            assert(amount > 0, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
-            assert(lock_duration > 0, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
+            assert(amount > 0, Errors::ERR_ZERO_LOCK_AMOUNT);
+            assert(lock_duration > 0, Errors::ERR_ZERO_LOCK_DURATION);
 
             // Check that we have enough unlocked tokens to lock
             let account = get_contract_address();
@@ -239,23 +239,23 @@ pub mod TreasuryHandler {
         /// # Parameters
         /// - `lock_id` – The unique lock ID.
         fn _unlock_tokens(ref self: ComponentState<TContractState>, lock_id: u256) {
-            assert(lock_id > 0, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
+            assert(lock_id > 0, Errors::ERR_ZERO_LOCK_ID);
 
             let mut lock_plan = self.smart_token_locks.read(lock_id);
 
             // Check that the lock exists and is currently locked
             assert(
-                lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
+                lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_LOCK_ALREADY_UNLOCKED
             );
 
             // Check that the lock duration has passed
             let current_time = get_block_timestamp();
             let lock_end_time = lock_plan.date_locked
                 + (lock_plan.lock_duration * 86400); // 86400 seconds in a day
-            assert(current_time >= lock_end_time, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
+            assert(current_time >= lock_end_time, Errors::ERR_LOCK_DURATION_NOT_ELAPSED);
 
             // Update lock status
-            lock_plan.lock_status = LockStatus::PAYEDOUT;
+            lock_plan.lock_status = LockStatus::PAIDOUT;
             self.smart_token_locks.write(lock_id, lock_plan);
 
             // Update locked amounts

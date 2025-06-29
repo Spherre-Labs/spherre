@@ -39,6 +39,13 @@ pub mod Errors {
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
     pub const ERR_ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
 
+    // Token locking specific errors
+    pub const ERR_ZERO_LOCK_AMOUNT: felt252 = 'Lock amount cannot be zero';
+    pub const ERR_ZERO_LOCK_DURATION: felt252 = 'Lock duration cannot be zero';
+    pub const ERR_ZERO_LOCK_ID: felt252 = 'Lock ID cannot be zero';
+    pub const ERR_LOCK_NOT_FOUND: felt252 = 'Lock plan not found';
+    pub const ERR_LOCK_ALREADY_UNLOCKED: felt252 = 'Lock already unlocked';
+
     pub const MEMBER_NOT_FOUND: felt252 = 'Member does not exist';
     pub const INVALID_MEMBER_REMOVE_TRANSACTION: felt252 = 'Not member remove proposal';
     pub const INSUFFICIENT_MEMBERS_AFTER_REMOVAL: felt252 = 'Would violate minimum threshold';
@@ -65,4 +72,7 @@ pub mod Errors {
 
     // errors for member permission transaction
     pub const ERR_INVALID_MEMBER_PERMISSION_TRANSACTION: felt252 = 'Invalid edit permission txn';
+
+    pub const ERR_LOCK_DURATION_NOT_ELAPSED: felt252 = 'Lock duration not elapsed';
+
 }
