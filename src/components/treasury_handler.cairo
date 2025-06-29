@@ -102,9 +102,7 @@ pub mod TreasuryHandler {
             locked_plans
         }
 
-        fn get_locked_plan(
-            self: @ComponentState<TContractState>, lock_id: u256
-        ) -> SmartTokenLock {
+        fn get_locked_plan(self: @ComponentState<TContractState>, lock_id: u256) -> SmartTokenLock {
             self.smart_token_locks.read(lock_id)
         }
     }
@@ -252,9 +250,7 @@ pub mod TreasuryHandler {
             let mut lock_plan = self.smart_token_locks.read(lock_id);
 
             // Check that the lock exists and is currently locked
-            assert(
-                lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_LOCK_ALREADY_UNLOCKED
-            );
+            assert(lock_plan.lock_status == LockStatus::LOCKED, Errors::ERR_LOCK_ALREADY_UNLOCKED);
 
             // Check that the lock duration has passed
             let current_time = get_block_timestamp();
