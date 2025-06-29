@@ -123,6 +123,22 @@ pub mod SpherreAdminRoles {
     pub const STAFF: felt252 = selector!("STAFF");
 }
 
+#[derive(Drop, Copy, starknet::Store, PartialEq, Serde)]
+pub enum LockStatus {
+    #[default]
+    LOCKED,
+    PAIDOUT,
+}
+
+#[derive(Drop, Copy, Serde, starknet::Store)]
+pub struct SmartTokenLock {
+    pub token: ContractAddress,
+    pub date_locked: u64,
+    pub lock_duration: u64, // Number of days till token unlock
+    pub token_amount: u256,
+    pub lock_status: LockStatus,
+}
+
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct EditPermissionTransaction {
     pub member: ContractAddress,
