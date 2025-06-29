@@ -195,11 +195,7 @@ pub mod TreasuryHandler {
             assert(lock_duration > 0, Errors::ERR_ZERO_LOCK_DURATION);
 
             // Check that we have enough unlocked tokens to lock
-            let account = get_contract_address();
-            let total_balance = IERC20Dispatcher { contract_address: token_address }
-                .balance_of(account);
-            let current_locked = self.locked_amount.read(token_address);
-            let available_balance = total_balance - current_locked;
+            let available_balance = self.get_token_balance(token_address);
             assert(amount <= available_balance, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
 
             // Create new lock plan
