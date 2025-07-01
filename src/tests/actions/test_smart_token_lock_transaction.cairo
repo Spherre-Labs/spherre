@@ -7,7 +7,7 @@ use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
@@ -81,7 +81,7 @@ fn test_zero_duration_should_fail() {
     start_cheat_caller_address(mock_contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-    let tx_id = mock_contract
+    mock_contract
         .propose_smart_token_lock_transaction_pub(token.contract_address, amount_to_send, duration);
     stop_cheat_caller_address(mock_contract_address);
 }
@@ -103,7 +103,7 @@ fn test_zero_amount_should_fail() {
     start_cheat_caller_address(mock_contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-    let tx_id = mock_contract
+    mock_contract
         .propose_smart_token_lock_transaction_pub(token.contract_address, amount_to_send, duration);
     stop_cheat_caller_address(mock_contract_address);
 }
@@ -125,7 +125,7 @@ fn test_insufficient_token_balance_should_fail() {
     start_cheat_caller_address(mock_contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
-    let tx_id = mock_contract
+    mock_contract
         .propose_smart_token_lock_transaction_pub(token.contract_address, amount_to_send, duration);
     stop_cheat_caller_address(mock_contract_address);
 }

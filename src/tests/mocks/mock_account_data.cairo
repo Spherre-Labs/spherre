@@ -290,12 +290,12 @@ pub mod MockContract {
         fn get_smart_token_lock_transaction_pub(
             self: @ContractState, transaction_id: u256
         ) -> SmartTokenLockTransaction {
-            self.smart_token_lock_transaction.get_smart_lock_transaction(transaction_id)
+            self.smart_token_lock_transaction.get_smart_token_lock_transaction(transaction_id)
         }
         fn smart_token_lock_transaction_list_pub(
             self: @ContractState
         ) -> Array<SmartTokenLockTransaction> {
-            self.smart_token_lock_transaction.smart_lock_transaction_list()
+            self.smart_token_lock_transaction.smart_token_lock_transaction_list()
         }
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)

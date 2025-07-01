@@ -8,7 +8,6 @@ pub mod SmartTokenLockTransactionComponent {
     use spherre::account_data;
     use spherre::components::treasury_handler::TreasuryHandler::{
         InternalImpl as TreasuryHandlerInternalImpl, TreasuryHandlerImpl,
-        InternalTrait as TreasuryHandlerInternalTrait
     };
     use spherre::components::{treasury_handler, permission_control};
     use spherre::errors::Errors;
@@ -82,7 +81,7 @@ pub mod SmartTokenLockTransactionComponent {
             tx_id
         }
 
-        fn get_smart_lock_transaction(
+        fn get_smart_token_lock_transaction(
             self: @ComponentState<TContractState>, transaction_id: u256
         ) -> SmartTokenLockTransaction {
             let account_data_comp = get_dep_component!(self, AccountData);
@@ -95,7 +94,7 @@ pub mod SmartTokenLockTransactionComponent {
 
             self.smart_token_lock_transactions.entry(transaction_id).read()
         }
-        fn smart_lock_transaction_list(
+        fn smart_token_lock_transaction_list(
             self: @ComponentState<TContractState>
         ) -> Array<SmartTokenLockTransaction> {
             let mut smart_lock_tx_array = array![];
