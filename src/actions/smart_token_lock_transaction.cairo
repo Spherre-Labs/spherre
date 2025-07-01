@@ -1,24 +1,26 @@
-
 #[starknet::component]
 pub mod SmartTokenLockTransactionComponent {
     use core::num::traits::Zero;
+    use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
+    use openzeppelin_security::pausable::PausableComponent;
+    use spherre::account_data::AccountData::InternalImpl;
+    use spherre::account_data::AccountData::InternalTrait;
+    use spherre::account_data;
+    use spherre::components::treasury_handler::TreasuryHandler::{
+        InternalImpl as TreasuryHandlerInternalImpl, TreasuryHandlerImpl,
+        InternalTrait as TreasuryHandlerInternalTrait
+    };
+    use spherre::components::{treasury_handler, permission_control};
+    use spherre::errors::Errors;
+    use spherre::interfaces::iaccount_data::IAccountData;
+    use spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction;
+    use spherre::interfaces::itreasury_handler::ITreasuryHandler;
+    use spherre::types::{SmartTokenLockTransaction, TransactionType, Transaction};
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
-    use openzeppelin_security::pausable::PausableComponent;
-    use spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction;
-    use spherre::components::{treasury_handler, permission_control};
-    use spherre::types::{SmartTokenLockTransaction, TransactionType, Transaction};
-    use spherre::account_data;
-    use spherre::errors::Errors;
-    use spherre::account_data::AccountData::InternalImpl;
-    use spherre::account_data::AccountData::InternalTrait;
-    use spherre::components::treasury_handler::TreasuryHandler::{InternalImpl as TreasuryHandlerInternalImpl, TreasuryHandlerImpl, InternalTrait as TreasuryHandlerInternalTrait};
-    use spherre::interfaces::itreasury_handler::ITreasuryHandler;
-    use spherre::interfaces::iaccount_data::IAccountData;
 
     #[storage]
     pub struct Storage {
@@ -51,7 +53,12 @@ pub mod SmartTokenLockTransactionComponent {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of ISmartTokenLockTransaction<ComponentState<TContractState>> {
-        fn propose_smart_token_lock_transaction(ref self: ComponentState<TContractState>, token: ContractAddress, amount: u256, duration: u64) -> u256 {
+        fn propose_smart_token_lock_transaction(
+            ref self: ComponentState<TContractState>,
+            token: ContractAddress,
+            amount: u256,
+            duration: u64
+        ) -> u256 {
             assert(token.is_non_zero(), Errors::ERR_NON_ZERO_ADDRESS_TOKEN);
             assert(amount > 0, Errors::ERR_INVALID_AMOUNT);
             assert(duration > 0, Errors::ERR_INVALID_TOKEN_LOCK_DURATION);
@@ -65,44 +72,41 @@ pub mod SmartTokenLockTransactionComponent {
             let tx_id = account_data_comp.create_transaction(TransactionType::SMART_TOKEN_LOCK);
 
             let smart_token_lock_tx = SmartTokenLockTransaction {
-                token,
-                amount,
-                duration,
-                transaction_id: tx_id
+                token, amount, duration, transaction_id: tx_id
             };
             self.smart_token_lock_transactions.entry(tx_id).write(smart_token_lock_tx);
             self.smart_token_lock_transaction_ids.append().write(tx_id);
 
-            self.emit(
-                SmartTokenLockTransactionProposed {
-                    id: tx_id,
-                    token,
-                    amount,
-                    duration
-                }
-            );
+            self.emit(SmartTokenLockTransactionProposed { id: tx_id, token, amount, duration });
 
             tx_id
-
         }
 
-        fn get_smart_lock_transaction(self: @ComponentState<TContractState>, transaction_id: u256) -> SmartTokenLockTransaction {
+        fn get_smart_lock_transaction(
+            self: @ComponentState<TContractState>, transaction_id: u256
+        ) -> SmartTokenLockTransaction {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(transaction_id);
-            
-            assert(transaction.tx_type == TransactionType::SMART_TOKEN_LOCK, Errors::ERR_INVALID_SMART_TOKEN_LOCK_TRANSACTION);
+
+            assert(
+                transaction.tx_type == TransactionType::SMART_TOKEN_LOCK,
+                Errors::ERR_INVALID_SMART_TOKEN_LOCK_TRANSACTION
+            );
 
             self.smart_token_lock_transactions.entry(transaction_id).read()
         }
-        fn smart_lock_transaction_list(self: @ComponentState<TContractState>) -> Array<SmartTokenLockTransaction> {
+        fn smart_lock_transaction_list(
+            self: @ComponentState<TContractState>
+        ) -> Array<SmartTokenLockTransaction> {
             let mut smart_lock_tx_array = array![];
             let range_stop = self.smart_token_lock_transaction_ids.len();
 
-            for index in 0..range_stop {
-                let id = self.smart_token_lock_transaction_ids.at(index).read();
-                let tx = self.smart_token_lock_transactions.entry(id).read();
-                smart_lock_tx_array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.smart_token_lock_transaction_ids.at(index).read();
+                    let tx = self.smart_token_lock_transactions.entry(id).read();
+                    smart_lock_tx_array.append(tx);
+                };
 
             smart_lock_tx_array
         }

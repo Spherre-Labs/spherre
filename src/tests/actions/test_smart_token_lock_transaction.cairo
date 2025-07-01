@@ -57,7 +57,9 @@ fn test_propose_smart_token_lock() {
     // check that the transaction type is type TOKEN::SEND
     assert(transaction.tx_type == TransactionType::SMART_TOKEN_LOCK, 'Invalid Transaction');
     let smart_token_lock_transaction = mock_contract.get_smart_token_lock_transaction_pub(tx_id);
-    assert(smart_token_lock_transaction.token == token.contract_address, 'Contract Address Invalid');
+    assert(
+        smart_token_lock_transaction.token == token.contract_address, 'Contract Address Invalid'
+    );
     assert(smart_token_lock_transaction.amount == amount_to_send, 'Amount is Invalid');
     assert(smart_token_lock_transaction.duration == duration, 'Recipient is Invalid');
 }

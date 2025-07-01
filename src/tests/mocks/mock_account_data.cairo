@@ -1,6 +1,7 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction, SmartTokenLockTransaction, SmartTokenLock
+    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
+    SmartTokenLockTransaction
 };
 use starknet::ContractAddress;
 
@@ -27,12 +28,15 @@ pub trait IMockContract<TContractState> {
     fn execute_token_transaction_pub(ref self: TContractState, id: u256);
     fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
     fn execute_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
-    fn propose_smart_token_lock_transaction_pub(ref self: TContractState, token: ContractAddress, amount: u256, duration: u64) -> u256;
-    fn get_smart_token_lock_transaction_pub(self: @TContractState, transaction_id: u256) -> SmartTokenLockTransaction;
-    fn smart_token_lock_transaction_list_pub(self: @TContractState) -> Array<SmartTokenLockTransaction>;
-    fn get_token_balance_pub(self: @TContractState, token_address: ContractAddress) -> u256;
-    fn is_nft_owner_pub(self: @TContractState, nft_address: ContractAddress, token_id: u256) -> bool;
-    fn get_all_locked_plans_pub(self: @TContractState) -> Array<SmartTokenLock>;
+    fn propose_smart_token_lock_transaction_pub(
+        ref self: TContractState, token: ContractAddress, amount: u256, duration: u64
+    ) -> u256;
+    fn get_smart_token_lock_transaction_pub(
+        self: @TContractState, transaction_id: u256
+    ) -> SmartTokenLockTransaction;
+    fn smart_token_lock_transaction_list_pub(
+        self: @TContractState
+    ) -> Array<SmartTokenLockTransaction>;
     fn assign_executor_permission_pub(ref self: TContractState, member: ContractAddress);
     fn propose_nft_transaction_pub(
         ref self: TContractState,
@@ -84,14 +88,14 @@ pub mod MockContract {
     use spherre::actions::member_permission_tx::MemberPermissionTransaction;
     use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
-    use spherre::actions::token_transaction::TokenTransaction;
     use spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent;
+    use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
     use spherre::components::treasury_handler::{TreasuryHandler};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction, SmartTokenLock,
+        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
     };
     use spherre::types::{EditPermissionTransaction};
     use starknet::ContractAddress;
@@ -101,7 +105,11 @@ pub mod MockContract {
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
-    component!(path: SmartTokenLockTransactionComponent, storage: smart_token_lock_transaction, event: SmartTokenLockTransactionEvent);
+    component!(
+        path: SmartTokenLockTransactionComponent,
+        storage: smart_token_lock_transaction,
+        event: SmartTokenLockTransactionEvent
+    );
     component!(path: TreasuryHandler, storage: treasury_handler, event: TreasuryHandlerEvent);
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(
@@ -134,7 +142,7 @@ pub mod MockContract {
     pub impl TreasuryHandlerImpl = TreasuryHandler::TreasuryHandler<ContractState>;
 
     #[abi(embed_v0)]
-    pub impl SmartTokenLockTransactionImpl = 
+    pub impl SmartTokenLockTransactionImpl =
         SmartTokenLockTransactionComponent::SmartTokenLockTransactionComponent<ContractState>;
 
     #[abi(embed_v0)]
@@ -272,23 +280,22 @@ pub mod MockContract {
         fn execute_token_transaction_pub(ref self: ContractState, id: u256) {
             self.token_transaction.execute_token_transaction(id)
         }
-        fn propose_smart_token_lock_transaction_pub(ref self: ContractState, token: ContractAddress, amount: u256, duration: u64) -> u256 {
-            self.smart_token_lock_transaction.propose_smart_token_lock_transaction(token, amount, duration)
+        fn propose_smart_token_lock_transaction_pub(
+            ref self: ContractState, token: ContractAddress, amount: u256, duration: u64
+        ) -> u256 {
+            self
+                .smart_token_lock_transaction
+                .propose_smart_token_lock_transaction(token, amount, duration)
         }
-        fn get_smart_token_lock_transaction_pub(self: @ContractState, transaction_id: u256) -> SmartTokenLockTransaction {
+        fn get_smart_token_lock_transaction_pub(
+            self: @ContractState, transaction_id: u256
+        ) -> SmartTokenLockTransaction {
             self.smart_token_lock_transaction.get_smart_lock_transaction(transaction_id)
         }
-        fn smart_token_lock_transaction_list_pub(self: @ContractState) -> Array<SmartTokenLockTransaction> {
+        fn smart_token_lock_transaction_list_pub(
+            self: @ContractState
+        ) -> Array<SmartTokenLockTransaction> {
             self.smart_token_lock_transaction.smart_lock_transaction_list()
-        }
-        fn get_token_balance_pub(self: @ContractState, token_address: ContractAddress) -> u256 {
-            self.treasury_handler.get_token_balance(token_address)
-        }
-        fn is_nft_owner_pub(self: @ContractState, nft_address: ContractAddress, token_id: u256) -> bool {
-            self.treasury_handler.is_nft_owner(nft_address, token_id)
-        }
-        fn get_all_locked_plans_pub(self: @ContractState) -> Array<SmartTokenLock> {
-            self.treasury_handler.get_all_locked_plans()
         }
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)
