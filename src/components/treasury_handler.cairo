@@ -64,7 +64,7 @@ pub mod TreasuryHandler {
 
     /// External interface implementation.
     #[embeddable_as(TreasuryHandler)]
-    impl TreasuryHandlerImpl<
+    pub impl TreasuryHandlerImpl<
         TContractState, +HasComponent<TContractState>,
     > of ITreasuryHandler<ComponentState<TContractState>> {
         fn get_token_balance(
