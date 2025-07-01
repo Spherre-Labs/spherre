@@ -61,7 +61,7 @@ fn test_propose_smart_token_lock() {
         smart_token_lock_transaction.token == token.contract_address, 'Contract Address Invalid'
     );
     assert(smart_token_lock_transaction.amount == amount_to_send, 'Amount is Invalid');
-    assert(smart_token_lock_transaction.duration == duration, 'Recipient is Invalid');
+    assert(smart_token_lock_transaction.duration == duration, 'Duration is Invalid');
 }
 
 #[test]
