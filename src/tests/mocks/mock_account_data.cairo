@@ -1,6 +1,7 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction
+    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
+    SmartTokenLockTransaction
 };
 use starknet::ContractAddress;
 
@@ -27,6 +28,15 @@ pub trait IMockContract<TContractState> {
     fn execute_token_transaction_pub(ref self: TContractState, id: u256);
     fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
     fn execute_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
+    fn propose_smart_token_lock_transaction_pub(
+        ref self: TContractState, token: ContractAddress, amount: u256, duration: u64
+    ) -> u256;
+    fn get_smart_token_lock_transaction_pub(
+        self: @TContractState, transaction_id: u256
+    ) -> SmartTokenLockTransaction;
+    fn smart_token_lock_transaction_list_pub(
+        self: @TContractState
+    ) -> Array<SmartTokenLockTransaction>;
     fn assign_executor_permission_pub(ref self: TContractState, member: ContractAddress);
     fn propose_nft_transaction_pub(
         ref self: TContractState,
@@ -78,12 +88,14 @@ pub mod MockContract {
     use spherre::actions::member_permission_tx::MemberPermissionTransaction;
     use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
     use spherre::actions::nft_transaction::NFTTransaction;
+    use spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent;
     use spherre::actions::token_transaction::TokenTransaction;
     use spherre::components::permission_control::{PermissionControl};
+    use spherre::components::treasury_handler::{TreasuryHandler};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData, MemberAddData
+        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
     };
     use spherre::types::{EditPermissionTransaction};
     use starknet::ContractAddress;
@@ -93,6 +105,12 @@ pub mod MockContract {
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
     component!(path: PermissionControl, storage: permission_control, event: PermissionControlEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
+    component!(
+        path: SmartTokenLockTransactionComponent,
+        storage: smart_token_lock_transaction,
+        event: SmartTokenLockTransactionEvent
+    );
+    component!(path: TreasuryHandler, storage: treasury_handler, event: TreasuryHandlerEvent);
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(
         path: ChangeThresholdTransaction, storage: change_threshold, event: ChangeThresholdEvent
@@ -119,6 +137,13 @@ pub mod MockContract {
     #[abi(embed_v0)]
     pub impl TokenTransactionImpl =
         TokenTransaction::TokenTransaction<ContractState>;
+
+    #[abi(embed_v0)]
+    pub impl TreasuryHandlerImpl = TreasuryHandler::TreasuryHandler<ContractState>;
+
+    #[abi(embed_v0)]
+    pub impl SmartTokenLockTransactionImpl =
+        SmartTokenLockTransactionComponent::SmartTokenLockTransactionComponent<ContractState>;
 
     #[abi(embed_v0)]
     pub impl NFTTransactionImpl = NFTTransaction::NFTTransaction<ContractState>;
@@ -150,6 +175,10 @@ pub mod MockContract {
         #[substorage(v0)]
         pub token_transaction: TokenTransaction::Storage,
         #[substorage(v0)]
+        pub smart_token_lock_transaction: SmartTokenLockTransactionComponent::Storage,
+        #[substorage(v0)]
+        pub treasury_handler: TreasuryHandler::Storage,
+        #[substorage(v0)]
         pub nft_transaction: NFTTransaction::Storage,
         #[substorage(v0)]
         pub change_threshold: ChangeThresholdTransaction::Storage,
@@ -172,6 +201,10 @@ pub mod MockContract {
         PausableEvent: PausableComponent::Event,
         #[flat]
         TokenTransactionEvent: TokenTransaction::Event,
+        #[flat]
+        SmartTokenLockTransactionEvent: SmartTokenLockTransactionComponent::Event,
+        #[flat]
+        TreasuryHandlerEvent: TreasuryHandler::Event,
         #[flat]
         NFTTransactionEvent: NFTTransaction::Event,
         #[flat]
@@ -247,7 +280,23 @@ pub mod MockContract {
         fn execute_token_transaction_pub(ref self: ContractState, id: u256) {
             self.token_transaction.execute_token_transaction(id)
         }
-
+        fn propose_smart_token_lock_transaction_pub(
+            ref self: ContractState, token: ContractAddress, amount: u256, duration: u64
+        ) -> u256 {
+            self
+                .smart_token_lock_transaction
+                .propose_smart_token_lock_transaction(token, amount, duration)
+        }
+        fn get_smart_token_lock_transaction_pub(
+            self: @ContractState, transaction_id: u256
+        ) -> SmartTokenLockTransaction {
+            self.smart_token_lock_transaction.get_smart_token_lock_transaction(transaction_id)
+        }
+        fn smart_token_lock_transaction_list_pub(
+            self: @ContractState
+        ) -> Array<SmartTokenLockTransaction> {
+            self.smart_token_lock_transaction.smart_token_lock_transaction_list()
+        }
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)
         }

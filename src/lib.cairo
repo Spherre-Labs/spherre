@@ -14,6 +14,7 @@ pub mod interfaces {
     pub mod imember_remove_tx;
     pub mod inft_tx;
     pub mod ipermission_control;
+    pub mod ismart_token_lock_transaction;
     pub mod ispherre;
     pub mod itoken_tx;
     pub mod itreasury_handler;
@@ -28,6 +29,7 @@ pub mod actions {
     pub mod member_permission_tx;
     pub mod member_remove_transaction;
     pub mod nft_transaction;
+    pub mod smart_token_lock_transaction;
     pub mod token_transaction;
 }
 
@@ -56,6 +58,7 @@ pub mod tests {
         pub mod test_member_permission_tx;
         pub mod test_member_remove_transaction;
         pub mod test_nft_transaction;
+        pub mod test_smart_token_lock_transaction;
         pub mod test_token_transaction;
     }
 }

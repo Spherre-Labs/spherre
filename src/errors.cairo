@@ -74,4 +74,8 @@ pub mod Errors {
     pub const ERR_INVALID_MEMBER_PERMISSION_TRANSACTION: felt252 = 'Invalid edit permission txn';
 
     pub const ERR_LOCK_DURATION_NOT_ELAPSED: felt252 = 'Lock duration not elapsed';
+
+    // errors for smart token lock transaction
+    pub const ERR_INVALID_SMART_TOKEN_LOCK_TRANSACTION: felt252 = 'Invalid Token Lock Transaction';
+    pub const ERR_INVALID_TOKEN_LOCK_DURATION: felt252 = 'Invalid Token Lock Duration';
 }

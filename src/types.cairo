@@ -21,6 +21,7 @@ pub enum TransactionType {
     THRESHOLD_CHANGE,
     TOKEN_SEND,
     NFT_SEND,
+    SMART_TOKEN_LOCK,
 }
 
 #[derive(Drop, Copy, PartialEq, Serde)]
@@ -143,4 +144,12 @@ pub struct SmartTokenLock {
 pub struct EditPermissionTransaction {
     pub member: ContractAddress,
     pub new_permissions: u8
+}
+
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct SmartTokenLockTransaction {
+    pub token: ContractAddress,
+    pub amount: u256,
+    pub duration: u64,
+    pub transaction_id: u256,
 }
