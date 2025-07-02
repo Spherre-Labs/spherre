@@ -937,13 +937,13 @@ fn test_member_details_tracking_rejected() {
     mock_contract.assign_proposer_permission_pub(caller_approved);
     mock_contract.assign_voter_permission_pub(caller_approved);
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-    mock_contract.approve_transaction_pub(tx_id, caller_approved);
+    mock_contract.reject_transaction_pub(tx_id, caller_approved);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let member_details = mock_contract.get_member_full_details_pub(caller_approved);
     assert(member_details.proposed_count == 1, 'wrong proposed count');
-    assert(member_details.approved_count == 1, 'wrong approved count');
-    assert(member_details.rejected_count == 0, 'wrong rejected count');
+    assert(member_details.approved_count == 0, 'wrong approved count');
+    assert(member_details.rejected_count == 1, 'wrong rejected count');
     assert(member_details.executed_count == 0, 'wrong executed count');
     assert(member_details.date_joined == 1513049189, 'wrong date joined');
 }

@@ -1,6 +1,7 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction, MemberDetails
+    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
+    SmartTokenLockTransaction, MemberDetails
 };
 use starknet::ContractAddress;
 
