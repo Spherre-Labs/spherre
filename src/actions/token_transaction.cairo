@@ -14,11 +14,16 @@ pub mod TokenTransaction {
     use spherre::account_data::AccountData::InternalTrait;
     use spherre::account_data;
     use spherre::components::permission_control;
+    use spherre::components::treasury_handler::TreasuryHandler::InternalImpl as TreasuryHandlerInternalImpl;
+    use spherre::components::treasury_handler::TreasuryHandler::InternalTrait as TreasuryHandlerInternalTrait;
+    use spherre::components::treasury_handler::TreasuryHandler::TreasuryHandlerImpl;
+    use spherre::components::treasury_handler;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
 
     use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
+    use spherre::interfaces::itreasury_handler::ITreasuryHandler;
     use spherre::types::{TokenTransactionData, Transaction};
     use spherre::types::{TransactionType};
     use starknet::storage::{
@@ -68,6 +73,7 @@ pub mod TokenTransaction {
         impl AccountData: account_data::AccountData::HasComponent<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
+        impl TreasuryHandler: treasury_handler::TreasuryHandler::HasComponent<TContractState>,
     > of ITokenTransaction<ComponentState<TContractState>> {
         fn propose_token_transaction(
             ref self: ComponentState<TContractState>,
@@ -83,10 +89,10 @@ pub mod TokenTransaction {
             // check that the recipient address is not the account address
             let account_address = get_contract_address();
             assert(recipient != account_address, Errors::ERR_RECIPIENT_CANNOT_BE_ACCOUNT);
-            // check if balance of the token is greater than amount
-            let erc20_dispatcher = IERC20Dispatcher { contract_address: token };
+            // check if balance of the token is greater than amount using TreasuryHandler
+            let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
-                erc20_dispatcher.balance_of(account_address) >= amount,
+                treasury_handler.get_token_balance(token) >= amount,
                 Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
             );
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -131,18 +137,23 @@ pub mod TokenTransaction {
             self.assert_is_valid_token_transaction(id);
             let token_transaction = self.get_token_transaction(id);
             let caller = get_caller_address();
-            // check if balance of the token is greater than amount
-            let account_address = get_contract_address();
-            let erc20_dispatcher = IERC20Dispatcher { contract_address: token_transaction.token };
+            // check if balance of the token is greater than amount using TreasuryHandler
+            let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
-                erc20_dispatcher.balance_of(account_address) >= token_transaction.amount,
+                treasury_handler
+                    .get_token_balance(token_transaction.token) >= token_transaction
+                    .amount,
                 Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
             );
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             // execute the transaction in account data. all check is done there
             account_data_comp.execute_transaction(id, caller);
-            // send the token to the recipient
-            erc20_dispatcher.transfer(token_transaction.recipient, token_transaction.amount);
+            // send the token to the recipient using TreasuryHandler
+            let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
+            treasury_handler_mut
+                ._transfer_token(
+                    token_transaction.token, token_transaction.recipient, token_transaction.amount
+                );
             // emit event
             self
                 .emit(
@@ -163,6 +174,7 @@ pub mod TokenTransaction {
         impl AccountData: account_data::AccountData::HasComponent<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
+        impl TreasuryHandler: treasury_handler::TreasuryHandler::HasComponent<TContractState>,
     > of PrivateTrait<TContractState> {
         /// Asserts that the transaction with the given ID is a valid token transaction.
         ///
