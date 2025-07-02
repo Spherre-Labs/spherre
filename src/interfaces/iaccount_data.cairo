@@ -1,5 +1,5 @@
 use core::starknet::ContractAddress;
-use spherre::types::{Transaction};
+use spherre::types::{Transaction, MemberDetails};
 
 /// Interface for managing account data in a smart contract
 /// This interface defines methods for perfoming management operations related to Spherre account.
@@ -94,4 +94,15 @@ pub trait IAccountData<TContractState> {
     /// # Parameters
     /// * `tx_id` - The ID of the transaction to reject
     fn reject_transaction(ref self: TContractState, tx_id: u256);
+    /// Retrieves detailed metrics for a specific member
+    ///
+    /// # Parameters
+    /// * `member` - The contract address of the member to get details for
+    ///
+    /// # Returns
+    /// * `MemberDetails` A struct containing all member activity metrics
+    ///
+    /// # Panics
+    /// * If the provided address is not a member
+    fn get_member_full_details(self: @TContractState, member: ContractAddress) -> MemberDetails;
 }

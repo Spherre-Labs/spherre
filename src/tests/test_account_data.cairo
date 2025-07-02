@@ -10,9 +10,9 @@ use snforge_std::{
 use spherre::tests::mocks::mock_account_data::{
     MockContract, MockContract::PrivateTrait, IMockContractDispatcher, IMockContractDispatcherTrait
 };
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionType, TransactionStatus, MemberDetails};
 use starknet::ContractAddress;
-use starknet::contract_address_const;
+use starknet::{contract_address_const, get_block_timestamp};
 
 // Helper function to get addresses
 fn deployer() -> ContractAddress {
@@ -296,7 +296,6 @@ fn test_onlY_member_with_proposer_permission_can_create_transaction() {
     mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
-
 
 #[test]
 fn test_approve_transaction_successful() {
@@ -874,4 +873,121 @@ fn test_reject_transaction_forces_rejection() {
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(transaction.tx_status == TransactionStatus::REJECTED, 'Status should be REJECTED');
     assert(transaction.rejected.len() == 2, 'Should have 2 rejections');
+}
+
+#[test]
+fn test_member_details_tracking_proposed() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    start_cheat_block_timestamp(mock_contract.contract_address, 1513049189);
+
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Assign Proposer Role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Create Transaction
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Get Member Details
+    let member_details = mock_contract.get_member_full_details_pub(caller);
+    assert(member_details.proposed_count == 1, 'wrong proposed count');
+    assert(member_details.approved_count == 0, 'wrong approved count');
+    assert(member_details.rejected_count == 0, 'wrong rejected count');
+    assert(member_details.executed_count == 0, 'wrong executed count');
+    assert(member_details.date_joined == 1513049189, 'wrong date joined');
+}
+
+#[test]
+fn test_member_details_tracking_approved() {
+    let mock_contract = deploy_mock_contract();
+    let caller_approved = new_member();
+
+    start_cheat_block_timestamp(mock_contract.contract_address, 1513049189);
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller_approved);
+    mock_contract.add_member_pub(caller_approved);
+    mock_contract.assign_proposer_permission_pub(caller_approved);
+    mock_contract.assign_voter_permission_pub(caller_approved);
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    mock_contract.approve_transaction_pub(tx_id, caller_approved);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let member_details = mock_contract.get_member_full_details_pub(caller_approved);
+    assert(member_details.proposed_count == 1, 'wrong proposed count');
+    assert(member_details.approved_count == 1, 'wrong approved count');
+    assert(member_details.rejected_count == 0, 'wrong rejected count');
+    assert(member_details.executed_count == 0, 'wrong executed count');
+    assert(member_details.date_joined == 1513049189, 'wrong date joined');
+
+}
+
+#[test]
+fn test_member_details_tracking_rejected() {
+    let mock_contract = deploy_mock_contract();
+    let caller_approved = member();
+    start_cheat_block_timestamp(mock_contract.contract_address, 1513049189);
+
+    // Add Member
+    start_cheat_caller_address(mock_contract.contract_address, caller_approved);
+    mock_contract.add_member_pub(caller_approved);
+    mock_contract.assign_proposer_permission_pub(caller_approved);
+    mock_contract.assign_voter_permission_pub(caller_approved);
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    mock_contract.approve_transaction_pub(tx_id, caller_approved);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let member_details = mock_contract.get_member_full_details_pub(caller_approved);
+    assert(member_details.proposed_count == 1, 'wrong proposed count');
+    assert(member_details.approved_count == 1, 'wrong approved count');
+    assert(member_details.rejected_count == 0, 'wrong rejected count');
+    assert(member_details.executed_count == 0, 'wrong executed count');
+    assert(member_details.date_joined == 1513049189, 'wrong date joined');
+}
+
+#[test]
+fn test_member_details_tracking_executed() {
+    let mock_contract = deploy_mock_contract();
+    let caller_executed = member();
+    start_cheat_block_timestamp(mock_contract.contract_address, 1513049189);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller_executed);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1713049189);
+
+    mock_contract.add_member_pub(caller_executed);
+
+    // Assign permissions
+    mock_contract.assign_proposer_permission_pub(caller_executed);
+    mock_contract.assign_voter_permission_pub(caller_executed);
+    mock_contract.assign_executor_permission_pub(caller_executed);
+
+    // Create Transaction
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    mock_contract.set_threshold_pub(1);
+    mock_contract.approve_transaction_pub(tx_id, caller_executed);
+    mock_contract.execute_transaction_pub(tx_id, caller_executed);
+
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let member_details = mock_contract.get_member_full_details_pub(caller_executed);
+    assert(member_details.proposed_count == 1, 'wrong proposed count');
+    assert(member_details.approved_count == 1, 'wrong approved count');
+    assert(member_details.rejected_count == 0, 'wrong rejected count');
+    assert(member_details.executed_count == 1, 'wrong executed count');
+}
+
+#[should_panic(expected: 'Caller is not a member')]
+#[test]
+fn test_member_details_tracking_non_member() {
+    let mock_contract = deploy_mock_contract();
+
+    // Test non-member access
+    let non_member = contract_address_const::<999>();
+    let member_details = mock_contract.get_member_full_details_pub(non_member);
+
 }

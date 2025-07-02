@@ -153,3 +153,13 @@ pub struct SmartTokenLockTransaction {
     pub duration: u64,
     pub transaction_id: u256,
 }
+
+#[derive(Drop, Copy, Serde, starknet::Store)]
+pub struct MemberDetails {
+    pub address: ContractAddress,
+    pub proposed_count: u256,
+    pub approved_count: u256,
+    pub rejected_count: u256,
+    pub executed_count: u256,
+    pub date_joined: u64,
+}

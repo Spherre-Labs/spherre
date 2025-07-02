@@ -1,7 +1,7 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
     ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
-    SmartTokenLockTransaction
+    SmartTokenLockTransaction, MemberDetails
 };
 use starknet::ContractAddress;
 
@@ -75,6 +75,7 @@ pub trait IMockContract<TContractState> {
         self: @TContractState, transaction_id: u256
     ) -> EditPermissionTransaction;
     fn execute_edit_permission_transaction_pub(ref self: TContractState, transaction_id: u256);
+    fn get_member_full_details_pub(self: @TContractState, member: ContractAddress) -> MemberDetails;
 }
 
 
@@ -95,7 +96,8 @@ pub mod MockContract {
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
+        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction, 
+        MemberDetails
     };
     use spherre::types::{EditPermissionTransaction};
     use starknet::ContractAddress;
@@ -397,6 +399,9 @@ pub mod MockContract {
         fn execute_edit_permission_transaction_pub(ref self: ContractState, transaction_id: u256) {
             self.member_permission.execute_edit_permission_transaction(transaction_id);
         }
+        fn get_member_full_details_pub(self: @ContractState, member: ContractAddress) -> MemberDetails {
+            self.account_data.get_member_full_details(member)
+        }
     }
 
     #[generate_trait]
@@ -447,6 +452,9 @@ pub mod MockContract {
         }
         fn get_number_of_executors(self: @ContractState) -> u64 {
             self.account_data.get_number_of_executors()
+        }
+        fn get_member_full_details(self: @ContractState, member: ContractAddress) -> MemberDetails {
+            self.account_data.get_member_full_details(member)
         }
     }
 }
