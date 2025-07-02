@@ -18,7 +18,9 @@ pub mod AccountData {
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ipermission_control::IPermissionControl;
-    use spherre::types::{TransactionStatus, TransactionType, Transaction, Permissions};
+    use spherre::types::{
+        TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails
+    };
     use starknet::storage::MutableVecTrait;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
@@ -32,7 +34,12 @@ pub mod AccountData {
         pub members: Map::<u64, ContractAddress>, // Map(id, member) the members of the account
         pub members_count: u64, // the member length
         pub has_voted: Map<(u256, ContractAddress), bool>, // Map(tx_id, member) -> bool
-        pub transaction_rejectors: Map<ContractAddress, u256> // Map(member that rejected) -> tx_id
+        pub transaction_rejectors: Map<ContractAddress, u256>, // Map(member that rejected) -> tx_id
+        pub member_proposed_count: Map<ContractAddress, u256>,
+        pub member_approved_count: Map<ContractAddress, u256>,
+        pub member_rejected_count: Map<ContractAddress, u256>,
+        pub member_executed_count: Map<ContractAddress, u256>,
+        pub member_joined_date: Map<ContractAddress, u64>,
     }
 
     #[starknet::storage_node]
@@ -271,7 +278,10 @@ pub mod AccountData {
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
-                )
+                );
+
+            // Increment approver's count
+            self._increment_approved_count(caller);
         }
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
             // PAUSE GUARD
@@ -311,7 +321,33 @@ pub mod AccountData {
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
-                )
+                );
+
+            // Increment rejector's count
+            self._increment_rejected_count(caller);
+        }
+        fn get_member_full_details(
+            self: @ComponentState<TContractState>, member: ContractAddress
+        ) -> MemberDetails {
+            // Verify member exists
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+
+            // Get all metrics from storage
+            let proposed_count = self.member_proposed_count.entry(member).read();
+            let approved_count = self.member_approved_count.entry(member).read();
+            let rejected_count = self.member_rejected_count.entry(member).read();
+            let executed_count = self.member_executed_count.entry(member).read();
+            let date_joined = self.member_joined_date.entry(member).read();
+
+            // Return populated MemberDetails struct
+            MemberDetails {
+                address: member,
+                proposed_count,
+                approved_count,
+                rejected_count,
+                executed_count,
+                date_joined,
+            }
         }
     }
 
@@ -336,6 +372,16 @@ pub mod AccountData {
             let mut current_members = self.members_count.read();
             self.members.entry(current_members).write(address);
             self.members_count.write(current_members + 1);
+
+            // Initialize member metrics
+            self.member_proposed_count.entry(address).write(0);
+            self.member_approved_count.entry(address).write(0);
+            self.member_rejected_count.entry(address).write(0);
+            self.member_executed_count.entry(address).write(0);
+            self.member_joined_date.entry(address).write(get_block_timestamp());
+
+            // Emit event
+            self.emit(AddedMember { member: address });
         }
         /// Removes a member from the account
         /// This function removes a member from the account
@@ -444,6 +490,10 @@ pub mod AccountData {
 
             // update the transaction count
             self.tx_count.write(transaction_id);
+
+            // Increment proposer's count
+            self._increment_proposed_count(caller);
+
             transaction_id
         }
         /// Executes a transaction by its ID
@@ -492,6 +542,9 @@ pub mod AccountData {
                         transaction_id: transaction_id, executor: caller, date_executed: timestamp,
                     }
                 );
+
+            // Increment executor's count
+            self._increment_executed_count(caller);
         }
         /// Updates the status of a transaction
         /// This function updates the status of a transaction to the given status.
@@ -574,6 +627,30 @@ pub mod AccountData {
                 !self.has_voted.entry((transaction_id, caller)).read(),
                 Errors::ERR_CALLER_CANNOT_VOTE
             );
+        }
+        fn _increment_proposed_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            let current_count = self.member_proposed_count.entry(member).read();
+            self.member_proposed_count.entry(member).write(current_count + 1);
+        }
+        fn _increment_approved_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            let current_count = self.member_approved_count.entry(member).read();
+            self.member_approved_count.entry(member).write(current_count + 1);
+        }
+        fn _increment_rejected_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            let current_count = self.member_rejected_count.entry(member).read();
+            self.member_rejected_count.entry(member).write(current_count + 1);
+        }
+        fn _increment_executed_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
+            let current_count = self.member_executed_count.entry(member).read();
+            self.member_executed_count.entry(member).write(current_count + 1);
         }
     }
 }
