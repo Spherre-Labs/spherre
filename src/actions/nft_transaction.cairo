@@ -14,10 +14,15 @@ pub mod NFTTransaction {
     use spherre::account_data::AccountData::InternalTrait;
     use spherre::account_data;
     use spherre::components::permission_control;
+    use spherre::components::treasury_handler::TreasuryHandler::InternalImpl as TreasuryHandlerInternalImpl;
+    use spherre::components::treasury_handler::TreasuryHandler::InternalTrait as TreasuryHandlerInternalTrait;
+    use spherre::components::treasury_handler::TreasuryHandler::TreasuryHandlerImpl;
+    use spherre::components::treasury_handler;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use spherre::interfaces::inft_tx::INFTTransaction;
+    use spherre::interfaces::itreasury_handler::ITreasuryHandler;
     use spherre::types::{NFTTransactionData, Transaction};
     use spherre::types::{TransactionType};
     use starknet::storage::{
@@ -64,6 +69,7 @@ pub mod NFTTransaction {
         impl AccountData: account_data::AccountData::HasComponent<TContractState>,
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
+        impl TreasuryHandler: treasury_handler::TreasuryHandler::HasComponent<TContractState>,
     > of INFTTransaction<ComponentState<TContractState>> {
         fn propose_nft_transaction(
             ref self: ComponentState<TContractState>,
@@ -78,8 +84,8 @@ pub mod NFTTransaction {
             let account_address = get_contract_address();
             assert(recipient != account_address, Errors::ERR_RECIPIENT_CANNOT_BE_ACCOUNT);
             // Verify NFT ownership
-            let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_contract };
-            assert(erc721_dispatcher.owner_of(token_id) == account_address, Errors::ERR_NOT_OWNER);
+            let treasury_handler = get_dep_component!(@self, TreasuryHandler);
+            assert(treasury_handler.is_nft_owner(nft_contract, token_id), Errors::ERR_NOT_OWNER);
 
             // Create the transaction in account data and get the id
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -126,26 +132,21 @@ pub mod NFTTransaction {
             let caller = get_caller_address();
 
             let account_address = get_contract_address();
-            // Get the ERC721 dispatcher for the NFT contract
-            let erc721_dispatcher = IERC721Dispatcher {
-                contract_address: nft_tx_data.nft_contract
-            };
+            // Use TreasuryHandler for NFT ownership check
+            let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
-                erc721_dispatcher.owner_of(nft_tx_data.token_id) == account_address,
+                treasury_handler.is_nft_owner(nft_tx_data.nft_contract, nft_tx_data.token_id),
                 Errors::ERR_NOT_OWNER
             );
-
             // Execute the transaction
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             account_data_comp.execute_transaction(id, caller);
-
-            // Approve the NFT transfer
-            erc721_dispatcher.approve(nft_tx_data.recipient, nft_tx_data.token_id);
-
-            // Transfer the NFT to the recipient
-            erc721_dispatcher
-                .transfer_from(account_address, nft_tx_data.recipient, nft_tx_data.token_id);
-
+            // Use TreasuryHandler for NFT transfer
+            let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
+            treasury_handler_mut
+                ._transfer_nft(
+                    nft_tx_data.nft_contract, nft_tx_data.recipient, nft_tx_data.token_id
+                );
             // Emit event for successful execution
             self
                 .emit(
