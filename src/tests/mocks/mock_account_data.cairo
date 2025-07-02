@@ -1,7 +1,6 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
-    SmartTokenLockTransaction, MemberDetails
+    ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction, MemberDetails
 };
 use starknet::ContractAddress;
 
@@ -96,7 +95,7 @@ pub mod MockContract {
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction, 
+        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
         MemberDetails
     };
     use spherre::types::{EditPermissionTransaction};
@@ -399,7 +398,9 @@ pub mod MockContract {
         fn execute_edit_permission_transaction_pub(ref self: ContractState, transaction_id: u256) {
             self.member_permission.execute_edit_permission_transaction(transaction_id);
         }
-        fn get_member_full_details_pub(self: @ContractState, member: ContractAddress) -> MemberDetails {
+        fn get_member_full_details_pub(
+            self: @ContractState, member: ContractAddress
+        ) -> MemberDetails {
             self.account_data.get_member_full_details(member)
         }
     }

@@ -18,7 +18,9 @@ pub mod AccountData {
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ipermission_control::IPermissionControl;
-    use spherre::types::{TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails};
+    use spherre::types::{
+        TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails
+    };
     use starknet::storage::MutableVecTrait;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
@@ -324,7 +326,9 @@ pub mod AccountData {
             // Increment rejector's count
             self._increment_rejected_count(caller);
         }
-        fn get_member_full_details(self: @ComponentState<TContractState>, member: ContractAddress) -> MemberDetails {
+        fn get_member_full_details(
+            self: @ComponentState<TContractState>, member: ContractAddress
+        ) -> MemberDetails {
             // Verify member exists
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
 
@@ -624,19 +628,27 @@ pub mod AccountData {
                 Errors::ERR_CALLER_CANNOT_VOTE
             );
         }
-        fn _increment_proposed_count(ref self: ComponentState<TContractState>, member: ContractAddress) {
+        fn _increment_proposed_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
             let current_count = self.member_proposed_count.entry(member).read();
             self.member_proposed_count.entry(member).write(current_count + 1);
         }
-        fn _increment_approved_count(ref self: ComponentState<TContractState>, member: ContractAddress) {
+        fn _increment_approved_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
             let current_count = self.member_approved_count.entry(member).read();
             self.member_approved_count.entry(member).write(current_count + 1);
         }
-        fn _increment_rejected_count(ref self: ComponentState<TContractState>, member: ContractAddress) {
+        fn _increment_rejected_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
             let current_count = self.member_rejected_count.entry(member).read();
             self.member_rejected_count.entry(member).write(current_count + 1);
         }
-        fn _increment_executed_count(ref self: ComponentState<TContractState>, member: ContractAddress) {
+        fn _increment_executed_count(
+            ref self: ComponentState<TContractState>, member: ContractAddress
+        ) {
             let current_count = self.member_executed_count.entry(member).read();
             self.member_executed_count.entry(member).write(current_count + 1);
         }

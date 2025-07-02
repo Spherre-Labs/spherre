@@ -923,7 +923,6 @@ fn test_member_details_tracking_approved() {
     assert(member_details.rejected_count == 0, 'wrong rejected count');
     assert(member_details.executed_count == 0, 'wrong executed count');
     assert(member_details.date_joined == 1513049189, 'wrong date joined');
-
 }
 
 #[test]
@@ -989,5 +988,4 @@ fn test_member_details_tracking_non_member() {
     // Test non-member access
     let non_member = contract_address_const::<999>();
     let member_details = mock_contract.get_member_full_details_pub(non_member);
-
 }
