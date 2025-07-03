@@ -77,7 +77,9 @@ pub trait IMockContract<TContractState> {
     fn execute_edit_permission_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn get_member_full_details_pub(self: @TContractState, member: ContractAddress) -> MemberDetails;
     fn update_smart_will_pub(ref self: TContractState, will_address: ContractAddress);
-    fn get_member_will_address_pub(self: @TContractState, member: ContractAddress) -> ContractAddress;
+    fn get_member_will_address_pub(
+        self: @TContractState, member: ContractAddress
+    ) -> ContractAddress;
     fn get_member_will_duration_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn get_remaining_will_time_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn can_update_will_pub(self: @TContractState, member: ContractAddress) -> bool;
@@ -412,7 +414,9 @@ pub mod MockContract {
         fn update_smart_will_pub(ref self: ContractState, will_address: ContractAddress) {
             self.account_data.update_smart_will(will_address);
         }
-        fn get_member_will_address_pub(self: @ContractState, member: ContractAddress) -> ContractAddress {
+        fn get_member_will_address_pub(
+            self: @ContractState, member: ContractAddress
+        ) -> ContractAddress {
             self.account_data.get_member_will_address(member)
         }
         fn get_member_will_duration_pub(self: @ContractState, member: ContractAddress) -> u64 {
@@ -481,7 +485,9 @@ pub mod MockContract {
         fn update_smart_will(ref self: ContractState, will_address: ContractAddress) {
             self.account_data.update_smart_will(will_address);
         }
-        fn get_member_will_address(self: @ContractState, member: ContractAddress) -> ContractAddress {
+        fn get_member_will_address(
+            self: @ContractState, member: ContractAddress
+        ) -> ContractAddress {
             self.account_data.get_member_will_address(member)
         }
         fn get_member_will_duration(self: @ContractState, member: ContractAddress) -> u64 {

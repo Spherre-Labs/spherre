@@ -1034,7 +1034,6 @@ fn test_smart_will_get_remaining_will_time() {
     stop_cheat_caller_address(mock_contract.contract_address);
     stop_cheat_block_timestamp(mock_contract.contract_address);
 
-
     start_cheat_caller_address(mock_contract.contract_address, caller);
     start_cheat_block_timestamp(mock_contract.contract_address, 4000000);
     let remaining_will_time = mock_contract.get_remaining_will_time_pub(caller);
@@ -1061,7 +1060,6 @@ fn test_smart_will_can_update_will() {
     let can_update_will = mock_contract.can_update_will_pub(caller);
     stop_cheat_caller_address(mock_contract.contract_address);
     assert(can_update_will == true, 'Can update will Incorrect');
-
 }
 
 #[test]
@@ -1100,4 +1098,72 @@ fn test_smart_will_can_update_will_non_member() {
     start_cheat_caller_address(mock_contract.contract_address, non_member);
     let can_update_will = mock_contract.can_update_will_pub(non_member);
     stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+
+#[test]
+#[should_panic(expected: 'Will address cannot be member')]
+fn test_smart_will_can_update_will_member() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let member = new_member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    let will_address = contract_address_const::<2>();
+
+    mock_contract.update_smart_will_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Will address already assigned')]
+fn test_smart_will_can_update_will_already_assigned() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let member = new_member();
+    let will_address = contract_address_const::<2>();
+
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    let can_update_will = mock_contract.update_smart_will_pub(will_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, member);
+    mock_contract.update_smart_will_pub(will_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+
+#[test]
+#[should_panic(expected: 'Will duration not elapsed')]
+fn test_smart_will_can_update_will_up() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let member = new_member();
+    let will_address = contract_address_const::<2>();
+
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 100000);
+    mock_contract.update_smart_will_pub(will_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 200000);
+    mock_contract.update_smart_will_pub(will_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 100001 + 7776000);
+    mock_contract.update_smart_will_pub(will_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    stop_cheat_block_timestamp(mock_contract.contract_address);
 }

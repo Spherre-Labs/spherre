@@ -369,8 +369,7 @@ pub mod AccountData {
             }
         }
         fn update_smart_will(
-            ref self: ComponentState<TContractState>, 
-            will_address: ContractAddress
+            ref self: ComponentState<TContractState>, will_address: ContractAddress
         ) {
             // Get caller
             let caller = get_caller_address();
@@ -378,11 +377,11 @@ pub mod AccountData {
             // Validate caller is a member
             assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
 
-             // Validate will conditions
-             self.validate_will_conditions(caller, will_address);
-            
-             // Get current timestamp
-             let current_time = get_block_timestamp();
+            // Validate will conditions
+            self.validate_will_conditions(caller, will_address);
+
+            // Get current timestamp
+            let current_time = get_block_timestamp();
 
             // Validate will_address is not zero
             assert(!will_address.is_zero(), Errors::ERR_INVALID_WILL_ADDRESS);
@@ -412,47 +411,45 @@ pub mod AccountData {
             }
 
             // Emit event
-            self.emit(
-                SmartWillUpdated {
-                    member: caller,
-                    will_address,
-                    duration: DEFAULT_WILL_DURATION,
-                    creation_time: current_time
-                }
-            );
+            self
+                .emit(
+                    SmartWillUpdated {
+                        member: caller,
+                        will_address,
+                        duration: DEFAULT_WILL_DURATION,
+                        creation_time: current_time
+                    }
+                );
         }
 
         fn get_member_will_address(
-            self: @ComponentState<TContractState>, 
-            member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress
         ) -> ContractAddress {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
             self.member_to_smart_will.entry(member).read()
         }
 
         fn get_member_will_duration(
-            self: @ComponentState<TContractState>, 
-            member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress
         ) -> u64 {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
             self.member_to_will_duration.entry(member).read()
         }
 
         fn get_remaining_will_time(
-            self: @ComponentState<TContractState>, 
-            member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress
         ) -> u64 {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
-            
+
             let creation_time = self.member_will_creation_time.entry(member).read();
             if creation_time == 0 {
                 return 0;
             }
-            
+
             let duration = self.member_to_will_duration.entry(member).read();
             let current_time = get_block_timestamp();
             let elapsed_time = current_time - creation_time;
-            
+
             if elapsed_time >= duration {
                 0
             } else {
@@ -460,10 +457,7 @@ pub mod AccountData {
             }
         }
 
-        fn can_update_will(
-            self: @ComponentState<TContractState>, 
-            member: ContractAddress
-        ) -> bool {
+        fn can_update_will(self: @ComponentState<TContractState>, member: ContractAddress) -> bool {
             // Verify member exists
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
 
@@ -790,17 +784,17 @@ pub mod AccountData {
         ) {
             // Check if will_address is zero
             assert(!will_address.is_zero(), Errors::ERR_INVALID_WILL_ADDRESS);
-            
+
             // Check if will_address is not a member
             assert(!self.is_member(will_address), Errors::ERR_WILL_ADDRESS_IS_MEMBER);
-            
+
             // Check if will_address is already assigned to another member
             let assigned_member = self.smart_will_to_member.entry(will_address).read();
             assert(
                 assigned_member.is_zero() || assigned_member == member,
                 Errors::ERR_WILL_ADDRESS_ALREADY_ASSIGNED
             );
-            
+
             // Check if member can update their will
             let creation_time = self.member_will_creation_time.entry(member).read();
             if creation_time != 0 {
