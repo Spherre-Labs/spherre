@@ -473,6 +473,11 @@ pub mod AccountData {
                 transaction.tx_status.read() == TransactionStatus::APPROVED,
                 Errors::ERR_TRANSACTION_NOT_EXECUTABLE
             );
+            // Ensure transaction hasn't been executed already
+            assert(
+                transaction.tx_status.read() != TransactionStatus::EXECUTED,
+                Errors::ERR_TRANSACTION_ALREADY_EXECUTED
+            );
             assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
 
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
