@@ -380,25 +380,6 @@ pub mod AccountData {
             // Validate will conditions
             self.validate_will_conditions(caller, will_address);
 
-            // Get current timestamp
-            let current_time = get_block_timestamp();
-
-            // Validate will_address is not zero
-            assert(!will_address.is_zero(), Errors::ERR_INVALID_WILL_ADDRESS);
-
-            // Validate will_address is not a member
-            assert(!self.is_member(will_address), Errors::ERR_WILL_ADDRESS_IS_MEMBER);
-
-            // Check if will_address is already assigned to another member
-            let existing_member = self.smart_will_to_member.entry(will_address).read();
-            assert(
-                existing_member.is_zero() || existing_member == caller,
-                Errors::ERR_WILL_ADDRESS_ALREADY_ASSIGNED
-            );
-
-            // Check if member can update their will
-            assert(self.can_update_will(caller), Errors::ERR_WILL_DURATION_NOT_ELAPSED);
-
             // Update storage maps
             let current_time = get_block_timestamp();
             self.smart_will_to_member.entry(will_address).write(caller);
@@ -472,7 +453,11 @@ pub mod AccountData {
             let current_time = get_block_timestamp();
             let elapsed_time = current_time - creation_time;
 
-            elapsed_time < duration
+            // elapsed_time < duration
+            if elapsed_time < duration {
+                return true;
+            }
+            false
         }
     }
 

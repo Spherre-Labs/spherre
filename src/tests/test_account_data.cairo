@@ -1074,7 +1074,6 @@ fn test_smart_will_can_update_will_time() {
     let will_address = contract_address_const::<2>();
     mock_contract.update_smart_will_pub(will_address);
     let can_update_will = mock_contract.can_update_will_pub(caller);
-
     stop_cheat_block_timestamp(mock_contract.contract_address);
     stop_cheat_caller_address(mock_contract.contract_address);
 
@@ -1129,7 +1128,7 @@ fn test_smart_will_can_update_will_already_assigned() {
     mock_contract.add_member_pub(member);
 
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    let can_update_will = mock_contract.update_smart_will_pub(will_address);
+    mock_contract.update_smart_will_pub(will_address);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     start_cheat_caller_address(mock_contract.contract_address, member);
@@ -1162,7 +1161,7 @@ fn test_smart_will_can_update_will_up() {
     stop_cheat_block_timestamp(mock_contract.contract_address);
 
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 100001 + 7776000);
+    start_cheat_block_timestamp(mock_contract.contract_address, 20000 + 7776000);
     mock_contract.update_smart_will_pub(will_address);
     stop_cheat_caller_address(mock_contract.contract_address);
     stop_cheat_block_timestamp(mock_contract.contract_address);
