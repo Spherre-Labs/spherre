@@ -130,7 +130,7 @@ pub trait ISpherre<TContractState> {
     /// This function raises an error if the caller does not have the superadmin role.
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
     /// Updates the fee amount for a given fee type.
-    /// This function allows a superadmin to update the fee amount for a given fee type.
+    /// This function allows a staff member to update the fee amount for a given fee type.
     ///
     /// # Parameters
     /// * `fee_type` - The type of fee to update.
