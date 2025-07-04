@@ -1,3 +1,4 @@
+use spherre::types::FeesType;
 use starknet::{ContractAddress, ClassHash};
 
 /// Interface for the Spherre contract
@@ -128,4 +129,43 @@ pub trait ISpherre<TContractState> {
     /// # Panics
     /// This function raises an error if the caller does not have the superadmin role.
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
+    /// Updates the fee amount for a given fee type.
+    /// This function allows a staff member to update the fee amount for a given fee type.
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee to update.
+    /// * `amount` - The new fee amount.
+    fn update_fee(ref self: TContractState, fee_type: FeesType, amount: u256);
+    /// Updates the fee token address.
+    /// This function allows a superadmin to update the fee token address.
+    ///
+    /// # Parameters
+    /// * `token_address` - The new fee token address.
+    ///
+    /// # Panics
+    /// This function raises an error if the caller does not have the superadmin role.
+    fn update_fee_token(ref self: TContractState, token_address: ContractAddress);
+    /// Updates the fee enabled status for a given fee type.
+    /// This function allows a superadmin to update the fee enabled status for a given fee type.
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee to update.
+    /// * `enabled` - The new fee enabled status.
+    fn get_fee(self: @TContractState, fee_type: FeesType) -> u256;
+    /// Gets the fee amount for a given fee type.
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee to query.
+    ///
+    /// # Returns
+    /// * `u256` - The fee amount, or 0 if the fee is not enabled.
+    fn get_fee_token(self: @TContractState) -> ContractAddress;
+    /// Checks if a fee type is enabled.
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee to check.
+    ///
+    /// # Returns
+    /// * `bool` - Returns true if the fee type is enabled, false otherwise.
+    fn is_fee_enabled(self: @TContractState, fee_type: FeesType) -> bool;
 }

@@ -14,7 +14,7 @@ pub mod Spherre {
     use spherre::account::SpherreAccount;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
-    use spherre::types::SpherreAdminRoles;
+    use spherre::types::{FeesType, SpherreAdminRoles};
     use starknet::storage::{
         Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
         Vec, VecTrait,
@@ -26,6 +26,22 @@ pub mod Spherre {
     };
 
     // Interface IDs
+
+    // Events for fee management
+    #[derive(Drop, starknet::Event)]
+    pub struct FeeUpdated {
+        pub fee_type: FeesType,
+        pub amount: u256,
+        pub enabled: bool,
+        pub caller: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct FeeTokenUpdated {
+        pub old_token: ContractAddress,
+        pub new_token: ContractAddress,
+        pub caller: ContractAddress,
+    }
 
     #[storage]
     struct Storage {
@@ -48,6 +64,10 @@ pub mod Spherre {
         pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
+        // --- Fee management ---
+        fee_amounts: Map<FeesType, u256>,
+        fee_token_address: ContractAddress,
+        fee_enabled: Map<FeesType, bool>,
     }
 
     #[event]
@@ -55,6 +75,8 @@ pub mod Spherre {
     pub enum Event {
         AccountDeployed: AccountDeployed,
         AccountClassHashUpdated: AccountClassHashUpdated,
+        FeeUpdated: FeeUpdated,
+        FeeTokenUpdated: FeeTokenUpdated,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -257,6 +279,53 @@ pub mod Spherre {
 
             // Replace the class hash, hence upgrading the contract
             self.upgradeable.upgrade(new_class_hash);
+        }
+
+        /// Update the fee amount for a given fee type. Only STAFF_ROLE can call.
+        fn update_fee(ref self: ContractState, fee_type: FeesType, amount: u256) {
+            self.assert_only_staff();
+            // Update fee amount
+            self.fee_amounts.entry(fee_type).write(amount);
+            // Enable fee if not already enabled
+            if !self.fee_enabled.entry(fee_type).read() {
+                self.fee_enabled.entry(fee_type).write(true);
+            }
+            // Emit event
+            self
+                .emit(
+                    FeeUpdated { fee_type, amount, enabled: true, caller: get_caller_address(), }
+                );
+        }
+        /// Update the fee token address. Only SUPERADMIN_ROLE can call.
+        fn update_fee_token(ref self: ContractState, token_address: ContractAddress) {
+            self.assert_only_superadmin();
+            // Validate token address is not zero
+            assert(!token_address.is_zero(), Errors::ERR_NON_ZERO_ADDRESS_TOKEN);
+            let old_token = self.fee_token_address.read();
+            self.fee_token_address.write(token_address);
+            // Emit event
+            self
+                .emit(
+                    FeeTokenUpdated {
+                        old_token, new_token: token_address, caller: get_caller_address(),
+                    }
+                );
+        }
+        /// Get the fee amount for a given fee type. Returns 0 if not set.
+        fn get_fee(self: @ContractState, fee_type: FeesType) -> u256 {
+            if self.is_fee_enabled(fee_type) {
+                self.fee_amounts.entry(fee_type).read()
+            } else {
+                0
+            }
+        }
+        /// Get the current fee token address.
+        fn get_fee_token(self: @ContractState) -> ContractAddress {
+            self.fee_token_address.read()
+        }
+        /// Check if a fee type is enabled.
+        fn is_fee_enabled(self: @ContractState, fee_type: FeesType) -> bool {
+            self.fee_enabled.entry(fee_type).read()
         }
     }
 

@@ -10,7 +10,7 @@ use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
     EventSpyAssertionsTrait, DeclareResultTrait, get_class_hash
 };
-use spherre::types::SpherreAdminRoles;
+use spherre::types::{FeesType, SpherreAdminRoles};
 use starknet::class_hash::class_hash_const;
 use starknet::{ContractAddress, contract_address_const, ClassHash,};
 
@@ -770,5 +770,209 @@ fn test_update_account_class_hash_same_hash_panics() {
     start_cheat_caller_address(spherre_contract, to_be_superadmin);
     dispatcher.update_account_class_hash(NEW_CLASS_HASH);
     stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_update_fee_staff_success_emit_event() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Grant superadmin and staff roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Update fee as staff
+    let mut spy = spy_events();
+    let fee_type = FeesType::PROPOSAL_FEE;
+    let fee_amount: u256 = 100;
+
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    dispatcher.update_fee(fee_type, fee_amount);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check getter
+    let stored_fee = dispatcher.get_fee(fee_type);
+    assert(stored_fee == fee_amount, 'Fee not updated correctly');
+    assert(dispatcher.is_fee_enabled(fee_type), 'Fee should be enabled');
+
+    // Check event
+    let expected_event = Spherre::Event::FeeUpdated(
+        Spherre::FeeUpdated { fee_type, amount: fee_amount, enabled: true, caller: to_be_staff, }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+fn test_update_fee_superadmin_success_emit_event() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Update fee as superadmin
+    let mut spy = spy_events();
+    let fee_type = FeesType::PROPOSAL_FEE;
+    let fee_amount: u256 = 100;
+
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.update_fee(fee_type, fee_amount);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check getter
+    let stored_fee = dispatcher.get_fee(fee_type);
+    assert(stored_fee == fee_amount, 'Fee not updated correctly');
+    assert(dispatcher.is_fee_enabled(fee_type), 'Fee should be enabled');
+
+    // Check event
+    let expected_event = Spherre::Event::FeeUpdated(
+        Spherre::FeeUpdated {
+            fee_type, amount: fee_amount, enabled: true, caller: to_be_superadmin,
+        }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a staff')]
+fn test_update_fee_by_non_staff_should_fail() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let random_guy = contract_address_const::<'random_guy'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let fee_type = FeesType::PROPOSAL_FEE;
+    let fee_amount: u256 = 100;
+
+    start_cheat_caller_address(spherre_contract, random_guy);
+    dispatcher.update_fee(fee_type, fee_amount);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_update_fee_token_superadmin_success_emit_event() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let new_token = contract_address_const::<'fee_token'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Grant superadmin
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Set initial token
+    let initial_token: ContractAddress = 0x123.try_into().unwrap();
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.update_fee_token(initial_token);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Update token
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.update_fee_token(new_token);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check getter
+    let stored_token = dispatcher.get_fee_token();
+    assert(stored_token == new_token, 'Fee token not updated correctly');
+
+    // Check event
+    let expected_event = Spherre::Event::FeeTokenUpdated(
+        Spherre::FeeTokenUpdated { old_token: initial_token, new_token, caller: to_be_superadmin, }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a superadmin')]
+fn test_update_fee_token_staff_fails() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+    let new_token = contract_address_const::<'fee_token'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Grant superadmin and staff roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to update fee token as staff
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    dispatcher.update_fee_token(new_token);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a superadmin')]
+fn test_update_fee_token_non_superadmin_should_fail() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let random_guy = contract_address_const::<'random_guy'>();
+    let new_token = contract_address_const::<'fee_token'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    start_cheat_caller_address(spherre_contract, random_guy);
+    dispatcher.update_fee_token(new_token);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Token address is zero')]
+fn test_update_fee_token_with_zero_address_should_fail() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Grant superadmin
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to set zero address
+    let zero_address: ContractAddress = contract_address_const::<0x0>();
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    dispatcher.update_fee_token(zero_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_get_not_enabled_fee_returns_zero() {
+    let owner = contract_address_const::<'owner'>();
+    let spherre_contract = deploy_contract(owner);
+
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let fee_type = FeesType::EXECUTION_FEE;
+    let fee: u256 = dispatcher.get_fee(fee_type);
+    assert(fee == 0_u256, 'Fee should be zero');
+    assert(!dispatcher.is_fee_enabled(fee_type), 'Fee should not be enabled');
 }
 
