@@ -105,4 +105,60 @@ pub trait IAccountData<TContractState> {
     /// # Panics
     /// * If the provided address is not a member
     fn get_member_full_details(self: @TContractState, member: ContractAddress) -> MemberDetails;
+    /// Updates the smart will address for the caller
+    ///
+    /// # Parameters
+    /// * `will_address` - The contract address to set as the will address
+    ///
+    /// # Panics
+    /// * If caller is not a member
+    /// * If will_address is a member
+    /// * If will_address is already assigned to another member
+    /// * If existing will duration has not elapsed
+    fn update_smart_will(ref self: TContractState, will_address: ContractAddress);
+    /// Gets the will address for a member
+    ///
+    /// # Parameters
+    /// * `member` - The member's address to query
+    ///
+    /// # Returns
+    /// * The will address for the member, or zero address if none set
+    ///
+    /// # Panics
+    /// * If member address is not a member
+    fn get_member_will_address(self: @TContractState, member: ContractAddress) -> ContractAddress;
+    /// Gets the will duration for a member
+    ///
+    /// # Parameters
+    /// * `member` - The member's address to query
+    ///
+    /// # Returns
+    /// * The will duration in seconds, or 0 if no will is set
+    ///
+    /// # Panics
+    /// * If member address is not a member
+    fn get_member_will_duration(self: @TContractState, member: ContractAddress) -> u64;
+    /// Gets the remaining time before a member can update their will
+    ///
+    /// # Parameters
+    /// * `member` - The member's address to query
+    ///
+    /// # Returns
+    /// * The remaining time in seconds, or 0 if will can be updated immediately
+    ///
+    /// # Panics
+    /// * If member address is not a member
+    fn get_remaining_will_time(self: @TContractState, member: ContractAddress) -> u64;
+    /// Checks if a member can update their will
+    ///
+    /// # Parameters
+    /// * `member` - The member's address to check
+    ///
+    /// # Returns
+    /// * `bool` - True if member can update their will (no existing will or duration has elapsed),
+    ///           false otherwise
+    ///
+    /// # Panics
+    /// * If member address is not a member
+    fn can_update_will(self: @TContractState, member: ContractAddress) -> bool;
 }

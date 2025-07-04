@@ -24,6 +24,8 @@ pub mod AccountData {
     use starknet::storage::MutableVecTrait;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
+    const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days in seconds
+
     #[storage]
     pub struct Storage {
         pub transactions: Map::<
@@ -40,6 +42,11 @@ pub mod AccountData {
         pub member_rejected_count: Map<ContractAddress, u256>,
         pub member_executed_count: Map<ContractAddress, u256>,
         pub member_joined_date: Map<ContractAddress, u64>,
+        // Smart Will storage
+        pub smart_will_to_member: Map<ContractAddress, ContractAddress>,
+        pub member_to_smart_will: Map<ContractAddress, ContractAddress>,
+        pub member_to_will_duration: Map<ContractAddress, u64>,
+        pub member_will_creation_time: Map<ContractAddress, u64>,
     }
 
     #[starknet::storage_node]
@@ -64,6 +71,8 @@ pub mod AccountData {
         TransactionRejected: TransactionRejected,
         TransactionVoted: TransactionVoted,
         TransactionExecuted: TransactionExecuted,
+        // Smart Will events
+        SmartWillUpdated: SmartWillUpdated,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -107,6 +116,16 @@ pub mod AccountData {
         #[key]
         executor: ContractAddress,
         date_executed: u64
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct SmartWillUpdated {
+        #[key]
+        member: ContractAddress,
+        #[key]
+        will_address: ContractAddress,
+        duration: u64,
+        creation_time: u64,
     }
 
     #[embeddable_as(AccountData)]
@@ -347,6 +366,91 @@ pub mod AccountData {
                 rejected_count,
                 executed_count,
                 date_joined,
+            }
+        }
+        fn update_smart_will(
+            ref self: ComponentState<TContractState>, will_address: ContractAddress
+        ) {
+            // Get caller
+            let caller = get_caller_address();
+
+            // Validate caller is a member
+            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+
+            // Validate will conditions
+            self.validate_will_conditions(caller, will_address);
+
+            // Update storage maps
+            let current_time = get_block_timestamp();
+            self.smart_will_to_member.entry(will_address).write(caller);
+            self.member_to_smart_will.entry(caller).write(will_address);
+            self.member_will_creation_time.entry(caller).write(current_time);
+
+            // Set default duration if first-time setup
+            self.member_to_will_duration.entry(caller).write(current_time + DEFAULT_WILL_DURATION);
+
+            // Emit event
+            self
+                .emit(
+                    SmartWillUpdated {
+                        member: caller,
+                        will_address,
+                        duration: DEFAULT_WILL_DURATION,
+                        creation_time: current_time
+                    }
+                );
+        }
+
+        fn get_member_will_address(
+            self: @ComponentState<TContractState>, member: ContractAddress
+        ) -> ContractAddress {
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+            self.member_to_smart_will.entry(member).read()
+        }
+
+        fn get_member_will_duration(
+            self: @ComponentState<TContractState>, member: ContractAddress
+        ) -> u64 {
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+            self.member_to_will_duration.entry(member).read()
+        }
+
+        fn get_remaining_will_time(
+            self: @ComponentState<TContractState>, member: ContractAddress
+        ) -> u64 {
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+
+            let creation_time = self.member_will_creation_time.entry(member).read();
+            if creation_time == 0 {
+                return 0;
+            }
+
+            let duration = self.member_to_will_duration.entry(member).read();
+            let current_time = get_block_timestamp();
+
+            if current_time > duration {
+                0
+            } else {
+                duration - current_time
+            }
+        }
+
+        fn can_update_will(self: @ComponentState<TContractState>, member: ContractAddress) -> bool {
+            // Verify member exists
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+
+            // Get creation time - if 0, no will exists
+            let creation_time = self.member_will_creation_time.entry(member).read();
+            if creation_time == 0 {
+                return true;
+            }
+            let current_time = get_block_timestamp();
+            // Check if duration has elapsed
+            let duration = self.member_to_will_duration.entry(member).read();
+            if current_time < duration {
+                true
+            } else {
+                false
             }
         }
     }
@@ -651,6 +755,32 @@ pub mod AccountData {
         ) {
             let current_count = self.member_executed_count.entry(member).read();
             self.member_executed_count.entry(member).write(current_count + 1);
+        }
+        fn validate_will_conditions(
+            self: @ComponentState<TContractState>,
+            member: ContractAddress,
+            will_address: ContractAddress
+        ) {
+            // Check if will_address is zero
+            assert(!will_address.is_zero(), Errors::ERR_INVALID_WILL_ADDRESS);
+
+            // Check if will_address is not a member
+            assert(!self.is_member(will_address), Errors::ERR_WILL_ADDRESS_IS_MEMBER);
+
+            // Check if will_address is already assigned to another member
+            let assigned_member = self.smart_will_to_member.entry(will_address).read();
+            assert(
+                assigned_member.is_zero() || assigned_member == member,
+                Errors::ERR_WILL_ADDRESS_ALREADY_ASSIGNED
+            );
+
+            // Check if member can update their will
+            let creation_time = self.member_will_creation_time.entry(member).read();
+            if creation_time != 0 {
+                let duration = self.member_to_will_duration.entry(member).read();
+                let current_time = get_block_timestamp();
+                assert(duration > current_time, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
+            }
         }
     }
 }

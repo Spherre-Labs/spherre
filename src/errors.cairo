@@ -78,4 +78,10 @@ pub mod Errors {
     // errors for smart token lock transaction
     pub const ERR_INVALID_SMART_TOKEN_LOCK_TRANSACTION: felt252 = 'Invalid Token Lock Transaction';
     pub const ERR_INVALID_TOKEN_LOCK_DURATION: felt252 = 'Invalid Token Lock Duration';
+
+    // Smart Will Errors
+    pub const ERR_WILL_ADDRESS_IS_MEMBER: felt252 = 'Will address cannot be member';
+    pub const ERR_WILL_ADDRESS_ALREADY_ASSIGNED: felt252 = 'Will address already assigned';
+    pub const ERR_WILL_DURATION_NOT_ELAPSED: felt252 = 'Will duration not elapsed';
+    pub const ERR_INVALID_WILL_ADDRESS: felt252 = 'Invalid will address';
 }
