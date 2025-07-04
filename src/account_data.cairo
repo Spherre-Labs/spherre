@@ -430,7 +430,7 @@ pub mod AccountData {
 
             if current_time > duration {
                 0
-             } else {
+            } else {
                 duration - current_time
             }
         }
@@ -450,7 +450,6 @@ pub mod AccountData {
             if current_time < duration {
                 return true;
             }
-            
             false
         }
     }
