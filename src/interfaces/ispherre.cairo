@@ -136,11 +136,14 @@ pub trait ISpherre<TContractState> {
     /// * `fee_type` - The type of fee to update.
     /// * `amount` - The new fee amount.
     fn update_fee(ref self: TContractState, fee_type: FeesType, amount: u256);
-    /// Updates the fee token for a given fee type.
-    /// This function allows a superadmin to update the fee token for a given fee type.
+    /// Updates the fee token address.
+    /// This function allows a superadmin to update the fee token address.
     ///
     /// # Parameters
-    /// * `token_address` - The new fee token.
+    /// * `token_address` - The new fee token address.
+    ///
+    /// # Panics
+    /// This function raises an error if the caller does not have the superadmin role.
     fn update_fee_token(ref self: TContractState, token_address: ContractAddress);
     /// Updates the fee enabled status for a given fee type.
     /// This function allows a superadmin to update the fee enabled status for a given fee type.
@@ -149,14 +152,15 @@ pub trait ISpherre<TContractState> {
     /// * `fee_type` - The type of fee to update.
     /// * `enabled` - The new fee enabled status.
     fn get_fee(self: @TContractState, fee_type: FeesType) -> u256;
-    /// Gets the fee token address.
-    /// This function allows a superadmin to get the fee token address.
+    /// Gets the fee amount for a given fee type.
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee to query.
     ///
     /// # Returns
-    /// * `ContractAddress` - The address of the fee token.
+    /// * `u256` - The fee amount, or 0 if the fee is not enabled.
     fn get_fee_token(self: @TContractState) -> ContractAddress;
     /// Checks if a fee type is enabled.
-    /// This function allows a superadmin to check if a fee type is enabled.
     ///
     /// # Parameters
     /// * `fee_type` - The type of fee to check.
