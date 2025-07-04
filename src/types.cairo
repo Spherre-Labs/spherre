@@ -31,6 +31,14 @@ pub enum PermissionEnum {
     EXECUTOR,
 }
 
+#[derive(Copy, Drop, Serde, PartialEq, starknet::Store, Hash)]
+pub enum FeesType {
+    PROPOSAL_FEE,
+    VOTING_FEE,
+    EXECUTION_FEE,
+    DEPLOYMENT_FEE,
+}
+
 pub trait PermissionTrait {
     fn to_mask(self: PermissionEnum) -> u8;
     fn has_permission_from_mask(self: PermissionEnum, mask: u8) -> bool;
