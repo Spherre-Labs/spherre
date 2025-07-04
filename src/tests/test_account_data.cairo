@@ -1068,21 +1068,23 @@ fn test_smart_will_can_update_will_time() {
     let caller = member();
 
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 100000);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
 
     mock_contract.add_member_pub(caller);
     let will_address = contract_address_const::<2>();
     mock_contract.update_smart_will_pub(will_address);
     let can_update_will = mock_contract.can_update_will_pub(caller);
-    stop_cheat_block_timestamp(mock_contract.contract_address);
-    stop_cheat_caller_address(mock_contract.contract_address);
-
     assert(can_update_will == true, 'Can update will Incorrect');
 
-    start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 100001 + 7776000);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1003);
 
     let can_update_will = mock_contract.can_update_will_pub(caller);
+    assert(can_update_will == true, 'Can update will Incorrect');
+
+    let new_time = 1000 + 7776001; // 1 second after duration expires
+    start_cheat_block_timestamp(mock_contract.contract_address, new_time);
+    let can_update_will = mock_contract.can_update_will_pub(caller);
+
     stop_cheat_block_timestamp(mock_contract.contract_address);
     stop_cheat_caller_address(mock_contract.contract_address);
     assert(can_update_will == false, 'Can update will Incorrect');
