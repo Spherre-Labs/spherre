@@ -778,8 +778,6 @@ pub mod AccountData {
             if creation_time != 0 {
                 let duration = self.member_to_will_duration.entry(member).read();
                 let current_time = get_block_timestamp();
-                let elapsed_time = current_time - creation_time;
-                assert(elapsed_time >= duration, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
                 assert(duration > current_time, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
             }
         }
