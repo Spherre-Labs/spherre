@@ -448,9 +448,10 @@ pub mod AccountData {
             // Check if duration has elapsed
             let duration = self.member_to_will_duration.entry(member).read();
             if current_time < duration {
-                return true;
+                false
+            } else {
+                true
             }
-            false
         }
     }
 

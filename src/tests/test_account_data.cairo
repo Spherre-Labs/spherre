@@ -1136,33 +1136,25 @@ fn test_smart_will_can_update_will_already_assigned() {
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
-
 #[test]
 #[should_panic(expected: 'Will duration not elapsed')]
-fn test_smart_will_can_update_will_up() {
+fn test_smart_will_can_update_will_elapsed() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
-    let member = new_member();
     let will_address = contract_address_const::<2>();
+    let new_will_address = contract_address_const::<3>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
 
     mock_contract.add_member_pub(caller);
-    mock_contract.add_member_pub(member);
-
-    start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 100000);
     mock_contract.update_smart_will_pub(will_address);
-    stop_cheat_caller_address(mock_contract.contract_address);
-    stop_cheat_block_timestamp(mock_contract.contract_address);
 
-    start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 200000);
-    mock_contract.update_smart_will_pub(will_address);
-    stop_cheat_caller_address(mock_contract.contract_address);
-    stop_cheat_block_timestamp(mock_contract.contract_address);
+    let new_time = 1000 + 7776001; // 1 second after duration expires
+    start_cheat_block_timestamp(mock_contract.contract_address, new_time);
 
-    start_cheat_caller_address(mock_contract.contract_address, caller);
-    start_cheat_block_timestamp(mock_contract.contract_address, 20000 + 7776000);
-    mock_contract.update_smart_will_pub(will_address);
-    stop_cheat_caller_address(mock_contract.contract_address);
+    mock_contract.update_smart_will_pub(new_will_address);
+
     stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
 }
