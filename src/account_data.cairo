@@ -387,9 +387,7 @@ pub mod AccountData {
             self.member_will_creation_time.entry(caller).write(current_time);
 
             // Set default duration if first-time setup
-            if self.member_to_will_duration.entry(caller).read() == 0 {
-                self.member_to_will_duration.entry(caller).write(DEFAULT_WILL_DURATION);
-            }
+            self.member_to_will_duration.entry(caller).write(current_time + DEFAULT_WILL_DURATION);
 
             // Emit event
             self
@@ -429,12 +427,11 @@ pub mod AccountData {
 
             let duration = self.member_to_will_duration.entry(member).read();
             let current_time = get_block_timestamp();
-            let elapsed_time = current_time - creation_time;
 
-            if elapsed_time >= duration {
+            if current_time > duration {
                 0
-            } else {
-                duration - elapsed_time
+             } else {
+                duration - current_time
             }
         }
 
@@ -447,16 +444,13 @@ pub mod AccountData {
             if creation_time == 0 {
                 return true;
             }
-
+            let current_time = get_block_timestamp();
             // Check if duration has elapsed
             let duration = self.member_to_will_duration.entry(member).read();
-            let current_time = get_block_timestamp();
-            let elapsed_time = current_time - creation_time;
-
-            // elapsed_time < duration
-            if elapsed_time < duration {
+            if current_time < duration {
                 return true;
             }
+            
             false
         }
     }
@@ -787,6 +781,7 @@ pub mod AccountData {
                 let current_time = get_block_timestamp();
                 let elapsed_time = current_time - creation_time;
                 assert(elapsed_time >= duration, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
+                assert(duration > current_time, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
             }
         }
     }
