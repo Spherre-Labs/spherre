@@ -134,28 +134,13 @@ pub mod SmartTokenLockTransactionComponent {
 
             let caller = get_caller_address();
 
-            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
-            let transaction = account_data_comp.get_transaction(transaction_id);
-
-            // Validate transaction type
-            assert(
-                transaction.tx_type == TransactionType::SMART_TOKEN_LOCK,
-                Errors::ERR_INVALID_SMART_TOKEN_LOCK_TRANSACTION
-            );
-
-            // Validate transaction is approved and not executed
-            assert(
-                transaction.tx_status == TransactionStatus::APPROVED,
-                Errors::ERR_TRANSACTION_NOT_EXECUTABLE
-            );
-
-            // Smart token lock transaction details
-            let smart_lock_tx = self.smart_token_lock_transactions.entry(transaction_id).read();
+            let smart_lock_tx = self.get_smart_token_lock_transaction(transaction_id);
 
             let treasury_handler_comp = get_dep_component!(@self, TreasuryHandler);
             let current_balance = treasury_handler_comp.get_token_balance(smart_lock_tx.token);
             assert(current_balance >= smart_lock_tx.amount, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
 
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             account_data_comp.execute_transaction(transaction_id, caller);
 
             let mut treasury_handler_comp_mut = get_dep_component_mut!(ref self, TreasuryHandler);
