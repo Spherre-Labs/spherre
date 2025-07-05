@@ -37,6 +37,9 @@ pub trait IMockContract<TContractState> {
     fn smart_token_lock_transaction_list_pub(
         self: @TContractState
     ) -> Array<SmartTokenLockTransaction>;
+    fn execute_smart_token_lock_transaction_pub(
+        ref self: TContractState, transaction_id: u256
+    ) -> u256;
     fn assign_executor_permission_pub(ref self: TContractState, member: ContractAddress);
     fn propose_nft_transaction_pub(
         ref self: TContractState,
@@ -305,6 +308,11 @@ pub mod MockContract {
             self: @ContractState
         ) -> Array<SmartTokenLockTransaction> {
             self.smart_token_lock_transaction.smart_token_lock_transaction_list()
+        }
+        fn execute_smart_token_lock_transaction_pub(
+            ref self: ContractState, transaction_id: u256
+        ) -> u256 {
+            self.smart_token_lock_transaction.execute_smart_token_lock_transaction(transaction_id)
         }
         fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
             self.account_data.execute_transaction(tx_id, caller)

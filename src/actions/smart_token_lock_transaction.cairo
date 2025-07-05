@@ -14,12 +14,16 @@ pub mod SmartTokenLockTransactionComponent {
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction;
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
-    use spherre::types::{SmartTokenLockTransaction, TransactionType, Transaction};
+    use spherre::types::{
+        SmartTokenLockTransaction, TransactionStatus, TransactionType, Transaction
+    };
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
+    use starknet::{get_block_timestamp, get_caller_address,};
+
 
     #[storage]
     pub struct Storage {
@@ -31,6 +35,7 @@ pub mod SmartTokenLockTransactionComponent {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         SmartTokenLockTransactionProposed: SmartTokenLockTransactionProposed,
+        SmartTokenLockTransactionExecuted: SmartTokenLockTransactionExecuted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -40,6 +45,18 @@ pub mod SmartTokenLockTransactionComponent {
         token: ContractAddress,
         amount: u256,
         duration: u64
+    }
+    #[derive(Drop, starknet::Event)]
+    pub struct SmartTokenLockTransactionExecuted {
+        #[key]
+        transaction_id: u256,
+        #[key]
+        lock_id: u256,
+        token: ContractAddress,
+        amount: u256,
+        duration: u64,
+        executor: ContractAddress,
+        date_executed: u64,
     }
 
     #[embeddable_as(SmartTokenLockTransactionComponent)]
@@ -108,6 +125,44 @@ pub mod SmartTokenLockTransactionComponent {
                 };
 
             smart_lock_tx_array
+        }
+        fn execute_smart_token_lock_transaction(
+            ref self: ComponentState<TContractState>, transaction_id: u256
+        ) -> u256 {
+            let pausable = get_dep_component!(@self, Pausable);
+            pausable.assert_not_paused();
+
+            let caller = get_caller_address();
+
+            let smart_lock_tx = self.get_smart_token_lock_transaction(transaction_id);
+
+            let treasury_handler_comp = get_dep_component!(@self, TreasuryHandler);
+            let current_balance = treasury_handler_comp.get_token_balance(smart_lock_tx.token);
+            assert(current_balance >= smart_lock_tx.amount, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
+
+            let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
+            account_data_comp.execute_transaction(transaction_id, caller);
+
+            let mut treasury_handler_comp_mut = get_dep_component_mut!(ref self, TreasuryHandler);
+            let lock_id = treasury_handler_comp_mut
+                ._lock_tokens(smart_lock_tx.token, smart_lock_tx.amount, smart_lock_tx.duration);
+
+            // Event
+            self
+                .emit(
+                    Event::SmartTokenLockTransactionExecuted(
+                        SmartTokenLockTransactionExecuted {
+                            transaction_id,
+                            lock_id,
+                            token: smart_lock_tx.token,
+                            amount: smart_lock_tx.amount,
+                            duration: smart_lock_tx.duration,
+                            executor: caller,
+                            date_executed: get_block_timestamp()
+                        }
+                    )
+                );
+            lock_id
         }
     }
 }

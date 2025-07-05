@@ -10,4 +10,5 @@ pub trait ISmartTokenLockTransaction<TContractState> {
         self: @TContractState, transaction_id: u256
     ) -> SmartTokenLockTransaction;
     fn smart_token_lock_transaction_list(self: @TContractState) -> Array<SmartTokenLockTransaction>;
+    fn execute_smart_token_lock_transaction(ref self: TContractState, transaction_id: u256) -> u256;
 }
