@@ -312,7 +312,9 @@ pub mod Spherre {
                 );
         }
         /// Get the fee amount for a given fee type. Returns 0 if not set.
-        fn get_fee(self: @ContractState, fee_type: FeesType) -> u256 {
+        fn get_fee(self: @ContractState, fee_type: FeesType, account: ContractAddress) -> u256 {
+            assert(account.is_non_zero(), Errors::ERR_NON_ZERO_ACCOUNT);
+            // TODO: create special logic for treating fees of whitelisted accounts.
             if self.is_fee_enabled(fee_type) {
                 self.fee_amounts.entry(fee_type).read()
             } else {
