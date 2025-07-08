@@ -24,6 +24,7 @@ pub mod Errors {
     pub const ERR_INVALID_NFT_TRANSACTION: felt252 = 'Invalid NFT transaction';
     pub const ERR_NFT_NOT_OWNED: felt252 = 'Caller does not own the NFT';
     pub const ERR_NON_ZERO_ACCOUNT: felt252 = 'Account should not be zero';
+    pub const ERR_INSUFFICIENT_FEE: felt252 = 'Insufficient fee balance';
 
     pub const ERR_THRESHOLD_UNCHANGED: felt252 = 'Threshold is unchanged';
     pub const ERR_THRESHOLD_EXCEEDS_VOTERS: felt252 = 'Threshold exceeds total voters';

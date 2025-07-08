@@ -16,13 +16,16 @@ pub mod AccountData {
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::components::permission_control;
     use spherre::errors::Errors;
+    use spherre::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
     use spherre::interfaces::iaccount_data::IAccountData;
+    use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::ipermission_control::IPermissionControl;
+    use spherre::interfaces::ispherre::{ISpherreDispatcher, ISpherreDispatcherTrait};
     use spherre::types::{
-        TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails
+        TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails, FeesType,
     };
     use starknet::storage::MutableVecTrait;
-    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp, get_contract_address};
 
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days in seconds
 
@@ -781,6 +784,33 @@ pub mod AccountData {
                 let current_time = get_block_timestamp();
                 assert(duration > current_time, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
             }
+        }
+        fn collect_fees(ref self: ComponentState<TContractState>, fee_type: FeesType) {
+            let account_address = get_contract_address();
+            // Get the deployer address and dispatcher
+            let deployer = IAccountDispatcher { contract_address: account_address }.get_deployer();
+            let deployer_dispatcher = ISpherreDispatcher { contract_address: deployer };
+            // Get Fees and Fees Token
+            let fee = deployer_dispatcher.get_fee(fee_type, account_address);
+            let fee_token = deployer_dispatcher.get_fee_token();
+
+            // Stop execution if fee is equal to zero or fee token is zero
+            if fee == 0 || fee_token.is_zero() {
+                return;
+            }
+
+            // Collect the fees from the account
+            // TODO: (delibrate whether to collect from caller or account)
+            // Check if account balance is enough to pay fee
+            let erc20_dispatcher = IERC20Dispatcher { contract_address: fee_token };
+            assert(
+                erc20_dispatcher.balance_of(account_address) >= fee, Errors::ERR_INSUFFICIENT_FEE
+            );
+
+            // Transfer Fee
+            erc20_dispatcher.transfer(deployer, fee);
+            // Update the collection statistics
+
         }
     }
 }
