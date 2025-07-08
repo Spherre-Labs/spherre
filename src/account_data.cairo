@@ -89,6 +89,8 @@ pub mod AccountData {
         date_updated: u64,
     }
 
+    // TODO: Implement Transaction Proposed Event
+
     #[derive(Drop, starknet::Event)]
     pub struct TransactionVoted {
         #[key]
@@ -291,19 +293,21 @@ pub mod AccountData {
             let (threshold, _) = self.get_threshold();
             let timestamp = get_block_timestamp();
 
+            // Increment approver's count
+            self._increment_approved_count(caller);
+
             // check if approval threshold has been reached and updated
             // the transaction status if that is the case.
             if approvers_length >= threshold {
                 transaction.tx_status.write(TransactionStatus::APPROVED);
                 self.emit(TransactionApproved { transaction_id: tx_id, date_approved: timestamp });
             }
+            // Collect Fee
+            self.collect_fees(FeesType::VOTING_FEE);
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
                 );
-
-            // Increment approver's count
-            self._increment_approved_count(caller);
         }
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
             // PAUSE GUARD
@@ -330,6 +334,10 @@ pub mod AccountData {
             let max_possible_approved_length = approved_length + not_voted_yet;
             let (threshold, _) = self.get_threshold();
             let timestamp = get_block_timestamp();
+
+            // Increment rejector's count
+            self._increment_rejected_count(caller);
+
             // check if approval threshold has been reached and update
             // the transaction status if that is the case.
             // According to issue description, transaction is automatically
@@ -339,14 +347,13 @@ pub mod AccountData {
                 transaction.tx_status.write(TransactionStatus::REJECTED);
                 self.emit(TransactionRejected { transaction_id: tx_id, date_approved: timestamp });
             }
+            // Collect Fee
+            self.collect_fees(FeesType::VOTING_FEE);
 
             self
                 .emit(
                     TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
                 );
-
-            // Increment rejector's count
-            self._increment_rejected_count(caller);
         }
         fn get_member_full_details(
             self: @ComponentState<TContractState>, member: ContractAddress
@@ -601,6 +608,9 @@ pub mod AccountData {
             // Increment proposer's count
             self._increment_proposed_count(caller);
 
+            // Collect Fee
+            self.collect_fees(FeesType::PROPOSAL_FEE);
+
             transaction_id
         }
         /// Executes a transaction by its ID
@@ -642,6 +652,9 @@ pub mod AccountData {
             let timestamp = get_block_timestamp();
             transaction.date_executed.write(timestamp);
             transaction.executor.write(caller);
+
+            // Collect Fee
+            self.collect_fees(FeesType::EXECUTION_FEE);
 
             self
                 .emit(
