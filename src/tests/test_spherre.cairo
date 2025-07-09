@@ -53,8 +53,6 @@ fn MEMBER_TWO() -> ContractAddress {
     contract_address_const::<'Member_two'>()
 }
 
-// TODO: Wait for classhash setter function in order to conplete the test case
-
 #[test]
 fn test_deploy_account() {
     let spherre_contract = deploy_contract(OWNER());
