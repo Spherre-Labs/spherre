@@ -145,20 +145,19 @@ pub trait ISpherre<TContractState> {
     /// # Panics
     /// This function raises an error if the caller does not have the superadmin role.
     fn update_fee_token(ref self: TContractState, token_address: ContractAddress);
-    /// Updates the fee enabled status for a given fee type.
-    /// This function allows a superadmin to update the fee enabled status for a given fee type.
-    ///
-    /// # Parameters
-    /// * `fee_type` - The type of fee to update.
-    /// * `enabled` - The new fee enabled status.
-    fn get_fee(self: @TContractState, fee_type: FeesType) -> u256;
     /// Gets the fee amount for a given fee type.
     ///
     /// # Parameters
     /// * `fee_type` - The type of fee to query.
+    /// *  `account` - The account that is being charged
     ///
     /// # Returns
     /// * `u256` - The fee amount, or 0 if the fee is not enabled.
+    fn get_fee(self: @TContractState, fee_type: FeesType, account: ContractAddress) -> u256;
+    /// Gets the fee token for a fee payment.
+    ///
+    /// # Returns
+    /// * `ContractAddress` - The fee token
     fn get_fee_token(self: @TContractState) -> ContractAddress;
     /// Checks if a fee type is enabled.
     ///
@@ -168,4 +167,20 @@ pub trait ISpherre<TContractState> {
     /// # Returns
     /// * `bool` - Returns true if the fee type is enabled, false otherwise.
     fn is_fee_enabled(self: @TContractState, fee_type: FeesType) -> bool;
+    /// Update the fee collection statistics of an account
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee
+    /// * `amount` - The amount of fee to add (record)
+    ///
+    fn update_fee_collection_statistics(ref self: TContractState, fee_type: FeesType, amount: u256);
+    /// Get the fee collected from an account operations
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee
+    /// * `account` - The account
+    ///
+    fn get_fees_collected(
+        self: @TContractState, fee_type: FeesType, account: ContractAddress
+    ) -> u256;
 }

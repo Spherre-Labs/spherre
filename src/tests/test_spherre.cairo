@@ -53,8 +53,6 @@ fn MEMBER_TWO() -> ContractAddress {
     contract_address_const::<'Member_two'>()
 }
 
-// TODO: Wait for classhash setter function in order to conplete the test case
-
 #[test]
 fn test_deploy_account() {
     let spherre_contract = deploy_contract(OWNER());
@@ -778,6 +776,7 @@ fn test_update_fee_staff_success_emit_event() {
     let spherre_contract = deploy_contract(owner);
     let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
     let to_be_staff = contract_address_const::<'to_be_staff'>();
+    let account = contract_address_const::<'account'>();
 
     let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
 
@@ -800,7 +799,7 @@ fn test_update_fee_staff_success_emit_event() {
     stop_cheat_caller_address(spherre_contract);
 
     // Check getter
-    let stored_fee = dispatcher.get_fee(fee_type);
+    let stored_fee = dispatcher.get_fee(fee_type, account);
     assert(stored_fee == fee_amount, 'Fee not updated correctly');
     assert(dispatcher.is_fee_enabled(fee_type), 'Fee should be enabled');
 
@@ -816,6 +815,7 @@ fn test_update_fee_superadmin_success_emit_event() {
     let owner = contract_address_const::<'owner'>();
     let spherre_contract = deploy_contract(owner);
     let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let account = contract_address_const::<'account'>();
 
     let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
 
@@ -834,7 +834,7 @@ fn test_update_fee_superadmin_success_emit_event() {
     stop_cheat_caller_address(spherre_contract);
 
     // Check getter
-    let stored_fee = dispatcher.get_fee(fee_type);
+    let stored_fee = dispatcher.get_fee(fee_type, account);
     assert(stored_fee == fee_amount, 'Fee not updated correctly');
     assert(dispatcher.is_fee_enabled(fee_type), 'Fee should be enabled');
 
@@ -967,11 +967,12 @@ fn test_update_fee_token_with_zero_address_should_fail() {
 fn test_get_not_enabled_fee_returns_zero() {
     let owner = contract_address_const::<'owner'>();
     let spherre_contract = deploy_contract(owner);
+    let account = contract_address_const::<'account'>();
 
     let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
 
     let fee_type = FeesType::EXECUTION_FEE;
-    let fee: u256 = dispatcher.get_fee(fee_type);
+    let fee: u256 = dispatcher.get_fee(fee_type, account);
     assert(fee == 0_u256, 'Fee should be zero');
     assert(!dispatcher.is_fee_enabled(fee_type), 'Fee should not be enabled');
 }
