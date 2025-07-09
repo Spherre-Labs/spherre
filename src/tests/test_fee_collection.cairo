@@ -114,17 +114,19 @@ fn cheat_set_account_class_hash(
 //     let token = deploy_mock_token();
 //     let mint_dispatcher = IMockTokenDispatcher{contract_address: token.contract_address};
 //     let amount_to_mint: u256 = 100000000000000;
+//     start_cheat_caller_address(account_address, owner);
+//     mint_dispatcher.mint(owner, amount_to_mint);
+//     // Mint for account address
 //     mint_dispatcher.mint(account_address, amount_to_mint);
-
 //     assert(
-//         token.balance_of(account_address) == amount_to_mint,
+//         token.balance_of(owner) == amount_to_mint,
 //         'Invalid mint balance'
 //     );
 
 //     // Propose the token transaction
 //     let token_transaction_dispatcher = ITokenTransactionDispatcher{contract_address:
 //     account_address};
-//     start_cheat_caller_address(account_address, owner);
+
 //     token_transaction_dispatcher.propose_token_transaction(
 //         token.contract_address,
 //         amount_to_propose,
@@ -135,7 +137,7 @@ fn cheat_set_account_class_hash(
 //     // Check whether the balance minted has changed
 //     let expected_balance = amount_to_mint - fee;
 //     assert(
-//         token.balance_of(account_address) == expected_balance,
+//         token.balance_of(owner) == expected_balance,
 //         'Invalid balance'
 //     );
 // }
