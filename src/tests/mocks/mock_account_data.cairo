@@ -1,12 +1,16 @@
 use spherre::types::{
     TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
     ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
-    SmartTokenLockTransaction, MemberDetails
+    SmartTokenLockTransaction, MemberDetails, FeesType
 };
-use starknet::ContractAddress;
+use starknet::{ContractAddress};
 
 #[starknet::interface]
 pub trait IMockContract<TContractState> {
+    fn update_fee_collection_statistics(ref self: TContractState, fee_type: FeesType, amount: u256);
+    fn get_deployer(self: @TContractState) -> ContractAddress;
+    fn get_fee(self: @TContractState, fee_type: FeesType, account: ContractAddress) -> u256;
+    fn get_fee_token(self: @TContractState) -> ContractAddress;
     fn create_transaction_pub(ref self: TContractState, tx_type: TransactionType) -> u256;
     fn approve_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
     fn reject_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
@@ -107,11 +111,11 @@ pub mod MockContract {
     use spherre::types::{
         Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
         ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
-        MemberDetails
+        MemberDetails, FeesType
     };
     use spherre::types::{EditPermissionTransaction};
-    use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
+    use starknet::{ContractAddress, get_contract_address};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccountData, storage: account_data, event: AccountDataEvent);
@@ -231,6 +235,18 @@ pub mod MockContract {
 
     #[abi(embed_v0)]
     pub impl MockContractImpl of super::IMockContract<ContractState> {
+        fn update_fee_collection_statistics(
+            ref self: ContractState, fee_type: FeesType, amount: u256
+        ) {}
+        fn get_deployer(self: @ContractState) -> ContractAddress {
+            get_contract_address()
+        }
+        fn get_fee(self: @ContractState, fee_type: FeesType, account: ContractAddress) -> u256 {
+            0
+        }
+        fn get_fee_token(self: @ContractState) -> ContractAddress {
+            0.try_into().unwrap()
+        }
         fn create_transaction_pub(ref self: ContractState, tx_type: TransactionType) -> u256 {
             self.account_data.create_transaction(tx_type)
         }
