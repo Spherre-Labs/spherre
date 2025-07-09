@@ -823,7 +823,7 @@ pub mod AccountData {
             // Transfer Fee
             erc20_dispatcher.transfer(deployer, fee);
             // Update the collection statistics
-
+            deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
         }
     }
 }

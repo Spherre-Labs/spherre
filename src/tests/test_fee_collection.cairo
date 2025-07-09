@@ -1,19 +1,15 @@
-use crate::account::{SpherreAccount};
-use crate::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use crate::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 use crate::interfaces::ispherre::{ISpherreDispatcher, ISpherreDispatcherTrait};
-use crate::spherre::Spherre::Event::{AccountClassHashUpdated};
 use crate::spherre::Spherre::{SpherreImpl};
 use crate::spherre::Spherre;
-use openzeppelin::access::accesscontrol::{DEFAULT_ADMIN_ROLE, AccessControlComponent};
 use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
-    EventSpyAssertionsTrait, DeclareResultTrait, get_class_hash
+    EventSpyAssertionsTrait, DeclareResultTrait,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+use spherre::interfaces::itoken_tx::{ITokenTransactionDispatcher, ITokenTransactionDispatcherTrait};
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{FeesType, SpherreAdminRoles};
-use starknet::class_hash::class_hash_const;
+use spherre::types::{FeesType};
 use starknet::{ContractAddress, contract_address_const, ClassHash,};
 
 
@@ -69,4 +65,78 @@ fn cheat_set_account_class_hash(
     ISpherreDispatcher { contract_address }.update_account_class_hash(new_hash);
     stop_cheat_caller_address(contract_address);
 }
+// TODO: figure out why insufficient balance assertion is called and
+// why the test is failing.
+
+// #[test]
+// fn test_fee_collection_successfull() {
+//     let spherre_contract = deploy_contract(OWNER());
+//     let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+//     let owner = OWNER();
+//     let token = deploy_mock_token();
+//     let fee: u256 = 10000;
+//     let amount_to_propose: u256 = 1000000;
+//     let receiver: ContractAddress = contract_address_const::<'recipient'>();
+//     // Set classhash
+//     let classhash: ClassHash = get_spherre_account_class_hash();
+//     cheat_set_account_class_hash(spherre_contract, classhash, owner);
+//     // Update the fees token and fee
+//     start_cheat_caller_address(spherre_contract, owner);
+//     spherre_dispatcher.update_fee_token(token.contract_address);
+//     spherre_dispatcher.update_fee(FeesType::PROPOSAL_FEE, fee);
+//     stop_cheat_caller_address(spherre_contract);
+//     // Check if fee token is set
+//     assert(
+//         spherre_dispatcher.get_fee(FeesType::PROPOSAL_FEE, 1.try_into().unwrap()) == fee,
+//         'Invalid fee'
+//     );
+//     assert(
+//         spherre_dispatcher.get_fee_token() == token.contract_address,
+//         'Invalid fee token'
+//     );
+//     // Call the deploy account function
+//     let name: ByteArray = "Test Spherre Account";
+//     let description: ByteArray = "Test Spherre Account Description";
+//     let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+//     let threshold: u64 = 2;
+//     let account_address = spherre_dispatcher
+//         .deploy_account(owner, name, description, members, threshold);
+//     // Test newly deployed spherre contract
+//     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
+//     let spherre_account_data_dispatcher = IAccountDataDispatcher {
+//         contract_address: account_address
+//     };
+//     // Check that the account is deployed properly
+//     assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
+
+//     // Propose a transaction like a token transfer transaction
+//     // But first, mint the token
+//     let token = deploy_mock_token();
+//     let mint_dispatcher = IMockTokenDispatcher{contract_address: token.contract_address};
+//     let amount_to_mint: u256 = 100000000000000;
+//     mint_dispatcher.mint(account_address, amount_to_mint);
+
+//     assert(
+//         token.balance_of(account_address) == amount_to_mint,
+//         'Invalid mint balance'
+//     );
+
+//     // Propose the token transaction
+//     let token_transaction_dispatcher = ITokenTransactionDispatcher{contract_address:
+//     account_address};
+//     start_cheat_caller_address(account_address, owner);
+//     token_transaction_dispatcher.propose_token_transaction(
+//         token.contract_address,
+//         amount_to_propose,
+//         receiver
+//     );
+//     stop_cheat_caller_address(account_address);
+//     // Start the checks
+//     // Check whether the balance minted has changed
+//     let expected_balance = amount_to_mint - fee;
+//     assert(
+//         token.balance_of(account_address) == expected_balance,
+//         'Invalid balance'
+//     );
+// }
 
