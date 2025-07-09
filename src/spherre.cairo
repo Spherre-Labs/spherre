@@ -43,6 +43,14 @@ pub mod Spherre {
         pub caller: ContractAddress,
     }
 
+    #[derive(Drop, starknet::Event)]
+    pub struct FeeCollected {
+        pub fee_type: FeesType,
+        pub fee_token: ContractAddress,
+        pub account: ContractAddress,
+        pub amount: u256
+    }
+
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -70,8 +78,7 @@ pub mod Spherre {
         fee_enabled: Map<FeesType, bool>,
         // Fee collection statistics
         // (fees_type, fees_token, account) -> amount collected
-        fee_collection_amounts: 
-            Map<(FeesType, ContractAddress, ContractAddress),u256>,
+        fee_collection_amounts: Map<(FeesType, ContractAddress, ContractAddress), u256>,
     }
 
     #[event]
@@ -81,6 +88,7 @@ pub mod Spherre {
         AccountClassHashUpdated: AccountClassHashUpdated,
         FeeUpdated: FeeUpdated,
         FeeTokenUpdated: FeeTokenUpdated,
+        FeeCollected: FeeCollected,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -334,7 +342,21 @@ pub mod Spherre {
             self.fee_enabled.entry(fee_type).read()
         }
         /// Update fee collection statistics
-        
+        fn update_fee_collection_statistics(
+            ref self: ContractState, fee_type: FeesType, amount: u256
+        ) {
+            let account = get_caller_address();
+            self.assert_only_deployed_account();
+            // Get the current fee token
+            let fee_token = self.get_fee_token();
+            // Get the statistics map object
+            let fee_statistics = self.fee_collection_amounts.entry((fee_type, fee_token, account));
+            let collected_amount = fee_statistics.read();
+            // Update collected amount
+            fee_statistics.write(collected_amount + amount);
+            // Emit fee collected statistics event
+            self.emit(FeeCollected { fee_type, fee_token, amount, account });
+        }
     }
 
     #[generate_trait]
@@ -357,6 +379,15 @@ pub mod Spherre {
         fn assert_only_superadmin(self: @ContractState) {
             let caller = get_caller_address();
             assert(self.has_superadmin_role(caller), Errors::ERR_NOT_A_SUPERADMIN)
+        }
+        /// Asserts that the caller is a deployed account.
+        ///
+        /// # Panics
+        /// This function raises an error if the caller is not a deployed account
+        fn assert_only_deployed_account(self: @ContractState) {
+            let caller = get_caller_address();
+            let is_deployed_account = self.is_deployed_account(caller);
+            assert(is_deployed_account, Errors::ERR_CALLER_NOT_DEPLOYED_ACCOUNT);
         }
     }
 }

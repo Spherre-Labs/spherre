@@ -167,4 +167,11 @@ pub trait ISpherre<TContractState> {
     /// # Returns
     /// * `bool` - Returns true if the fee type is enabled, false otherwise.
     fn is_fee_enabled(self: @TContractState, fee_type: FeesType) -> bool;
+    /// Update the fee collection statistics of an account
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee
+    /// * `amount` - The amount of fee to add (record)
+    ///
+    fn update_fee_collection_statistics(ref self: TContractState, fee_type: FeesType, amount: u256);
 }
