@@ -27,6 +27,7 @@ pub mod Errors {
     pub const ERR_INSUFFICIENT_FEE: felt252 = 'Insufficient fee balance';
     pub const ERR_INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient fee allowance';
     pub const ERR_CALLER_NOT_DEPLOYED_ACCOUNT: felt252 = 'Caller is not an account';
+    pub const ERR_INVALID_TRANSACTION_TYPE: felt252 = 'Invalid transaction type';
 
     pub const ERR_THRESHOLD_UNCHANGED: felt252 = 'Threshold is unchanged';
     pub const ERR_THRESHOLD_EXCEEDS_VOTERS: felt252 = 'Threshold exceeds total voters';

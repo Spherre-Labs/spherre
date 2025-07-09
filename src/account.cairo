@@ -20,8 +20,10 @@ pub mod SpherreAccount {
             member_add_transaction::MemberAddTransaction,
             member_remove_transaction::MemberRemoveTransaction, nft_transaction::NFTTransaction,
             token_transaction::TokenTransaction,
+            smart_token_lock_transaction::SmartTokenLockTransactionComponent,
         },
-        {errors::Errors}, types::AccountDetails, interfaces::iaccount::IAccount,
+        {errors::Errors}, types::{AccountDetails, TransactionStatus, TransactionType},
+        interfaces::iaccount::IAccount,
     };
     use starknet::{
         {ContractAddress, get_caller_address, contract_address_const, ClassHash},
@@ -50,6 +52,11 @@ pub mod SpherreAccount {
         path: MemberPermissionTransaction,
         storage: member_permission_transaction,
         event: MemberPermissionTransactionEvent,
+    );
+    component!(
+        path: SmartTokenLockTransactionComponent,
+        storage: smart_token_lock_transaction,
+        event: SmartTokenLockTransactionEvent
     );
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
@@ -121,6 +128,11 @@ pub mod SpherreAccount {
     impl MemberPermissionTransactionImpl =
         MemberPermissionTransaction::MemberPermissionTransaction<ContractState>;
 
+    // SmartTokenLockTransaction component implementation
+    #[abi(embed_v0)]
+    impl SmartTokenLockTransactionImpl =
+        SmartTokenLockTransactionComponent::SmartTokenLockTransactionComponent<ContractState>;
+
     // NFTTransaction component implementation
     #[abi(embed_v0)]
     impl NFTTransactionImpl = NFTTransaction::NFTTransaction<ContractState>;
@@ -150,6 +162,8 @@ pub mod SpherreAccount {
         member_remove_transaction: MemberRemoveTransaction::Storage,
         #[substorage(v0)]
         member_permission_transaction: MemberPermissionTransaction::Storage,
+        #[substorage(v0)]
+        smart_token_lock_transaction: SmartTokenLockTransactionComponent::Storage,
         #[substorage(v0)]
         nft_transaction: NFTTransaction::Storage,
         #[substorage(v0)]
@@ -183,6 +197,8 @@ pub mod SpherreAccount {
         MemberRemoveTransactionEvent: MemberRemoveTransaction::Event,
         #[flat]
         MemberPermissionTransactionEvent: MemberPermissionTransaction::Event,
+        #[flat]
+        SmartTokenLockTransactionEvent: SmartTokenLockTransactionComponent::Event,
         #[flat]
         NFTTransactionEvent: NFTTransaction::Event,
         #[flat]
@@ -267,6 +283,56 @@ pub mod SpherreAccount {
             let deployer = self.deployer.read();
             assert(caller == deployer, Errors::ERR_NOT_DEPLOYER);
             self.pausable.unpause();
+        }
+        fn execute_transaction(ref self: ContractState, transaction_id: u256,) {
+            let transaction = self.account_data.get_transaction(transaction_id);
+            // Check if the transaction is executable
+            assert(
+                transaction.tx_status == TransactionStatus::APPROVED,
+                Errors::ERR_TRANSACTION_NOT_EXECUTABLE
+            );
+
+            match transaction.tx_type {
+                // Handle ChangeThresholdTransaction
+                TransactionType::THRESHOLD_CHANGE => {
+                    self
+                        .change_threshold_transaction
+                        .execute_threshold_change_transaction(transaction_id);
+                },
+                // Handle MemberAddTransaction
+                TransactionType::MEMBER_ADD => {
+                    self.member_add_transaction.execute_member_add_transaction(transaction_id);
+                },
+                // Handle MemberRemoveTransaction
+                TransactionType::MEMBER_REMOVE => {
+                    self
+                        .member_remove_transaction
+                        .execute_remove_member_transaction(transaction_id);
+                },
+                // Handle MemberPermissionTransaction
+                TransactionType::MEMBER_PERMISSION_EDIT => {
+                    self
+                        .member_permission_transaction
+                        .execute_edit_permission_transaction(transaction_id);
+                },
+                // Handle NFTTransaction
+                TransactionType::NFT_SEND => {
+                    self.nft_transaction.execute_nft_transaction(transaction_id);
+                },
+                // Handle TokenTransaction
+                TransactionType::TOKEN_SEND => {
+                    self.token_transaction.execute_token_transaction(transaction_id);
+                },
+                TransactionType::SMART_TOKEN_LOCK => {
+                    self
+                        .smart_token_lock_transaction
+                        .execute_smart_token_lock_transaction(transaction_id);
+                },
+                _ => {
+                    // If the transaction type is not recognized, raise an error
+                    panic(array![Errors::ERR_INVALID_TRANSACTION_TYPE]);
+                }
+            }
         }
     }
 

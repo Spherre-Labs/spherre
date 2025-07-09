@@ -39,4 +39,12 @@ pub trait IAccount<TContractState> {
     /// # Panics
     /// This function raises an error if the caller is not the deployer.
     fn unpause(ref self: TContractState);
+    /// Executes a transaction by its ID
+    ///
+    /// # Parameters
+    /// * `transaction_id` - The ID of the transaction to execute.
+    /// # Panics
+    /// This function raises an error if the transaction is not executable.
+    ///
+    fn execute_transaction(ref self: TContractState, transaction_id: u256,);
 }
