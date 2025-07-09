@@ -174,4 +174,13 @@ pub trait ISpherre<TContractState> {
     /// * `amount` - The amount of fee to add (record)
     ///
     fn update_fee_collection_statistics(ref self: TContractState, fee_type: FeesType, amount: u256);
+    /// Get the fee collected from an account operations
+    ///
+    /// # Parameters
+    /// * `fee_type` - The type of fee
+    /// * `account` - The account
+    ///
+    fn get_fees_collected(
+        self: @TContractState, fee_type: FeesType, account: ContractAddress
+    ) -> u256;
 }

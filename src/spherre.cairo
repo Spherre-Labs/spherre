@@ -357,6 +357,15 @@ pub mod Spherre {
             // Emit fee collected statistics event
             self.emit(FeeCollected { fee_type, fee_token, amount, account });
         }
+        fn get_fees_collected(
+            self: @ContractState, fee_type: FeesType, account: ContractAddress
+        ) -> u256 {
+            self.assert_only_deployed_account();
+            // Get the current fee token
+            let fee_token = self.get_fee_token();
+            // Get the statistics map object and read its value
+            self.fee_collection_amounts.entry((fee_type, fee_token, account)).read()
+        }
     }
 
     #[generate_trait]
