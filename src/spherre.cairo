@@ -68,6 +68,10 @@ pub mod Spherre {
         fee_amounts: Map<FeesType, u256>,
         fee_token_address: ContractAddress,
         fee_enabled: Map<FeesType, bool>,
+        // Fee collection statistics
+        // (fees_type, fees_token, account) -> amount collected
+        fee_collection_amounts: 
+            Map<(FeesType, ContractAddress, ContractAddress),u256>,
     }
 
     #[event]
@@ -329,6 +333,8 @@ pub mod Spherre {
         fn is_fee_enabled(self: @ContractState, fee_type: FeesType) -> bool {
             self.fee_enabled.entry(fee_type).read()
         }
+        /// Update fee collection statistics
+        
     }
 
     #[generate_trait]
