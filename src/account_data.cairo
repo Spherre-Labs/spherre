@@ -813,15 +813,18 @@ pub mod AccountData {
             }
 
             // Collect the fees from the account
-            // TODO: (delibrate whether to collect from caller or account)
-            // Check if account balance is enough to pay fee
+            // TODO: change fee collection from account to caller
+            // Check if the caller balance is enough to pay fee
             let erc20_dispatcher = IERC20Dispatcher { contract_address: fee_token };
+            let caller = get_caller_address();
+            assert(erc20_dispatcher.balance_of(caller) >= fee, Errors::ERR_INSUFFICIENT_FEE);
+            // Check that the allowance is enough for the fee
             assert(
-                erc20_dispatcher.balance_of(account_address) >= fee, Errors::ERR_INSUFFICIENT_FEE
+                erc20_dispatcher.allowance(caller, account_address) >= fee,
+                Errors::ERR_INSUFFICIENT_ALLOWANCE
             );
-
             // Transfer Fee
-            erc20_dispatcher.transfer(deployer, fee);
+            erc20_dispatcher.transfer_from(account_address, deployer, fee);
             // Update the collection statistics
             deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
         }
