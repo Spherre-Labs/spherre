@@ -277,24 +277,29 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
+            // Validate caller
+            let (member, _caller) = self.validate_member(get_caller_address());
             // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
+            self.assert_caller_can_vote(tx_id, member);
 
             // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
+            self.has_voted.entry((tx_id, member)).write(true);
 
             // get the transaction
             let transaction = self.transactions.entry(tx_id);
             // add the caller to the list of approvers
-            transaction.approved.append().write(caller);
+            transaction.approved.append().write(member);
 
             let approvers_length = transaction.approved.len();
             let (threshold, _) = self.get_threshold();
             let timestamp = get_block_timestamp();
 
             // Increment approver's count
-            self._increment_approved_count(caller);
+            self._increment_approved_count(member);
+
+            //TODO: Create a logic for when caller is the same as the member
+            // Maybe emit and event that voting action was done by
+            // the will address and not the member
 
             // check if approval threshold has been reached and updated
             // the transaction status if that is the case.
@@ -306,7 +311,7 @@ pub mod AccountData {
             self.collect_fees(FeesType::VOTING_FEE);
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
                 );
         }
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
@@ -314,17 +319,19 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
+            // Validate caller
+            let (member, _caller) = self.validate_member(get_caller_address());
+
             // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
+            self.assert_caller_can_vote(tx_id, member);
 
             // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
+            self.has_voted.entry((tx_id, member)).write(true);
 
             // get the transaction
             let transaction = self.transactions.entry(tx_id);
             // add the caller to the list of approvers
-            transaction.rejected.append().write(caller);
+            transaction.rejected.append().write(member);
 
             let rejectors_length = transaction.rejected.len();
             let approved_length = transaction.approved.len();
@@ -336,7 +343,11 @@ pub mod AccountData {
             let timestamp = get_block_timestamp();
 
             // Increment rejector's count
-            self._increment_rejected_count(caller);
+            self._increment_rejected_count(member);
+
+            //TODO: Create a logic for when caller is the same as the member
+            // Maybe emit and event that voting action was done by
+            // the will address and not the member
 
             // check if approval threshold has been reached and update
             // the transaction status if that is the case.
@@ -352,7 +363,7 @@ pub mod AccountData {
 
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
                 );
         }
         fn get_member_full_details(
@@ -747,8 +758,7 @@ pub mod AccountData {
             self.assert_valid_transaction(transaction_id);
             // check if transaction is votable
             self.assert_is_votable_transaction(transaction_id);
-            // check if the caller is a member
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+
             // check if the caller has the voter permission
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             assert(
