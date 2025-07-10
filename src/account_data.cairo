@@ -828,5 +828,34 @@ pub mod AccountData {
             // Update the collection statistics
             deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
         }
+        fn validate_member(
+            self: @ComponentState<TContractState>, caller: ContractAddress
+        ) -> (ContractAddress, ContractAddress) {
+            // Validate that the caller is a member or is a smart will address of a member
+            if self.is_member(caller) {
+                // Caller is a member
+                let will_address = self.get_member_will_address(caller);
+                if will_address.is_zero() {
+                    // No smart will, return (caller, caller)
+                    (caller, caller)
+                } else {
+                    // Check if the will duration has elapsed
+                    let remaining_time = self.get_remaining_will_time(caller);
+                    assert(remaining_time > 0, Errors::AUTHORITY_DELEGATED_TO_WILL);
+                    (caller, caller)
+                }
+            } else {
+                // Caller is not a member
+                // Check if the caller is a smart will address of a member
+                let member = self.smart_will_to_member.entry(caller).read();
+                assert(member.is_non_zero(), Errors::ERR_NOT_MEMBER);
+                // Check that the member is a valid member
+                assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+                // Check if the will duration has elapsed
+                let remaining_time = self.get_remaining_will_time(member);
+                assert(remaining_time == 0, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
+                (member, caller)
+            }
+        }
     }
 }
