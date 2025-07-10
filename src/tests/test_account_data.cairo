@@ -10,9 +10,9 @@ use snforge_std::{
 use spherre::tests::mocks::mock_account_data::{
     MockContract, MockContract::PrivateTrait, IMockContractDispatcher, IMockContractDispatcherTrait
 };
-use spherre::types::{TransactionType, TransactionStatus, MemberDetails};
+use spherre::types::{TransactionType, TransactionStatus};
 use starknet::ContractAddress;
-use starknet::{contract_address_const, get_block_timestamp};
+use starknet::{contract_address_const};
 
 // Helper function to get addresses
 fn deployer() -> ContractAddress {
@@ -453,6 +453,7 @@ fn test_cannot_approve_unknown_transaction() {
     let caller = member();
     let tx_id: u256 = 1;
     start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
     // Approve Transaction (Should Panic)
     mock_contract.approve_transaction_pub(tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -465,6 +466,7 @@ fn test_cannot_reject_unknown_transaction() {
     let caller = member();
     let tx_id: u256 = 1;
     start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
     // Approve Transaction (Should Panic)
     mock_contract.reject_transaction_pub(tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -891,7 +893,7 @@ fn test_member_details_tracking_proposed() {
     stop_cheat_caller_address(mock_contract.contract_address);
     // Create Transaction
     start_cheat_caller_address(mock_contract.contract_address, caller);
-    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     stop_cheat_caller_address(mock_contract.contract_address);
     // Get Member Details
     let member_details = mock_contract.get_member_full_details_pub(caller);
@@ -987,7 +989,7 @@ fn test_member_details_tracking_non_member() {
 
     // Test non-member access
     let non_member = contract_address_const::<999>();
-    let member_details = mock_contract.get_member_full_details_pub(non_member);
+    mock_contract.get_member_full_details_pub(non_member);
 }
 
 #[test]
@@ -1097,7 +1099,7 @@ fn test_smart_will_can_update_will_non_member() {
     let non_member = new_member();
 
     start_cheat_caller_address(mock_contract.contract_address, non_member);
-    let can_update_will = mock_contract.can_update_will_pub(non_member);
+    mock_contract.can_update_will_pub(non_member);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -1112,7 +1114,6 @@ fn test_smart_will_can_update_will_member() {
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.add_member_pub(member);
-    let will_address = contract_address_const::<2>();
 
     mock_contract.update_smart_will_pub(member);
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -1160,3 +1161,4 @@ fn test_smart_will_can_update_will_elapsed() {
     stop_cheat_block_timestamp(mock_contract.contract_address);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
+
