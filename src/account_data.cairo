@@ -277,7 +277,7 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            // Validate caller
+            // Validate member (with smart will support)
             let (member, _caller) = self.validate_member(get_caller_address());
             // check if caller can vote
             self.assert_caller_can_vote(tx_id, member);
@@ -319,7 +319,7 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            // Validate caller
+            // Validate member (with smart will support)
             let (member, _caller) = self.validate_member(get_caller_address());
 
             // check if caller can vote
@@ -605,13 +605,12 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
-            // check if the caller is a member
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // Validate member (with smart will support)
+            let (member, _caller) = self.validate_member(get_caller_address());
             // check if the caller has the proposer permission
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
-                permission_control_comp.has_permission(caller, Permissions::PROPOSER),
+                permission_control_comp.has_permission(member, Permissions::PROPOSER),
                 Errors::ERR_NOT_PROPOSER
             );
 
@@ -623,14 +622,14 @@ pub mod AccountData {
             transaction.id.write(transaction_id);
             transaction.tx_type.write(tx_type);
             transaction.tx_status.write(TransactionStatus::INITIATED);
-            transaction.proposer.write(caller);
+            transaction.proposer.write(member);
             transaction.date_created.write(get_block_timestamp());
 
             // update the transaction count
             self.tx_count.write(transaction_id);
 
             // Increment proposer's count
-            self._increment_proposed_count(caller);
+            self._increment_proposed_count(member);
 
             // Collect Fee
             self.collect_fees(FeesType::PROPOSAL_FEE);
@@ -664,7 +663,7 @@ pub mod AccountData {
                 transaction.tx_status.read() == TransactionStatus::APPROVED,
                 Errors::ERR_TRANSACTION_NOT_EXECUTABLE
             );
-            // Validate member
+            // Validate member (with smart will support)
             let (member, _caller) = self.validate_member(caller);
 
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
