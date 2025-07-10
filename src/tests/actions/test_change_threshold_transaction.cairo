@@ -1,16 +1,14 @@
 use core::array::ArrayTrait;
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait, EventSpy, spy_events, EventSpyAssertionsTrait,
+    DeclareResultTrait, spy_events, EventSpyAssertionsTrait,
 };
 use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
-use spherre::interfaces::ichange_threshold_tx::{
-    IChangeThresholdTransactionDispatcher, IChangeThresholdTransactionDispatcherTrait
-};
+
 use spherre::tests::mocks::mock_account_data::{
     MockContract, IMockContractDispatcher, IMockContractDispatcherTrait,
 };
-use spherre::types::{TransactionType, Transaction, ThresholdChangeData, TransactionStatus};
+use spherre::types::{TransactionType, TransactionStatus};
 use starknet::{ContractAddress, contract_address_const};
 
 // test utility functions
@@ -236,7 +234,6 @@ fn test_get_threshold_change_transaction_fail_if_invalid_type() {
 #[should_panic]
 fn test_get_threshold_change_transaction_fail_if_non_existent() {
     let mock_contract = deploy_mock_contract();
-    let caller = proposer();
 
     // Attempt to retrieve a non-existent transaction
     mock_contract.get_threshold_change_transaction_pub(999);

@@ -530,7 +530,7 @@ fn test_execute_transaction_successful() {
     mock_contract.approve_transaction_pub(tx_id, caller);
 
     // Execute Transaction
-    mock_contract.execute_transaction_pub(tx_id, caller);
+    mock_contract.execute_transaction_pub(tx_id);
 
     stop_cheat_block_timestamp(mock_contract.contract_address);
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -710,7 +710,7 @@ fn test_non_member_cannot_execute_transaction() {
 
     // Try to execute as non-member (should panic)
     start_cheat_caller_address(mock_contract.contract_address, non_member);
-    mock_contract.execute_transaction_pub(tx_id, non_member);
+    mock_contract.execute_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -739,7 +739,7 @@ fn test_non_executor_cannot_execute_transaction() {
     mock_contract.approve_transaction_pub(tx_id, voter);
 
     // Try to execute as non-executor (should panic)
-    mock_contract.execute_transaction_pub(tx_id, voter);
+    mock_contract.execute_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -759,7 +759,7 @@ fn test_cannot_execute_non_approved_transaction() {
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
     // Try to execute non-approved transaction (should panic)
-    mock_contract.execute_transaction_pub(tx_id, caller);
+    mock_contract.execute_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -776,7 +776,7 @@ fn test_cannot_execute_nonexistent_transaction() {
 
     // Try to execute non-existent transaction (should panic)
     let non_existent_tx_id: u256 = 999;
-    mock_contract.execute_transaction_pub(non_existent_tx_id, caller);
+    mock_contract.execute_transaction_pub(non_existent_tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
 
@@ -968,7 +968,7 @@ fn test_member_details_tracking_executed() {
     let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     mock_contract.set_threshold_pub(1);
     mock_contract.approve_transaction_pub(tx_id, caller_executed);
-    mock_contract.execute_transaction_pub(tx_id, caller_executed);
+    mock_contract.execute_transaction_pub(tx_id);
 
     stop_cheat_block_timestamp(mock_contract.contract_address);
     stop_cheat_caller_address(mock_contract.contract_address);

@@ -649,9 +649,7 @@ pub mod AccountData {
         /// It raises an error if the caller is not a member of the account.
         /// It raises an error if the caller does not have the executor permission.
         /// It raises an error if the contract is paused.
-        fn execute_transaction(
-            ref self: ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
-        ) {
+        fn execute_transaction(ref self: ComponentState<TContractState>, transaction_id: u256,) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
@@ -664,7 +662,7 @@ pub mod AccountData {
                 Errors::ERR_TRANSACTION_NOT_EXECUTABLE
             );
             // Validate member (with smart will support)
-            let (member, _caller) = self.validate_member(caller);
+            let (member, _caller) = self.validate_member(get_caller_address());
 
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(

@@ -31,7 +31,7 @@ pub trait IMockContract<TContractState> {
     ) -> u256;
     fn execute_token_transaction_pub(ref self: TContractState, id: u256);
     fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
-    fn execute_transaction_pub(ref self: TContractState, tx_id: u256, caller: ContractAddress);
+    fn execute_transaction_pub(ref self: TContractState, tx_id: u256);
     fn propose_smart_token_lock_transaction_pub(
         ref self: TContractState, token: ContractAddress, amount: u256, duration: u64
     ) -> u256;
@@ -330,8 +330,8 @@ pub mod MockContract {
         ) -> u256 {
             self.smart_token_lock_transaction.execute_smart_token_lock_transaction(transaction_id)
         }
-        fn execute_transaction_pub(ref self: ContractState, tx_id: u256, caller: ContractAddress) {
-            self.account_data.execute_transaction(tx_id, caller)
+        fn execute_transaction_pub(ref self: ContractState, tx_id: u256) {
+            self.account_data.execute_transaction(tx_id)
         }
 
         fn assign_executor_permission_pub(ref self: ContractState, member: ContractAddress) {
