@@ -664,18 +664,22 @@ pub mod AccountData {
                 transaction.tx_status.read() == TransactionStatus::APPROVED,
                 Errors::ERR_TRANSACTION_NOT_EXECUTABLE
             );
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // Validate member
+            let (member, _caller) = self.validate_member(caller);
 
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
-                permission_control_comp.has_permission(caller, Permissions::EXECUTOR),
+                permission_control_comp.has_permission(member, Permissions::EXECUTOR),
                 Errors::ERR_NOT_EXECUTOR
             );
 
             transaction.tx_status.write(TransactionStatus::EXECUTED);
             let timestamp = get_block_timestamp();
             transaction.date_executed.write(timestamp);
-            transaction.executor.write(caller);
+            transaction.executor.write(member);
+
+            // Increment executor's count
+            self._increment_executed_count(member);
 
             // Collect Fee
             self.collect_fees(FeesType::EXECUTION_FEE);
@@ -683,12 +687,9 @@ pub mod AccountData {
             self
                 .emit(
                     TransactionExecuted {
-                        transaction_id: transaction_id, executor: caller, date_executed: timestamp,
+                        transaction_id: transaction_id, executor: member, date_executed: timestamp,
                     }
                 );
-
-            // Increment executor's count
-            self._increment_executed_count(caller);
         }
         /// Updates the status of a transaction
         /// This function updates the status of a transaction to the given status.
