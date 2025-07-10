@@ -21,7 +21,6 @@ pub mod TokenTransaction {
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
 
-    use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
     use spherre::types::{TokenTransactionData, Transaction};
@@ -30,7 +29,7 @@ pub mod TokenTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_contract_address, get_caller_address};
+    use starknet::{ContractAddress, get_contract_address};
 
     #[storage]
     pub struct Storage {
@@ -136,7 +135,6 @@ pub mod TokenTransaction {
         fn execute_token_transaction(ref self: ComponentState<TContractState>, id: u256) {
             self.assert_is_valid_token_transaction(id);
             let token_transaction = self.get_token_transaction(id);
-            let caller = get_caller_address();
             // check if balance of the token is greater than amount using TreasuryHandler
             let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
@@ -147,7 +145,7 @@ pub mod TokenTransaction {
             );
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             // execute the transaction in account data. all check is done there
-            account_data_comp.execute_transaction(id, caller);
+            account_data_comp.execute_transaction(id);
             // send the token to the recipient using TreasuryHandler
             let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
             treasury_handler_mut

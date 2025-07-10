@@ -25,7 +25,7 @@ pub mod MemberAddTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress};
 
     #[storage]
     pub struct Storage {
@@ -125,7 +125,6 @@ pub mod MemberAddTransaction {
         fn execute_member_add_transaction(
             ref self: ComponentState<TContractState>, transaction_id: u256
         ) {
-            let caller = get_caller_address();
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
             let member_add_data = self.get_member_add_transaction(transaction_id);
@@ -138,7 +137,7 @@ pub mod MemberAddTransaction {
             );
             // Execute the transaction (error occurs if threshold is not met or caller is not an
             // executor)
-            account_data_comp.execute_transaction(transaction_id, caller);
+            account_data_comp.execute_transaction(transaction_id);
 
             // Convert mask to permissions
             let permissions = permission_control_comp

@@ -24,7 +24,7 @@ pub mod MemberRemoveTransaction {
         StoragePointerReadAccess, StoragePointerWriteAccess, Map, StoragePathEntry, Vec, VecTrait,
         MutableVecTrait
     };
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress};
 
     #[storage]
     pub struct Storage {
@@ -137,8 +137,7 @@ pub mod MemberRemoveTransaction {
             // Execute the transaction (error is thrown if caller is not an executor
             // or if transaction is already executed or if transaction is not approved or if
             // contract is paused)
-            let caller = get_caller_address();
-            account_data_comp.execute_transaction(transaction_id, caller);
+            account_data_comp.execute_transaction(transaction_id);
 
             // Remove the member from the account data component
             account_data_comp.remove_member(member_removal_data.member_address);

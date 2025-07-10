@@ -26,7 +26,7 @@ pub mod MemberPermissionTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress};
 
     #[storage]
     pub struct Storage {
@@ -149,7 +149,7 @@ pub mod MemberPermissionTransaction {
             assert(account_data_comp.is_member(member), Errors::MEMBER_NOT_FOUND);
 
             // Execute the transaction in account data
-            account_data_comp.execute_transaction(transaction_id, get_caller_address());
+            account_data_comp.execute_transaction(transaction_id);
 
             // Get the permission control component
             let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
