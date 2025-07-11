@@ -14,15 +14,13 @@ pub mod SmartTokenLockTransactionComponent {
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction;
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
-    use spherre::types::{
-        SmartTokenLockTransaction, TransactionStatus, TransactionType, Transaction
-    };
+    use spherre::types::{SmartTokenLockTransaction, TransactionType, Transaction};
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{get_block_timestamp, get_caller_address,};
+    use starknet::{get_block_timestamp};
 
 
     #[storage]
@@ -55,7 +53,6 @@ pub mod SmartTokenLockTransactionComponent {
         token: ContractAddress,
         amount: u256,
         duration: u64,
-        executor: ContractAddress,
         date_executed: u64,
     }
 
@@ -132,8 +129,6 @@ pub mod SmartTokenLockTransactionComponent {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
-
             let smart_lock_tx = self.get_smart_token_lock_transaction(transaction_id);
 
             let treasury_handler_comp = get_dep_component!(@self, TreasuryHandler);
@@ -141,7 +136,7 @@ pub mod SmartTokenLockTransactionComponent {
             assert(current_balance >= smart_lock_tx.amount, Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT);
 
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
-            account_data_comp.execute_transaction(transaction_id, caller);
+            account_data_comp.execute_transaction(transaction_id);
 
             let mut treasury_handler_comp_mut = get_dep_component_mut!(ref self, TreasuryHandler);
             let lock_id = treasury_handler_comp_mut
@@ -157,7 +152,6 @@ pub mod SmartTokenLockTransactionComponent {
                             token: smart_lock_tx.token,
                             amount: smart_lock_tx.amount,
                             duration: smart_lock_tx.duration,
-                            executor: caller,
                             date_executed: get_block_timestamp()
                         }
                     )

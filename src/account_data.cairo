@@ -277,24 +277,29 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
+            // Validate member (with smart will support)
+            let (member, _caller) = self.validate_member(get_caller_address());
             // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
+            self.assert_caller_can_vote(tx_id, member);
 
             // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
+            self.has_voted.entry((tx_id, member)).write(true);
 
             // get the transaction
             let transaction = self.transactions.entry(tx_id);
             // add the caller to the list of approvers
-            transaction.approved.append().write(caller);
+            transaction.approved.append().write(member);
 
             let approvers_length = transaction.approved.len();
             let (threshold, _) = self.get_threshold();
             let timestamp = get_block_timestamp();
 
             // Increment approver's count
-            self._increment_approved_count(caller);
+            self._increment_approved_count(member);
+
+            //TODO: Create a logic for when caller is the same as the member
+            // Maybe emit and event that voting action was done by
+            // the will address and not the member
 
             // check if approval threshold has been reached and updated
             // the transaction status if that is the case.
@@ -306,7 +311,7 @@ pub mod AccountData {
             self.collect_fees(FeesType::VOTING_FEE);
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
                 );
         }
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
@@ -314,17 +319,19 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
+            // Validate member (with smart will support)
+            let (member, _caller) = self.validate_member(get_caller_address());
+
             // check if caller can vote
-            self.assert_caller_can_vote(tx_id, caller);
+            self.assert_caller_can_vote(tx_id, member);
 
             // update has_voted map to prevent double voting
-            self.has_voted.entry((tx_id, caller)).write(true);
+            self.has_voted.entry((tx_id, member)).write(true);
 
             // get the transaction
             let transaction = self.transactions.entry(tx_id);
             // add the caller to the list of approvers
-            transaction.rejected.append().write(caller);
+            transaction.rejected.append().write(member);
 
             let rejectors_length = transaction.rejected.len();
             let approved_length = transaction.approved.len();
@@ -336,7 +343,11 @@ pub mod AccountData {
             let timestamp = get_block_timestamp();
 
             // Increment rejector's count
-            self._increment_rejected_count(caller);
+            self._increment_rejected_count(member);
+
+            //TODO: Create a logic for when caller is the same as the member
+            // Maybe emit and event that voting action was done by
+            // the will address and not the member
 
             // check if approval threshold has been reached and update
             // the transaction status if that is the case.
@@ -352,7 +363,7 @@ pub mod AccountData {
 
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: caller, date_voted: timestamp }
+                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
                 );
         }
         fn get_member_full_details(
@@ -391,13 +402,26 @@ pub mod AccountData {
             self.validate_will_conditions(caller, will_address);
 
             // Update storage maps
+            // Get the current will address if any
+            let current_will_address = self.member_to_smart_will.entry(caller).read();
             let current_time = get_block_timestamp();
+            // Map the current will address to zero if it exists
+            if current_will_address.is_non_zero() {
+                // Remove the current will address from the smart_will_to_member map
+                self.smart_will_to_member.entry(current_will_address).write(Zero::zero());
+            }
             self.smart_will_to_member.entry(will_address).write(caller);
             self.member_to_smart_will.entry(caller).write(will_address);
-            self.member_will_creation_time.entry(caller).write(current_time);
 
-            // Set default duration if first-time setup
-            self.member_to_will_duration.entry(caller).write(current_time + DEFAULT_WILL_DURATION);
+            // If current will address is zero, it means this is the first time
+            if current_will_address.is_zero() {
+                self.member_will_creation_time.entry(caller).write(current_time);
+                // Set default duration if first-time setup
+                self
+                    .member_to_will_duration
+                    .entry(caller)
+                    .write(current_time + DEFAULT_WILL_DURATION);
+            }
 
             // Emit event
             self
@@ -581,13 +605,12 @@ pub mod AccountData {
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
 
-            let caller = get_caller_address();
-            // check if the caller is a member
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // Validate member (with smart will support)
+            let (member, _caller) = self.validate_member(get_caller_address());
             // check if the caller has the proposer permission
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
-                permission_control_comp.has_permission(caller, Permissions::PROPOSER),
+                permission_control_comp.has_permission(member, Permissions::PROPOSER),
                 Errors::ERR_NOT_PROPOSER
             );
 
@@ -599,14 +622,14 @@ pub mod AccountData {
             transaction.id.write(transaction_id);
             transaction.tx_type.write(tx_type);
             transaction.tx_status.write(TransactionStatus::INITIATED);
-            transaction.proposer.write(caller);
+            transaction.proposer.write(member);
             transaction.date_created.write(get_block_timestamp());
 
             // update the transaction count
             self.tx_count.write(transaction_id);
 
             // Increment proposer's count
-            self._increment_proposed_count(caller);
+            self._increment_proposed_count(member);
 
             // Collect Fee
             self.collect_fees(FeesType::PROPOSAL_FEE);
@@ -626,9 +649,7 @@ pub mod AccountData {
         /// It raises an error if the caller is not a member of the account.
         /// It raises an error if the caller does not have the executor permission.
         /// It raises an error if the contract is paused.
-        fn execute_transaction(
-            ref self: ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
-        ) {
+        fn execute_transaction(ref self: ComponentState<TContractState>, transaction_id: u256,) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
@@ -640,18 +661,22 @@ pub mod AccountData {
                 transaction.tx_status.read() == TransactionStatus::APPROVED,
                 Errors::ERR_TRANSACTION_NOT_EXECUTABLE
             );
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+            // Validate member (with smart will support)
+            let (member, _caller) = self.validate_member(get_caller_address());
 
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
-                permission_control_comp.has_permission(caller, Permissions::EXECUTOR),
+                permission_control_comp.has_permission(member, Permissions::EXECUTOR),
                 Errors::ERR_NOT_EXECUTOR
             );
 
             transaction.tx_status.write(TransactionStatus::EXECUTED);
             let timestamp = get_block_timestamp();
             transaction.date_executed.write(timestamp);
-            transaction.executor.write(caller);
+            transaction.executor.write(member);
+
+            // Increment executor's count
+            self._increment_executed_count(member);
 
             // Collect Fee
             self.collect_fees(FeesType::EXECUTION_FEE);
@@ -659,12 +684,9 @@ pub mod AccountData {
             self
                 .emit(
                     TransactionExecuted {
-                        transaction_id: transaction_id, executor: caller, date_executed: timestamp,
+                        transaction_id: transaction_id, executor: member, date_executed: timestamp,
                     }
                 );
-
-            // Increment executor's count
-            self._increment_executed_count(caller);
         }
         /// Updates the status of a transaction
         /// This function updates the status of a transaction to the given status.
@@ -734,8 +756,7 @@ pub mod AccountData {
             self.assert_valid_transaction(transaction_id);
             // check if transaction is votable
             self.assert_is_votable_transaction(transaction_id);
-            // check if the caller is a member
-            assert(self.is_member(caller), Errors::ERR_NOT_MEMBER);
+
             // check if the caller has the voter permission
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             assert(
@@ -785,10 +806,7 @@ pub mod AccountData {
 
             // Check if will_address is already assigned to another member
             let assigned_member = self.smart_will_to_member.entry(will_address).read();
-            assert(
-                assigned_member.is_zero() || assigned_member == member,
-                Errors::ERR_WILL_ADDRESS_ALREADY_ASSIGNED
-            );
+            assert(assigned_member.is_zero(), Errors::ERR_WILL_ADDRESS_ALREADY_ASSIGNED);
 
             // Check if member can update their will
             let creation_time = self.member_will_creation_time.entry(member).read();
@@ -827,6 +845,35 @@ pub mod AccountData {
             erc20_dispatcher.transfer_from(account_address, deployer, fee);
             // Update the collection statistics
             deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
+        }
+        fn validate_member(
+            self: @ComponentState<TContractState>, caller: ContractAddress
+        ) -> (ContractAddress, ContractAddress) {
+            // Validate that the caller is a member or is a smart will address of a member
+            if self.is_member(caller) {
+                // Caller is a member
+                let will_address = self.get_member_will_address(caller);
+                if will_address.is_zero() {
+                    // No smart will, return (caller, caller)
+                    (caller, caller)
+                } else {
+                    // Check if the will duration has elapsed
+                    let remaining_time = self.get_remaining_will_time(caller);
+                    assert(remaining_time > 0, Errors::AUTHORITY_DELEGATED_TO_WILL);
+                    (caller, caller)
+                }
+            } else {
+                // Caller is not a member
+                // Check if the caller is a smart will address of a member
+                let member = self.smart_will_to_member.entry(caller).read();
+                assert(member.is_non_zero(), Errors::ERR_NOT_MEMBER);
+                // Check that the member is a valid member
+                assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+                // Check if the will duration has elapsed
+                let remaining_time = self.get_remaining_will_time(member);
+                assert(remaining_time == 0, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
+                (member, caller)
+            }
         }
     }
 }

@@ -20,7 +20,6 @@ pub mod NFTTransaction {
     use spherre::components::treasury_handler;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
-    use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use spherre::interfaces::inft_tx::INFTTransaction;
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
     use spherre::types::{NFTTransactionData, Transaction};
@@ -29,7 +28,7 @@ pub mod NFTTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{ContractAddress, get_contract_address, get_caller_address};
+    use starknet::{ContractAddress, get_contract_address};
 
     #[storage]
     pub struct Storage {
@@ -129,9 +128,7 @@ pub mod NFTTransaction {
         fn execute_nft_transaction(ref self: ComponentState<TContractState>, id: u256) {
             // Get the NFT transaction data (validation carried out)
             let nft_tx_data = self.get_nft_transaction(id);
-            let caller = get_caller_address();
 
-            let account_address = get_contract_address();
             // Use TreasuryHandler for NFT ownership check
             let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
@@ -140,7 +137,7 @@ pub mod NFTTransaction {
             );
             // Execute the transaction
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
-            account_data_comp.execute_transaction(id, caller);
+            account_data_comp.execute_transaction(id);
             // Use TreasuryHandler for NFT transfer
             let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
             treasury_handler_mut

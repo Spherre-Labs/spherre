@@ -22,7 +22,6 @@ pub mod ChangeThresholdTransaction {
         Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
         StoragePointerWriteAccess
     };
-    use starknet::{get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -139,8 +138,7 @@ pub mod ChangeThresholdTransaction {
             );
 
             // Execute the transaction (All validation will be done)
-            let caller = get_caller_address();
-            account_data_comp.execute_transaction(id, caller);
+            account_data_comp.execute_transaction(id);
 
             // Update threshold in AccountData
             account_data_comp.set_threshold(threshold_change_data.new_threshold);
