@@ -1203,3 +1203,43 @@ fn test_smart_will_full_functionality_successful() {
     assert(transaction.approved.len() == 1, 'Should have one approval');
     assert(*transaction.approved.at(0) == caller, 'Approver should be member');
 }
+
+#[test]
+#[should_panic(expected: 'Will duration not elapsed')]
+fn test_smart_will_cannot_perform_transaction_before_duration_elapses() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    // Add member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Update will wallet
+    mock_contract.update_smart_will_pub(will_address);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Propose transaction with member
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Checks
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+    );
+    assert(transaction.proposer == caller, 'Proposer should be caller');
+
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Attempt to approve transaction before will duration elapses (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, will_address);
+    mock_contract.approve_transaction_pub(tx_id, will_address);
+
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
