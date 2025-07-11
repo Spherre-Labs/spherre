@@ -1173,6 +1173,8 @@ fn test_smart_will_full_functionality_successful() {
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.set_threshold_pub(1);
+    // Similate block timestamp
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
     // Update will wallet
     mock_contract.update_smart_will_pub(will_address);
     // Assign Proposer Role to create transaction
@@ -1215,7 +1217,8 @@ fn test_smart_will_cannot_perform_transaction_before_duration_elapses() {
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.set_threshold_pub(1);
-
+    // Similate block timestamp
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
     // Update will wallet
     mock_contract.update_smart_will_pub(will_address);
 
@@ -1240,6 +1243,43 @@ fn test_smart_will_cannot_perform_transaction_before_duration_elapses() {
     // Attempt to approve transaction before will duration elapses (should panic)
     start_cheat_caller_address(mock_contract.contract_address, will_address);
     mock_contract.approve_transaction_pub(tx_id, will_address);
+
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+
+#[test]
+#[should_panic(expected: 'Authority delegated to will')]
+fn test_member_blocked_due_to_authority_delegated_to_smart_will() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    // Add member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Similate block timestamp
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+
+    // Update will wallet
+    mock_contract.update_smart_will_pub(will_address);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Attempt to create transaction (should panic)
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Simulate time passing to allow will duration to elapse
+    start_cheat_block_timestamp(mock_contract.contract_address, DEFAULT_WILL_DURATION + 100000);
+
+    // Attempt to approve transaction (should panic )
+    mock_contract.approve_transaction_pub(tx_id, caller);
 
     stop_cheat_caller_address(mock_contract.contract_address);
 }
