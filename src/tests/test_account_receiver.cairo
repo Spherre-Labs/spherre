@@ -8,13 +8,11 @@ mod tests {
     use openzeppelin::introspection::src5::SRC5Component::SRC5Impl;
     use openzeppelin::token::erc721::interface::{IERC721_RECEIVER_ID, IERC721Receiver,};
     use snforge_std::{
-        declare, start_cheat_caller_address, get_class_hash, stop_cheat_caller_address,
-        ContractClassTrait, DeclareResultTrait, test_address
+        declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
+        DeclareResultTrait, test_address
     };
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
-    use spherre::tests::mocks::mock_account_data::{
-        IMockContractDispatcher, IMockContractDispatcherTrait
-    };
+    use spherre::tests::mocks::mock_account_data::{IMockContractDispatcher};
     use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
     use starknet::{ContractAddress, contract_address_const};
 
@@ -225,7 +223,6 @@ mod tests {
     #[should_panic(expected: ('ENTRYPOINT_NOT_FOUND', 'ENTRYPOINT_FAILED'))]
     fn test_approved_safe_transfer_to_spherre_account_no_receiver() {
         let erc721_contract = deploy_mock_erc721();
-        let state = CONTRACT_STATE();
         let account_contract = test_address();
         let minter = OWNER();
         let operator = OPERATOR();

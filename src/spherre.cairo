@@ -10,14 +10,12 @@ pub mod Spherre {
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
-    use openzeppelin::upgrades::interface::IUpgradeable;
-    use spherre::account::SpherreAccount;
     use spherre::errors::Errors;
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::{FeesType, SpherreAdminRoles};
     use starknet::storage::{
         Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
-        Vec, VecTrait,
+        Vec,
     };
     use starknet::syscalls::deploy_syscall;
     use starknet::{
