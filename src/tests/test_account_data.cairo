@@ -1283,3 +1283,36 @@ fn test_member_blocked_due_to_authority_delegated_to_smart_will() {
 
     stop_cheat_caller_address(mock_contract.contract_address);
 }
+
+#[test]
+fn test_member_without_smart_will_can_perform_transaction_operations_without_issue() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    // Add member
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Assign Proposer Role to create transaction
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    // Assign voter Role
+    mock_contract.assign_voter_permission_pub(caller);
+
+    // Propose transaction with member
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Similate block timestamp (should not have any effect since no smart will is set)
+    start_cheat_block_timestamp(mock_contract.contract_address, DEFAULT_WILL_DURATION + 100000);
+
+    // Approve transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Check transaction approvers
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.approved.len() == 1, 'Should have one approval');
+    assert(*transaction.approved.at(0) == caller, 'Approver should be member');
+
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
