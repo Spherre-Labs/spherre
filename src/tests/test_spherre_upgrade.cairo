@@ -5,8 +5,8 @@ use crate::spherre::Spherre;
 use openzeppelin::upgrades::interface::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 use openzeppelin::upgrades::upgradeable::UpgradeableComponent::{Event as UpgradeEvent, Upgraded};
 use snforge_std::{
-    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, EventSpyTrait, declare,
-    get_class_hash, spy_events, start_cheat_caller_address, stop_cheat_caller_address,
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, get_class_hash,
+    spy_events, start_cheat_caller_address, stop_cheat_caller_address,
 };
 use spherre::tests::mocks::mock_spherreV2::{ISpherreV2Dispatcher, ISpherreV2DispatcherTrait};
 use starknet::{ClassHash, ContractAddress, contract_address_const};

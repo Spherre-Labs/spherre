@@ -2,7 +2,7 @@ use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
     DeclareResultTrait
 };
-use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait
 };

@@ -2,12 +2,9 @@ use core::num::traits::Zero;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events
 };
-use snforge_std::{
-    start_cheat_block_timestamp, stop_cheat_block_timestamp, start_cheat_caller_address,
-    stop_cheat_caller_address, test_address
-};
+
 use spherre::components::treasury_handler::TreasuryHandler::{
-    Event, TokenTransferred, NftTransferred, TokenLocked, TokenUnlocked
+    Event, TokenTransferred, NftTransferred, TokenLocked
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
@@ -17,10 +14,9 @@ use spherre::interfaces::itreasury_handler::{
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::tests::utils::{TEST_USER};
-use spherre::types::{SmartTokenLock, LockStatus};
+use spherre::types::{LockStatus};
 use starknet::ContractAddress;
-use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-use starknet::{contract_address_const, get_block_timestamp};
+use starknet::{contract_address_const};
 
 #[starknet::interface]
 pub trait IMockTreasuryHandler<TContractState> {
