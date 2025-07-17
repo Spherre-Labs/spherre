@@ -1,13 +1,13 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{TransactionType, TransactionStatus, Permissions};
+use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
@@ -345,16 +345,16 @@ fn test_execute_remove_member_transaction_successful() {
     assert(!mock_contract.is_member_pub(member), 'Member should have been removed');
     // Check that member does not have permissions
     assert!(
-        !mock_contract.has_permission_pub(member, Permissions::PROPOSER,),
-        "Member should not have proposer permission"
+        !mock_contract.has_permission_pub(member, Permissions::PROPOSER),
+        "Member should not have proposer permission",
     );
     assert!(
-        !mock_contract.has_permission_pub(member, Permissions::VOTER,),
-        "Member should not have voter permission"
+        !mock_contract.has_permission_pub(member, Permissions::VOTER),
+        "Member should not have voter permission",
     );
     assert!(
-        !mock_contract.has_permission_pub(member, Permissions::EXECUTOR,),
-        "Member should not have executor permission"
+        !mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
+        "Member should not have executor permission",
     );
 }
 

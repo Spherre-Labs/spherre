@@ -1,5 +1,5 @@
 use core::starknet::ContractAddress;
-use spherre::types::{Transaction, MemberDetails};
+use spherre::types::{MemberDetails, Transaction};
 
 /// Interface for managing account data in a smart contract
 /// This interface defines methods for perfoming management operations related to Spherre account.
@@ -7,8 +7,7 @@ use spherre::types::{Transaction, MemberDetails};
 /// details.
 
 #[starknet::interface]
-pub trait IAccountData<TContractState> { 
-    
+pub trait IAccountData<TContractState> {
     /// Retrieves the list of account members
     ///
     /// # Returns
@@ -163,7 +162,7 @@ pub trait IAccountData<TContractState> {
     /// * If member address is not a member
     fn can_update_will(self: @TContractState, member: ContractAddress) -> bool;
 
-     /// Resets the will duration for a member within the allowed reset window
+    /// Resets the will duration for a member within the allowed reset window
     ///
     /// # Parameters
     /// * `member` - The member's address whose will duration should be reset
@@ -192,6 +191,6 @@ pub trait IAccountData<TContractState> {
     /// * if start >= transaction count
     /// * if start + limit exceeds the transaction count
     fn transaction_list(
-        self: @TContractState, start: Option<u64>, limit: Option<u64>
+        self: @TContractState, start: Option<u64>, limit: Option<u64>,
     ) -> Array<Transaction>;
 }

@@ -31,7 +31,7 @@ pub trait INFTTransaction<TContractState> {
         ref self: TContractState,
         nft_contract: ContractAddress,
         token_id: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     ) -> u256;
     /// Retrieves an NFT transaction by its ID
     /// This function allows retrieval of a specific NFT transaction

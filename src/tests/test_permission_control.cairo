@@ -1,19 +1,19 @@
 use MockPermissionContract::InternalTrait;
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use spherre::components::permission_control::PermissionControl;
 use spherre::interfaces::ipermission_control::{
-    IPermissionControl, IPermissionControlDispatcher, IPermissionControlDispatcherTrait
+    IPermissionControl, IPermissionControlDispatcher, IPermissionControlDispatcherTrait,
 };
 
 use spherre::tests::utils::{MEMBER_ONE};
-use spherre::types::{Permissions, PermissionEnum, PermissionTrait};
+use spherre::types::{PermissionEnum, PermissionTrait, Permissions};
 #[starknet::contract]
 pub mod MockPermissionContract {
     use spherre::components::permission_control::PermissionControl;
     use starknet::ContractAddress;
 
     component!(
-        path: PermissionControl, storage: permission_control_storage, event: PermissionControlEvent
+        path: PermissionControl, storage: permission_control_storage, event: PermissionControlEvent,
     );
 
     #[abi(embed_v0)]
@@ -81,7 +81,7 @@ fn get_contract_state() -> MockPermissionContract::ContractState {
 }
 
 fn get_component_state() -> PermissionControl::ComponentState<
-    MockPermissionContract::ContractState
+    MockPermissionContract::ContractState,
 > {
     PermissionControl::component_state_for_testing()
 }
@@ -266,7 +266,7 @@ fn test_permission_to_mask() {
     // this value represents having the PROPOSER and VOTER PERMISSION
     let mask_for_proposer_voter: u8 = 3;
     let permissions: Array<PermissionEnum> = array![
-        PermissionEnum::PROPOSER, PermissionEnum::VOTER
+        PermissionEnum::PROPOSER, PermissionEnum::VOTER,
     ];
 
     let mask = contract_dispatcher.permissions_to_mask(permissions);

@@ -11,20 +11,20 @@ pub mod MemberPermissionTransaction {
     use core::num::traits::Zero;
     use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin::security::pausable::PausableComponent;
+    use spherre::account_data;
     use spherre::account_data::AccountData::AccountDataImpl;
     use spherre::account_data::AccountData::InternalTrait as AccountDataInternalTrait;
     use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl};
-    use spherre::account_data;
-    use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
     use spherre::components::permission_control;
+    use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction;
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{EditPermissionTransaction, TransactionType};
     use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
     use starknet::{ContractAddress};
 
@@ -46,7 +46,7 @@ pub mod MemberPermissionTransaction {
         #[key]
         pub transaction_id: u256,
         pub member: ContractAddress,
-        pub new_permissions: u8
+        pub new_permissions: u8,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -54,7 +54,7 @@ pub mod MemberPermissionTransaction {
         #[key]
         pub transaction_id: u256,
         pub member: ContractAddress,
-        pub new_permissions: u8
+        pub new_permissions: u8,
     }
 
 
@@ -68,7 +68,7 @@ pub mod MemberPermissionTransaction {
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IEditPermissionTransaction<ComponentState<TContractState>> {
         fn propose_edit_permission_transaction(
-            ref self: ComponentState<TContractState>, member: ContractAddress, new_permissions: u8
+            ref self: ComponentState<TContractState>, member: ContractAddress, new_permissions: u8,
         ) -> u256 {
             // Pause guard
             let pausable = get_dep_component!(@self, Pausable);
@@ -81,7 +81,7 @@ pub mod MemberPermissionTransaction {
             let permission_control = get_dep_component!(@self, PermissionControl);
             assert(
                 permission_control.is_valid_mask(new_permissions),
-                Errors::ERR_INVALID_PERMISSION_MASK
+                Errors::ERR_INVALID_PERMISSION_MASK,
             );
 
             // Check if member exists
@@ -110,34 +110,33 @@ pub mod MemberPermissionTransaction {
         }
 
         fn get_edit_permission_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) -> EditPermissionTransaction {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction = account_data_comp.get_transaction(transaction_id);
             assert(
                 transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT,
-                Errors::ERR_INVALID_MEMBER_PERMISSION_TRANSACTION
+                Errors::ERR_INVALID_MEMBER_PERMISSION_TRANSACTION,
             );
             self.member_permission_transactions.entry(transaction_id).read()
         }
 
         fn get_edit_permission_transaction_list(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<EditPermissionTransaction> {
             let mut array: Array<EditPermissionTransaction> = array![];
             let range_stop = self.member_permission_transaction_ids.len();
 
-            for index in 0
-                ..range_stop {
-                    let id = self.member_permission_transaction_ids.at(index).read();
-                    let tx = self.member_permission_transactions.entry(id).read();
-                    array.append(tx);
-                };
+            for index in 0..range_stop {
+                let id = self.member_permission_transaction_ids.at(index).read();
+                let tx = self.member_permission_transactions.entry(id).read();
+                array.append(tx);
+            };
             array
         }
 
         fn execute_edit_permission_transaction(
-            ref self: ComponentState<TContractState>, transaction_id: u256
+            ref self: ComponentState<TContractState>, transaction_id: u256,
         ) {
             // Get the transaction data
             let edit_permission_data = self.get_edit_permission_transaction(transaction_id);

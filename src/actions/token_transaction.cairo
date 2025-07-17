@@ -10,14 +10,14 @@ pub mod TokenTransaction {
     use core::num::traits::Zero;
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
+    use spherre::account_data;
     use spherre::account_data::AccountData::InternalImpl;
     use spherre::account_data::AccountData::InternalTrait;
-    use spherre::account_data;
     use spherre::components::permission_control;
+    use spherre::components::treasury_handler;
     use spherre::components::treasury_handler::TreasuryHandler::InternalImpl as TreasuryHandlerInternalImpl;
     use spherre::components::treasury_handler::TreasuryHandler::InternalTrait as TreasuryHandlerInternalTrait;
     use spherre::components::treasury_handler::TreasuryHandler::TreasuryHandlerImpl;
-    use spherre::components::treasury_handler;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
 
@@ -26,22 +26,22 @@ pub mod TokenTransaction {
     use spherre::types::{TokenTransactionData, Transaction};
     use spherre::types::{TransactionType};
     use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
     use starknet::{ContractAddress, get_contract_address};
 
     #[storage]
     pub struct Storage {
         token_transactions: Map<u256, TokenTransactionData>,
-        token_transaction_ids: Vec<u256>
+        token_transaction_ids: Vec<u256>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         TokenTransactionProposed: TokenTransactionProposed,
-        TokenTransactionExecuted: TokenTransactionExecuted
+        TokenTransactionExecuted: TokenTransactionExecuted,
     }
 
 
@@ -51,7 +51,7 @@ pub mod TokenTransaction {
         id: u256,
         token: ContractAddress,
         amount: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -60,7 +60,7 @@ pub mod TokenTransaction {
         id: u256,
         token: ContractAddress,
         amount: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     }
 
 
@@ -78,7 +78,7 @@ pub mod TokenTransaction {
             ref self: ComponentState<TContractState>,
             token: ContractAddress,
             amount: u256,
-            recipient: ContractAddress
+            recipient: ContractAddress,
         ) -> u256 {
             // check that token and recipient are not zero addresses
             assert(token.is_non_zero(), Errors::ERR_NON_ZERO_ADDRESS_TOKEN);
@@ -92,7 +92,7 @@ pub mod TokenTransaction {
             let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
                 treasury_handler.get_token_balance(token) >= amount,
-                Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
+                Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT,
             );
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             // Create the transaction in account data and get the id
@@ -108,28 +108,27 @@ pub mod TokenTransaction {
             tx_id
         }
         fn get_token_transaction(
-            self: @ComponentState<TContractState>, id: u256
+            self: @ComponentState<TContractState>, id: u256,
         ) -> TokenTransactionData {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(id);
             // verify the transsaction type
             assert(
                 transaction.tx_type == TransactionType::TOKEN_SEND,
-                Errors::ERR_INVALID_TOKEN_TRANSACTION
+                Errors::ERR_INVALID_TOKEN_TRANSACTION,
             );
             self.token_transactions.entry(id).read()
         }
         fn token_transaction_list(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<TokenTransactionData> {
             let mut array: Array<TokenTransactionData> = array![];
             let range_stop = self.token_transaction_ids.len();
-            for index in 0
-                ..range_stop {
-                    let id = self.token_transaction_ids.at(index).read();
-                    let tx = self.token_transactions.entry(id).read();
-                    array.append(tx);
-                };
+            for index in 0..range_stop {
+                let id = self.token_transaction_ids.at(index).read();
+                let tx = self.token_transactions.entry(id).read();
+                array.append(tx);
+            };
             array
         }
         fn execute_token_transaction(ref self: ComponentState<TContractState>, id: u256) {
@@ -141,7 +140,7 @@ pub mod TokenTransaction {
                 treasury_handler
                     .get_token_balance(token_transaction.token) >= token_transaction
                     .amount,
-                Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT
+                Errors::ERR_INSUFFICIENT_TOKEN_AMOUNT,
             );
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             // execute the transaction in account data. all check is done there
@@ -150,7 +149,7 @@ pub mod TokenTransaction {
             let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
             treasury_handler_mut
                 ._transfer_token(
-                    token_transaction.token, token_transaction.recipient, token_transaction.amount
+                    token_transaction.token, token_transaction.recipient, token_transaction.amount,
                 );
             // emit event
             self
@@ -159,8 +158,8 @@ pub mod TokenTransaction {
                         id,
                         token: token_transaction.token,
                         amount: token_transaction.amount,
-                        recipient: token_transaction.recipient
-                    }
+                        recipient: token_transaction.recipient,
+                    },
                 );
         }
     }
@@ -188,7 +187,7 @@ pub mod TokenTransaction {
             // verify the transaction type
             assert(
                 transaction.tx_type == TransactionType::TOKEN_SEND,
-                Errors::ERR_INVALID_TOKEN_TRANSACTION
+                Errors::ERR_INVALID_TOKEN_TRANSACTION,
             );
         }
     }

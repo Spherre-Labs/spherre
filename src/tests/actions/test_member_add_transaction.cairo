@@ -1,12 +1,12 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 
-use spherre::types::{TransactionType, Permissions, TransactionStatus};
+use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn proposer() -> ContractAddress {
@@ -162,10 +162,10 @@ fn test_execute_member_add_transaction_successful() {
     // check that the new member has the permissions
     assert(
         mock_contract.has_permission_pub(new_member, Permissions::VOTER),
-        'Voter permission not found'
+        'Voter permission not found',
     );
     assert(
         mock_contract.has_permission_pub(new_member, Permissions::EXECUTOR),
-        'Executor permission not found'
+        'Executor permission not found',
     );
 }

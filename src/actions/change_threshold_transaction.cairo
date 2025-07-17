@@ -9,18 +9,18 @@
 #[starknet::component]
 pub mod ChangeThresholdTransaction {
     use core::num::traits::Zero;
-    use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin::security::PausableComponent;
-    use spherre::account_data::AccountData::{AccountDataImpl, InternalImpl, InternalTrait};
+    use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
     use spherre::account_data::AccountData;
+    use spherre::account_data::AccountData::{AccountDataImpl, InternalImpl, InternalTrait};
     use spherre::components::permission_control::PermissionControl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::ichange_threshold_tx::IChangeThresholdTransaction;
     use spherre::types::{ThresholdChangeData, Transaction, TransactionType};
     use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
 
     #[storage]
@@ -60,7 +60,7 @@ pub mod ChangeThresholdTransaction {
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IChangeThresholdTransaction<ComponentState<TContractState>> {
         fn propose_threshold_change_transaction(
-            ref self: ComponentState<TContractState>, new_threshold: u64
+            ref self: ComponentState<TContractState>, new_threshold: u64,
         ) -> u256 {
             // Pause guard
             let pausable = get_dep_component!(@self, Pausable);
@@ -84,38 +84,37 @@ pub mod ChangeThresholdTransaction {
             self.threshold_change_transaction_ids.append().write(tx_id);
 
             // Emit event
-            self.emit(ThresholdChangeProposed { id: tx_id, new_threshold, });
+            self.emit(ThresholdChangeProposed { id: tx_id, new_threshold });
 
             tx_id
         }
 
         fn get_threshold_change_transaction(
-            self: @ComponentState<TContractState>, id: u256
+            self: @ComponentState<TContractState>, id: u256,
         ) -> ThresholdChangeData {
             let account_data_comp = get_dep_component!(self, AccData);
             let transaction: Transaction = account_data_comp.get_transaction(id);
             assert(
                 transaction.tx_type == TransactionType::THRESHOLD_CHANGE,
-                Errors::ERR_INVALID_THRESHOLD_TRANSACTION
+                Errors::ERR_INVALID_THRESHOLD_TRANSACTION,
             );
             self.threshold_change_transactions.entry(id).read()
         }
 
         fn get_all_threshold_change_transactions(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<ThresholdChangeData> {
             let mut array: Array<ThresholdChangeData> = array![];
             let range_stop = self.threshold_change_transaction_ids.len();
-            for index in 0
-                ..range_stop {
-                    let id = self.threshold_change_transaction_ids.at(index).read();
-                    let tx = self.threshold_change_transactions.entry(id).read();
-                    array.append(tx);
-                };
+            for index in 0..range_stop {
+                let id = self.threshold_change_transaction_ids.at(index).read();
+                let tx = self.threshold_change_transactions.entry(id).read();
+                array.append(tx);
+            };
             array
         }
         fn execute_threshold_change_transaction(
-            ref self: ComponentState<TContractState>, id: u256
+            ref self: ComponentState<TContractState>, id: u256,
         ) {
             // Pause guard
             let pausable = get_dep_component!(@self, Pausable);
@@ -129,12 +128,12 @@ pub mod ChangeThresholdTransaction {
             let (current_threshold, _) = account_data_comp.get_threshold();
             assert(
                 threshold_change_data.new_threshold != current_threshold,
-                Errors::ERR_THRESHOLD_UNCHANGED
+                Errors::ERR_THRESHOLD_UNCHANGED,
             );
             let total_voters = account_data_comp.get_number_of_voters();
             assert(
                 threshold_change_data.new_threshold <= total_voters,
-                Errors::ERR_THRESHOLD_EXCEEDS_VOTERS
+                Errors::ERR_THRESHOLD_EXCEEDS_VOTERS,
             );
 
             // Execute the transaction (All validation will be done)
@@ -148,7 +147,7 @@ pub mod ChangeThresholdTransaction {
                 .emit(
                     ThresholdChangeExecuted {
                         id, new_threshold: threshold_change_data.new_threshold,
-                    }
+                    },
                 );
         }
     }

@@ -1,16 +1,16 @@
 use core::array::ArrayTrait;
-use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, MutableVecTrait,};
+use core::starknet::storage::{MutableVecTrait, StoragePathEntry, StoragePointerWriteAccess};
 use crate::account::{SpherreAccount::AccountImpl};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait, start_cheat_block_timestamp, stop_cheat_block_timestamp
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_block_timestamp,
+    start_cheat_caller_address, stop_cheat_block_timestamp, stop_cheat_caller_address,
 };
 
 
 use spherre::tests::mocks::mock_account_data::{
-    MockContract, MockContract::PrivateTrait, IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait, MockContract, MockContract::PrivateTrait,
 };
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::ContractAddress;
 use starknet::{contract_address_const};
 
@@ -165,11 +165,11 @@ fn test_get_transaction() {
     // Verify the retrieved transaction matches the expected values
     assert(retrieved_transaction.id == transaction_id, 'Transaction ID mismatch');
     assert(
-        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch'
+        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch',
     );
     assert(
         retrieved_transaction.tx_status == TransactionStatus::APPROVED,
-        'Transaction status mismatch'
+        'Transaction status mismatch',
     );
     assert(retrieved_transaction.proposer == proposer, 'Proposer mismatch');
     assert(retrieved_transaction.executor == executor, 'Executor mismatch');
@@ -205,7 +205,7 @@ fn test_is_member() {
     assert!(state.is_member(new_member), "New member should be recognized as a member");
 
     assert!(
-        state.is_member(another_new_member), "Another new member should be recognized as a member"
+        state.is_member(another_new_member), "Another new member should be recognized as a member",
     );
 
     assert!(!state.is_member(non_member), "Non-member should not be recognized as a member");
@@ -1188,7 +1188,7 @@ fn test_smart_will_full_functionality_successful() {
     // Checks
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated',
     );
     assert(transaction.proposer == caller, 'Proposer should be caller');
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -1234,7 +1234,7 @@ fn test_smart_will_cannot_perform_transaction_before_duration_elapses() {
     // Checks
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated',
     );
     assert(transaction.proposer == caller, 'Proposer should be caller');
 
@@ -1320,31 +1320,31 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 
 #[cfg(test)]
 mod test_reset_will_duration {
-    use snforge_std::{declare, deploy, start_prank, stop_prank, set_block_timestamp, CheatTarget};
-    use starknet::ContractAddress;
     use core::num::traits::Zero;
-    use crate::tests::utils::{setup_account_with_will, advance_block_timestamp};
+    use crate::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
     use crate::tests::mocks::mock_account_data::MockAccountDataDispatcher;
-    use crate::interfaces::iaccount_data::{ IAccountDataDispatcher, IAccountDataDispatcherTrait };
+    use crate::tests::utils::{advance_block_timestamp, setup_account_with_will};
+    use snforge_std::{CheatTarget, declare, deploy, set_block_timestamp, start_prank, stop_prank};
+    use starknet::ContractAddress;
 
     const THIRTY_DAYS_IN_SECONDS: u64 = 2592000;
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days
-    const THIRTY_DAYS: u64 = 30 * 24 * 60 * 60;  // 2,592,000 seconds
-    const NINETY_DAYS: u64 = 90 * 24 * 60 * 60;  // 7,776,000 seconds
+    const THIRTY_DAYS: u64 = 30 * 24 * 60 * 60; // 2,592,000 seconds
+    const NINETY_DAYS: u64 = 90 * 24 * 60 * 60; // 7,776,000 seconds
 
-    
+
     #[test]
     fn test_reset_will_success() {
         let (account, will) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
-        
+
         // Move time to 29 days before expiration
         let creation_time = dispatcher.get_member_will_creation_time(account);
         let initial_expiry = creation_time + DEFAULT_WILL_DURATION;
         advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 86400); // 29 days before
-        
+
         dispatcher.reset_will_duration(account);
-        
+
         let new_expiry = dispatcher.get_member_will_duration(account);
         assert(new_expiry == initial_expiry + DEFAULT_WILL_DURATION, 'Duration not extended');
     }
@@ -1354,7 +1354,7 @@ mod test_reset_will_duration {
     fn test_reset_without_will() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
-        
+
         // Remove will wallet
         dispatcher.update_smart_will(Zero::zero());
         dispatcher.reset_will_duration(account);
@@ -1365,11 +1365,11 @@ mod test_reset_will_duration {
     fn test_reset_after_expiration() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
-        
+
         // Move time past expiration
         let expiry = dispatcher.get_member_will_duration(account);
         advance_block_timestamp(expiry + 1);
-        
+
         dispatcher.reset_will_duration(account);
     }
 
@@ -1378,11 +1378,11 @@ mod test_reset_will_duration {
     fn test_reset_too_early() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
-        
+
         // Try resetting 31 days before expiration
         let expiry = dispatcher.get_member_will_duration(account);
         advance_block_timestamp(expiry - THIRTY_DAYS_IN_SECONDS - 86400);
-        
+
         dispatcher.reset_will_duration(account);
     }
 
@@ -1390,34 +1390,37 @@ mod test_reset_will_duration {
     fn test_event_emission() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
-        
+
         // Setup time
         let initial_expiry = dispatcher.get_member_will_duration(account);
         advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 1);
-        
+
         // Capture events
         let snapshot = starknet::testing::event_snapshot();
         dispatcher.reset_will_duration(account);
         let events = starknet::testing::new_events(snapshot);
-        
+
         assert(events.len() == 1, 'Event not emitted');
         match events[0] {
             Event::WillDurationReset(event) => {
                 assert(event.member == account, 'Wrong member');
-                assert(event.new_expiration == initial_expiry + DEFAULT_WILL_DURATION, 'Wrong expiry');
+                assert(
+                    event.new_expiration == initial_expiry + DEFAULT_WILL_DURATION, 'Wrong expiry',
+                );
             },
-            _ => panic_with_felt252('Wrong event type')
+            _ => panic_with_felt252('Wrong event type'),
         }
     }
 
     #[test]
     fn test_successful_duration_reset() {
-         // 1. Deploy contract and create interface dispatcher
+        // 1. Deploy contract and create interface dispatcher
         let contract_address = deploy("account_data");
         let dispatcher = IAccountDataDispatcher { contract_address };
 
         // 2. Test member address (contract assumes caller context, but we'll simulate)
-        let test_member: ContractAddress = contract_address;  // simulate caller is the contract deployer
+        let test_member: ContractAddress =
+            contract_address; // simulate caller is the contract deployer
 
         // 3. Set starting time and initialize state
         let start_time = 1_000;
@@ -1568,7 +1571,7 @@ fn test_transaction_list_with_start_and_limit() {
     assert!(*transaction.at(2).id == tx_id_4, "Last transaction should match last created");
     assert!(
         *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK,
-        "Last transaction should match TransactionType"
+        "Last transaction should match TransactionType",
     );
 }
 
@@ -1696,7 +1699,7 @@ fn test_transaction_list_check_transaction_attr() {
 
     assert!(*transaction.at(2).id == tx_id_4, "transaction should match the created");
     assert!(
-        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK, "Should be Smart Lock"
+        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK, "Should be Smart Lock",
     );
     assert!(*transaction.at(2).proposer == caller, "Should be Caller");
     assert!(*transaction.at(2).tx_status == TransactionStatus::EXECUTED, "Should be executed");

@@ -1,16 +1,16 @@
 use crate::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
 use crate::interfaces::ispherre::{ISpherreDispatcher, ISpherreDispatcherTrait};
-use crate::spherre::Spherre::{SpherreImpl};
 use crate::spherre::Spherre;
+use crate::spherre::Spherre::{SpherreImpl};
 use snforge_std::{
-    start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait,
-    DeclareResultTrait,
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use spherre::interfaces::itoken_tx::{ITokenTransactionDispatcher, ITokenTransactionDispatcherTrait};
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{FeesType};
-use starknet::{ContractAddress, contract_address_const, ClassHash,};
+use starknet::{ClassHash, ContractAddress, contract_address_const};
 
 
 // Define role constants for testing
@@ -87,7 +87,7 @@ fn test_fee_collection_successfull() {
     // Check if fee token is set
     assert(
         spherre_dispatcher.get_fee(FeesType::PROPOSAL_FEE, 1.try_into().unwrap()) == fee,
-        'Invalid fee'
+        'Invalid fee',
     );
     assert(spherre_dispatcher.get_fee_token() == fee_token.contract_address, 'Invalid fee token');
     // Call the deploy account function
@@ -100,7 +100,7 @@ fn test_fee_collection_successfull() {
     // Test newly deployed spherre contract
     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
     let spherre_account_data_dispatcher = IAccountDataDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
     // Check that the account is deployed properly
     assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
@@ -125,7 +125,7 @@ fn test_fee_collection_successfull() {
 
     // Propose the token transaction
     let token_transaction_dispatcher = ITokenTransactionDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
 
     token_transaction_dispatcher
@@ -158,7 +158,7 @@ fn test_fee_collection_successfull_just_enough_fee() {
     // Check if fee token is set
     assert(
         spherre_dispatcher.get_fee(FeesType::PROPOSAL_FEE, 1.try_into().unwrap()) == fee,
-        'Invalid fee'
+        'Invalid fee',
     );
     assert(spherre_dispatcher.get_fee_token() == fee_token.contract_address, 'Invalid fee token');
     // Call the deploy account function
@@ -171,7 +171,7 @@ fn test_fee_collection_successfull_just_enough_fee() {
     // Test newly deployed spherre contract
     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
     let spherre_account_data_dispatcher = IAccountDataDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
     // Check that the account is deployed properly
     assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
@@ -196,7 +196,7 @@ fn test_fee_collection_successfull_just_enough_fee() {
 
     // Propose the token transaction
     let token_transaction_dispatcher = ITokenTransactionDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
 
     token_transaction_dispatcher
@@ -230,7 +230,7 @@ fn test_fee_collection_insufficient_fee_balance() {
     // Check if fee token is set
     assert(
         spherre_dispatcher.get_fee(FeesType::PROPOSAL_FEE, 1.try_into().unwrap()) == fee,
-        'Invalid fee'
+        'Invalid fee',
     );
     assert(spherre_dispatcher.get_fee_token() == fee_token.contract_address, 'Invalid fee token');
     // Call the deploy account function
@@ -243,7 +243,7 @@ fn test_fee_collection_insufficient_fee_balance() {
     // Test newly deployed spherre contract
     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
     let spherre_account_data_dispatcher = IAccountDataDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
     // Check that the account is deployed properly
     assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
@@ -268,7 +268,7 @@ fn test_fee_collection_insufficient_fee_balance() {
 
     // Propose the token transaction
     let token_transaction_dispatcher = ITokenTransactionDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
 
     token_transaction_dispatcher
@@ -298,7 +298,7 @@ fn test_fee_collection_insufficient_fee_allowance() {
     // Check if fee token is set
     assert(
         spherre_dispatcher.get_fee(FeesType::PROPOSAL_FEE, 1.try_into().unwrap()) == fee,
-        'Invalid fee'
+        'Invalid fee',
     );
     assert(spherre_dispatcher.get_fee_token() == fee_token.contract_address, 'Invalid fee token');
     // Call the deploy account function
@@ -311,7 +311,7 @@ fn test_fee_collection_insufficient_fee_allowance() {
     // Test newly deployed spherre contract
     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
     let spherre_account_data_dispatcher = IAccountDataDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
     // Check that the account is deployed properly
     assert(spherre_account_data_dispatcher.is_member(OWNER()), 'Not a member');
@@ -336,7 +336,7 @@ fn test_fee_collection_insufficient_fee_allowance() {
 
     // Propose the token transaction
     let token_transaction_dispatcher = ITokenTransactionDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
 
     token_transaction_dispatcher

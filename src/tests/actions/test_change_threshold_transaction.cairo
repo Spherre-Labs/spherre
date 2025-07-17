@@ -1,14 +1,14 @@
 use core::array::ArrayTrait;
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait, spy_events, EventSpyAssertionsTrait,
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
 use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
 
 use spherre::tests::mocks::mock_account_data::{
-    MockContract, IMockContractDispatcher, IMockContractDispatcherTrait,
+    IMockContractDispatcher, IMockContractDispatcherTrait, MockContract,
 };
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 // test utility functions
@@ -37,12 +37,11 @@ fn set_voters(mock_contract: IMockContractDispatcher, members: Array<ContractAdd
 fn get_members(num: u64) -> Array<ContractAddress> {
     let mut addresses: Array<ContractAddress> = array![];
     let n = num + 1;
-    for i in 1
-        ..n {
-            let k: felt252 = i.try_into().unwrap();
-            let adr: ContractAddress = k.try_into().unwrap();
-            addresses.append(adr);
-        };
+    for i in 1..n {
+        let k: felt252 = i.try_into().unwrap();
+        let adr: ContractAddress = k.try_into().unwrap();
+        addresses.append(adr);
+    };
     addresses
 }
 
@@ -90,12 +89,12 @@ fn test_propose_threshold_change_transaction_successful() {
                     MockContract::Event::ChangeThresholdEvent(
                         ChangeThresholdTransaction::Event::ThresholdChangeProposed(
                             ChangeThresholdTransaction::ThresholdChangeProposed {
-                                id: tx_id, new_threshold
-                            }
-                        )
-                    )
-                )
-            ]
+                                id: tx_id, new_threshold,
+                            },
+                        ),
+                    ),
+                ),
+            ],
         );
 }
 
