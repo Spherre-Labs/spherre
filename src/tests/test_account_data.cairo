@@ -1318,7 +1318,7 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 }
 
 #[test]
-fn test_transaction_list_empty_with_start() {
+fn test_transaction_list_all_with_start_zero() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
 
@@ -1344,7 +1344,7 @@ fn test_transaction_list_empty_with_start() {
 }
 
 #[test]
-fn test_transaction_list_empty_no_start() {
+fn test_transaction_list_all_no_parameters() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
 
