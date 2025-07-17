@@ -507,7 +507,7 @@ pub mod AccountData {
             let limit_count: u256 = match limit {
                 Option::Some(l) => {
                     assert(
-                        start_idx + l.into() <= transaction_count + 1,
+                        l > 0 && start_idx + l.into() <= transaction_count + 1,
                         Errors::ERR_TRANSACTION_LIMIT_OUT_OF_RANGE
                     );
                     l.into()
