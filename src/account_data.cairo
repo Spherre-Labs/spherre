@@ -831,7 +831,6 @@ pub mod AccountData {
             }
 
             // Collect the fees from the account
-            // TODO: change fee collection from account to caller
             // Check if the caller balance is enough to pay fee
             let erc20_dispatcher = IERC20Dispatcher { contract_address: fee_token };
             let caller = get_caller_address();
