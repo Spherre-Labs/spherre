@@ -500,7 +500,7 @@ pub mod AccountData {
                 Option::Some(s) => s.into(),
                 Option::None => 0,
             };
-            assert(start_idx <= transaction_count, Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE);
+            assert(start_idx < transaction_count, Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE);
 
             let limit_count: u256 = match limit {
                 Option::Some(l) => {
@@ -510,19 +510,11 @@ pub mod AccountData {
                     );
                     l.into()
                 },
-                Option::None => if start_idx == 0 {
-                    transaction_count
-                } else {
-                    transaction_count - start_idx + 1
-                },
+                Option::None => transaction_count - start_idx,
             };
 
             let mut result: Array<Transaction> = array![];
-            let mut i = if start_idx == 0 {
-                1
-            } else {
-                start_idx
-            };
+            let mut i = start_idx + 1;
             let end_idx = i + limit_count - 1;
 
             while i <= end_idx && i <= transaction_count {

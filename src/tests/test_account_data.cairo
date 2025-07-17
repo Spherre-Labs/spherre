@@ -1318,7 +1318,6 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 }
 
 #[test]
-// #[should_panic(expected: ('Transaction Limit Out Of Range',))]
 fn test_transaction_list_empty_with_start() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
@@ -1341,6 +1340,7 @@ fn test_transaction_list_empty_with_start() {
     let transaction = mock_contract.transaction_list_pub(Option::Some(0), Option::None);
     assert!(transaction.len() == 8, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
+    assert!(*transaction.at(7).id == tx_id_8, "Last transaction does not match");
 }
 
 #[test]
@@ -1360,6 +1360,7 @@ fn test_transaction_list_empty_no_start() {
 
     assert!(transaction.len() == 2, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
+    assert!(*transaction.at(1).id == tx_id_2, "First transaction should match first created");
 }
 
 #[test]
@@ -1387,8 +1388,8 @@ fn test_transaction_list_with_start_only() {
 
     let transaction = mock_contract.transaction_list_pub(Option::Some(2), Option::None);
 
-    assert!(transaction.len() == 7, "Wrong Transaction length");
-    assert!(*transaction.at(0).id == tx_id_2, "First transaction should match first created");
+    assert!(transaction.len() == 6, "Wrong Transaction length");
+    assert!(*transaction.at(0).id == tx_id_3, "Trnsaction doesnt match");
 }
 
 #[test]
@@ -1417,12 +1418,12 @@ fn test_transaction_list_with_start_and_limit() {
     let transaction = mock_contract.transaction_list_pub(Option::Some(2), Option::Some(3));
 
     assert!(transaction.len() == 3, "Wrong Transaction length");
-    assert!(*transaction.at(0).id == tx_id_2, "First transaction should match first created");
-    assert!(*transaction.at(0).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
-    assert!(*transaction.at(2).id == tx_id_4, "Last transaction should match last created");
+    assert!(*transaction.at(0).id == tx_id_3, "First transaction should match first created");
+    assert!(*transaction.at(0).tx_type == TransactionType::NFT_SEND, "Should be NFT Send");
+    assert!(*transaction.at(2).id == tx_id_5, "Last transaction should match last created");
     assert!(
-        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK,
-        "Last transaction should match last created"
+        *transaction.at(2).tx_type == TransactionType::THRESHOLD_CHANGE,
+        "Last transaction should match TransactionType"
     );
 }
 
@@ -1445,6 +1446,7 @@ fn test_transaction_list_with_limit_only() {
 
     assert!(transaction.len() == 2, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
+    assert!(*transaction.at(1).id == tx_id_2, "SHould be the second transaction");
 }
 
 #[test]
@@ -1503,7 +1505,7 @@ fn test_transaction_list_exact_boundary() {
     assert!(result.len() == 5, "Expected all 5 transactions");
     let result2 = mock_contract.transaction_list_pub(Option::Some(4), Option::Some(1));
     assert!(result2.len() == 1, "Expected 1 transaction");
-    assert!(*result2.at(0).id == tx_id_4, "Should be the last transaction");
+    assert!(*result2.at(0).id == tx_id_5, "Should be the last transaction");
 }
 
 #[test]
@@ -1522,32 +1524,40 @@ fn test_transaction_list_check_transaction_attr() {
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
-    let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
+    let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_6 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::VOID);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
-    mock_contract.approve_transaction_pub(tx_id_2, caller);
     mock_contract.approve_transaction_pub(tx_id_3, caller);
-    mock_contract.execute_transaction_pub(tx_id_3);
-    mock_contract.reject_transaction_pub(tx_id_4, caller);
+    mock_contract.approve_transaction_pub(tx_id_4, caller);
+    mock_contract.execute_transaction_pub(tx_id_4);
+    mock_contract.approve_transaction_pub(tx_id_5, caller);
+    mock_contract.execute_transaction_pub(tx_id_5);
 
     stop_cheat_caller_address(mock_contract.contract_address);
     let transaction = mock_contract.transaction_list_pub(Option::Some(1), Option::Some(4));
 
     assert!(transaction.len() == 4, "Wrong Transaction length");
-    assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
-    assert!(*transaction.at(0).tx_type == TransactionType::VOID, "Should be Token Void");
+    assert!(*transaction.at(0).id == tx_id_2, "First transaction should match first created");
+    assert!(*transaction.at(0).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
     assert!(*transaction.at(0).proposer == caller, "Should be Caller");
     assert!(*transaction.at(0).tx_status == TransactionStatus::INITIATED, "Should be Initiated");
 
-    assert!(*transaction.at(1).id == tx_id_2, "transaction should match the created");
+    assert!(*transaction.at(1).id == tx_id_3, "transaction should match the created");
     assert!(*transaction.at(1).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
     assert!(*transaction.at(1).proposer == caller, "Should be Caller");
     assert!(*transaction.at(1).tx_status == TransactionStatus::APPROVED, "Should be  Approved");
 
-    assert!(*transaction.at(2).id == tx_id_3, "transaction should match the created");
-    assert!(*transaction.at(2).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
+    assert!(*transaction.at(2).id == tx_id_4, "transaction should match the created");
+    assert!(
+        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK, "Should be Smart Lock"
+    );
     assert!(*transaction.at(2).proposer == caller, "Should be Caller");
     assert!(*transaction.at(2).tx_status == TransactionStatus::EXECUTED, "Should be executed");
+
+    assert!(*transaction.at(3).id == tx_id_5, "transaction should match the created");
+    assert!(*transaction.at(3).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
+    assert!(*transaction.at(3).proposer == caller, "Should be Caller");
+    assert!(*transaction.at(3).tx_status == TransactionStatus::EXECUTED, "Should be executed");
 }
