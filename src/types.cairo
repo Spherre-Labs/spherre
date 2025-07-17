@@ -171,14 +171,3 @@ pub struct MemberDetails {
     pub executed_count: u256,
     pub date_joined: u64,
 }
-
-
-#[derive(Drop, Serde, Copy)]
-pub struct WillData {
-    expiration_timestamp: u64,  
-    beneficiary: ContractAddress,  
-    is_active: bool,  
-    last_reset_timestamp: u64,  
-    reset_count: u32,  
-    threshold: u8,  
-}

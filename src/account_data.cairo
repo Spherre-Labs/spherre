@@ -30,7 +30,6 @@ pub mod AccountData {
     use crate::errors::Errors::{
         ERR_WILL_DURATION_HAS_ELAPSED, ERR_RESET_WINDOW_NOT_ACTIVE,
     };
-    use crate::types::WillData;
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days in seconds
     const THIRTY_DAYS_IN_SECONDS: u64 = 30 * 24 * 60 * 60;
 
@@ -55,7 +54,6 @@ pub mod AccountData {
         pub member_to_smart_will: Map<ContractAddress, ContractAddress>,
         pub member_to_will_duration: Map<ContractAddress, u64>,
         pub member_will_creation_time: Map<ContractAddress, u64>,
-        pub will_data: Map<ContractAddress, WillData>, 
     }
 
     #[starknet::storage_node]
@@ -511,39 +509,42 @@ pub mod AccountData {
             }
         }
 
-
         fn reset_will_duration(ref self: ComponentState<TContractState>, member: ContractAddress) {
-            // Validate member exists
-            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+                // Validate member exists
+                assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
             
-            // Check will wallet exists
-            let will_wallet = self.member_to_smart_will.entry(member).read();
-            assert(!will_wallet.is_zero(), 'Member has no will wallet');
+                // Check will wallet exists
+                let will_wallet = self.member_to_smart_will.entry(member).read();
+                assert(!will_wallet.is_zero(), 'Member has no will wallet');
+                assert(!will_wallet.is_zero(), Errors::ERR_MEMBER_HAS_NO_WILL_WALLET);
             
-            // Get current expiration
-            let current_expiration = self.member_to_will_duration.entry(member).read();
-            let current_time = get_block_timestamp();
+                // Get current expiration
+                let current_expiration = self.member_to_will_duration.entry(member).read();
+                let current_time = get_block_timestamp();
             
-            // Check will hasn't expired
-            assert(current_expiration > current_time, ERR_WILL_DURATION_HAS_ELAPSED.into());
+                // Check will hasn't expired
+                assert(current_expiration > current_time, ERR_WILL_DURATION_HAS_ELAPSED);
             
-            // Check within reset window (30 days before expiration)
-            let reset_window_start = current_expiration - THIRTY_DAYS_IN_SECONDS;
-            assert(current_time >= reset_window_start, ERR_RESET_WINDOW_NOT_ACTIVE.into());
+                // Check within reset window (30 days before expiration)
+                let reset_window_start = current_expiration - THIRTY_DAYS_IN_SECONDS;
+                assert(current_time >= reset_window_start, ERR_RESET_WINDOW_NOT_ACTIVE);
             
-            // Calculate new expiration
-            let new_expiration = current_expiration + DEFAULT_WILL_DURATION;
+                // Calculate new expiration
+                let new_expiration = current_expiration + DEFAULT_WILL_DURATION;
+                let new_expiration = current_expiration
+                    .checked_add(DEFAULT_WILL_DURATION)
+                    .expect('Duration calculation overflow');
             
-            // Update storage
-            self.member_to_will_duration.entry(member).write(new_expiration);
+                // Update storage
+                self.member_to_will_duration.entry(member).write(new_expiration);
             
-            // Emit event with proper syntax
-            self.emit(Event::WillDurationReset(WillDurationReset { 
-                member, 
-                old_expiry: current_expiration,
-                new_expiration 
-            }));
-        }
+                // Emit event with proper syntax
+                self.emit(Event::WillDurationReset(WillDurationReset { 
+                    member, 
+                    old_expiry: current_expiration,
+                    new_expiration 
+                }));
+            }
     }
 
     #[generate_trait]

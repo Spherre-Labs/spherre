@@ -453,6 +453,9 @@ pub mod MockContract {
         fn can_update_will_pub(self: @ContractState, member: ContractAddress) -> bool {
             self.account_data.can_update_will(member)
         }
+        fn reset_will_duration_pub(ref self: ContractState, member: ContractAddress) {
+            self.account_data.reset_will_duration(member);
+       }
     }
 
     #[generate_trait]

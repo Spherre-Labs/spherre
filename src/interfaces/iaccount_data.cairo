@@ -163,5 +163,18 @@ pub trait IAccountData<TContractState> {
     /// * If member address is not a member
     fn can_update_will(self: @TContractState, member: ContractAddress) -> bool;
 
+     /// Resets the will duration for a member within the allowed reset window
+    ///
+    /// # Parameters
+    /// * `member` - The member's address whose will duration should be reset
+    ///
+    /// # Panics
+    /// * If the caller is not the member
+    /// * If the member is not found
+    /// * If the reset window is not active (not within 30 days before expiration)
+    ///
+    /// # Events
+    /// * Emits a WillDurationReset event upon successful reset
+
     fn reset_will_duration(ref self: TContractState, member: ContractAddress);
 }

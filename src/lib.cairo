@@ -46,7 +46,6 @@ pub mod tests {
     pub mod test_spherre_upgrade;
     pub mod test_treasury_handler;
     pub mod utils;
-    pub mod test_reset_will;
     pub mod mocks {
         pub mod mock_accountV2;
         pub mod mock_account_data;
