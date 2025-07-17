@@ -35,6 +35,8 @@ pub mod Errors {
 
     pub const ERR_NOT_A_STAFF: felt252 = 'Caller is not a staff';
     pub const ERR_NOT_A_SUPERADMIN: felt252 = 'Caller is not a superadmin';
+    pub const ERR_TRANSACTION_INDEX_OUT_OF_RANGE: felt252 = 'Transaction Index Out Of Range';
+    pub const ERR_TRANSACTION_LIMIT_OUT_OF_RANGE: felt252 = 'Transaction Limit Out Of Range';
 
     // Constants for token transaction
     pub const ERR_NON_ZERO_ADDRESS_TOKEN: felt252 = 'Token address is zero';

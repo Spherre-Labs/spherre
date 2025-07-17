@@ -487,6 +487,48 @@ pub mod AccountData {
                 false
             }
         }
+        fn transaction_list(
+            self: @ComponentState<TContractState>, start: Option<u64>, limit: Option<u64>
+        ) -> Array<Transaction> {
+            let transaction_count = self.tx_count.read();
+
+            if transaction_count == 0 {
+                return ArrayTrait::new();
+            }
+
+            let start_idx: u256 = match start {
+                Option::Some(s) => {
+                    assert(
+                        s > 0 && s.into() <= transaction_count,
+                        Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE
+                    );
+                    s.into()
+                },
+                Option::None => 1,
+            };
+
+            let limit_count: u256 = match limit {
+                Option::Some(l) => {
+                    assert(
+                        l > 0 && start_idx + l.into() <= transaction_count + 1,
+                        Errors::ERR_TRANSACTION_LIMIT_OUT_OF_RANGE
+                    );
+                    l.into()
+                },
+                Option::None => (transaction_count - start_idx) + 1,
+            };
+
+            let mut result: Array<Transaction> = array![];
+            let mut i = start_idx;
+            let end_idx = start_idx + limit_count - 1;
+
+            while i <= end_idx && i <= transaction_count {
+                let transaction_at_index = self.get_transaction(i);
+                result.append(transaction_at_index);
+                i += 1;
+            };
+            result
+        }
     }
 
     #[generate_trait]

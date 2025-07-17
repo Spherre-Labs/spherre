@@ -161,4 +161,20 @@ pub trait IAccountData<TContractState> {
     /// # Panics
     /// * If member address is not a member
     fn can_update_will(self: @TContractState, member: ContractAddress) -> bool;
+    /// Fetch paginated list of transactions
+    ///
+    /// # Parameters
+    /// * `start` - The start to fecth transaction
+    /// * `limit` - The number of transaction to fetch from start
+    ///
+    /// # Returns
+    /// * `Array` - List of transactions starting from the start index (if provided),
+    ///              up to a maximum of limit transactions (if provided).
+    ///
+    /// # Panics
+    /// * if start >= transaction count
+    /// * if start + limit exceeds the transaction count
+    fn transaction_list(
+        self: @TContractState, start: Option<u64>, limit: Option<u64>
+    ) -> Array<Transaction>;
 }

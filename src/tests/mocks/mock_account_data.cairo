@@ -90,6 +90,9 @@ pub trait IMockContract<TContractState> {
     fn get_member_will_duration_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn get_remaining_will_time_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn can_update_will_pub(self: @TContractState, member: ContractAddress) -> bool;
+    fn transaction_list_pub(
+        self: @TContractState, start: Option<u64>, limit: Option<u64>
+    ) -> Array<Transaction>;
 }
 
 
@@ -452,6 +455,11 @@ pub mod MockContract {
         fn can_update_will_pub(self: @ContractState, member: ContractAddress) -> bool {
             self.account_data.can_update_will(member)
         }
+        fn transaction_list_pub(
+            self: @ContractState, start: Option<u64>, limit: Option<u64>
+        ) -> Array<Transaction> {
+            self.account_data.transaction_list(start, limit)
+        }
     }
 
     #[generate_trait]
@@ -522,6 +530,11 @@ pub mod MockContract {
         }
         fn can_update_will(self: @ContractState, member: ContractAddress) -> bool {
             self.account_data.can_update_will(member)
+        }
+        fn transaction_list(
+            self: @ContractState, start: Option<u64>, limit: Option<u64>
+        ) -> Array<Transaction> {
+            self.account_data.transaction_list(start, limit)
         }
     }
 }
