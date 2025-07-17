@@ -842,7 +842,7 @@ pub mod AccountData {
                 Errors::ERR_INSUFFICIENT_ALLOWANCE
             );
             // Transfer Fee
-            erc20_dispatcher.transfer_from(account_address, deployer, fee);
+            erc20_dispatcher.transfer_from(caller, deployer, fee);
             // Update the collection statistics
             deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
         }
