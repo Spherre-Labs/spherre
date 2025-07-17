@@ -490,6 +490,8 @@ pub mod AccountData {
         fn transaction_list(
             self: @ComponentState<TContractState>, start: Option<u64>, limit: Option<u64>
         ) -> Array<Transaction> {
+
+            
             let transaction_count = self.tx_count.read();
 
             if transaction_count == 0 {
@@ -497,25 +499,28 @@ pub mod AccountData {
             }
 
             let start_idx: u256 = match start {
-                Option::Some(s) => s.into(),
-                Option::None => 0,
+                Option::Some(s) => {
+                    assert(s > 0, Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE);
+                    s.into()
+                },
+                Option::None => 1,
             };
             assert(start_idx < transaction_count, Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE);
 
             let limit_count: u256 = match limit {
                 Option::Some(l) => {
                     assert(
-                        (start_idx + l.into()) <= transaction_count,
+                        start_idx + l.into() <= transaction_count + 1,
                         Errors::ERR_TRANSACTION_LIMIT_OUT_OF_RANGE
                     );
                     l.into()
                 },
-                Option::None => transaction_count - start_idx,
+                Option::None => (transaction_count - start_idx) + 1,
             };
 
             let mut result: Array<Transaction> = array![];
-            let mut i = start_idx + 1;
-            let end_idx = i + limit_count - 1;
+            let mut i = start_idx;
+            let end_idx = start_idx + limit_count - 1;
 
             while i <= end_idx && i <= transaction_count {
                 let transaction_at_index = self.get_transaction(i);

@@ -1318,7 +1318,7 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 }
 
 #[test]
-fn test_transaction_list_all_with_start_zero() {
+fn test_transaction_list_all_with_start_first() {
     let mock_contract = deploy_mock_contract();
     let caller = member();
 
@@ -1327,17 +1327,19 @@ fn test_transaction_list_all_with_start_zero() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Create Transactions
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
     let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
     let tx_id_6 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-
     stop_cheat_caller_address(mock_contract.contract_address);
-    let transaction = mock_contract.transaction_list_pub(Option::Some(0), Option::None);
+    
+    let transaction = mock_contract.transaction_list_pub(Option::Some(1), Option::None);
+
+   
     assert!(transaction.len() == 8, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
     assert!(*transaction.at(7).id == tx_id_8, "Last transaction does not match");
@@ -1352,7 +1354,7 @@ fn test_transaction_list_all_no_parameters() {
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
 
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     stop_cheat_caller_address(mock_contract.contract_address);
 
@@ -1360,7 +1362,25 @@ fn test_transaction_list_all_no_parameters() {
 
     assert!(transaction.len() == 2, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
-    assert!(*transaction.at(1).id == tx_id_2, "First transaction should match first created");
+    assert!(*transaction.at(1).id == tx_id_2, "Last transaction does not match");
+}
+
+#[test]
+#[should_panic(expected: ('Transaction Index Out Of Range',))]
+fn test_transaction_list_start_zero() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+    let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
+    let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    mock_contract.transaction_list_pub(Option::Some(0), Option::Some(3));
 }
 
 #[test]
@@ -1375,21 +1395,21 @@ fn test_transaction_list_with_start_only() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Create Transactions
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
     let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
     let tx_id_6 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let transaction = mock_contract.transaction_list_pub(Option::Some(2), Option::None);
 
-    assert!(transaction.len() == 6, "Wrong Transaction length");
-    assert!(*transaction.at(0).id == tx_id_3, "Trnsaction doesnt match");
+    assert!(transaction.len() == 7, "Wrong Transaction length");
+    assert!(*transaction.at(0).id == tx_id_2, "Trnsaction doesnt match");
 }
 
 #[test]
@@ -1404,13 +1424,13 @@ fn test_transaction_list_with_start_and_limit() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Create Transactions
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
     let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
     let tx_id_6 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -1418,11 +1438,11 @@ fn test_transaction_list_with_start_and_limit() {
     let transaction = mock_contract.transaction_list_pub(Option::Some(2), Option::Some(3));
 
     assert!(transaction.len() == 3, "Wrong Transaction length");
-    assert!(*transaction.at(0).id == tx_id_3, "First transaction should match first created");
-    assert!(*transaction.at(0).tx_type == TransactionType::NFT_SEND, "Should be NFT Send");
-    assert!(*transaction.at(2).id == tx_id_5, "Last transaction should match last created");
+    assert!(*transaction.at(0).id == tx_id_2, "First transaction should match first created");
+    assert!(*transaction.at(0).tx_type == TransactionType::TOKEN_SEND, "Should be Token Send");
+    assert!(*transaction.at(2).id == tx_id_4, "Last transaction should match last created");
     assert!(
-        *transaction.at(2).tx_type == TransactionType::THRESHOLD_CHANGE,
+        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK,
         "Last transaction should match TransactionType"
     );
 }
@@ -1436,7 +1456,7 @@ fn test_transaction_list_with_limit_only() {
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
 
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
@@ -1459,7 +1479,7 @@ fn test_transaction_list_start_way_out_of_range() {
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
 
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
@@ -1477,11 +1497,11 @@ fn test_transaction_list_limit_out_of_range() {
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
 
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     stop_cheat_caller_address(mock_contract.contract_address);
-    mock_contract.transaction_list_pub(Option::Some(0), Option::Some(6));
+    mock_contract.transaction_list_pub(Option::Some(1), Option::Some(6));
 }
 
 #[test]
@@ -1494,18 +1514,18 @@ fn test_transaction_list_exact_boundary() {
     mock_contract.assign_proposer_permission_pub(caller);
 
     // Create Transactions
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::NFT_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
     let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
     stop_cheat_caller_address(mock_contract.contract_address);
 
-    let result = mock_contract.transaction_list_pub(Option::Some(0), Option::Some(5));
-    assert!(result.len() == 5, "Expected all 5 transactions");
-    let result2 = mock_contract.transaction_list_pub(Option::Some(4), Option::Some(1));
-    assert!(result2.len() == 1, "Expected 1 transaction");
-    assert!(*result2.at(0).id == tx_id_5, "Should be the last transaction");
+    let transaction = mock_contract.transaction_list_pub(Option::Some(1), Option::Some(5));
+    assert!(transaction.len() == 5, "Expected all 5 transactions");
+    let transaction2 = mock_contract.transaction_list_pub(Option::Some(4), Option::Some(2));
+    assert!(transaction2.len() == 2, "Expected 1 transaction");
+    assert!(*transaction2.at(1).id == tx_id_5, "Should be the last transaction");
 }
 
 #[test]
@@ -1520,13 +1540,13 @@ fn test_transaction_list_check_transaction_attr() {
     mock_contract.assign_executor_permission_pub(caller);
 
     // Create Transactions
-    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_1 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_2 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_3 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_4 = mock_contract.create_transaction_pub(TransactionType::SMART_TOKEN_LOCK);
     let tx_id_5 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_6 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
-    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::VOID);
+    let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
 
     mock_contract.approve_transaction_pub(tx_id_3, caller);
@@ -1536,7 +1556,7 @@ fn test_transaction_list_check_transaction_attr() {
     mock_contract.execute_transaction_pub(tx_id_5);
 
     stop_cheat_caller_address(mock_contract.contract_address);
-    let transaction = mock_contract.transaction_list_pub(Option::Some(1), Option::Some(4));
+    let transaction = mock_contract.transaction_list_pub(Option::Some(2), Option::Some(4));
 
     assert!(transaction.len() == 4, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_2, "First transaction should match first created");
