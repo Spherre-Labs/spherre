@@ -177,4 +177,21 @@ pub trait IAccountData<TContractState> {
     /// * Emits a WillDurationReset event upon successful reset
 
     fn reset_will_duration(ref self: TContractState, member: ContractAddress);
+
+    /// Fetch paginated list of transactions
+    ///
+    /// # Parameters
+    /// * `start` - The start to fecth transaction
+    /// * `limit` - The number of transaction to fetch from start
+    ///
+    /// # Returns
+    /// * `Array` - List of transactions starting from the start index (if provided),
+    ///              up to a maximum of limit transactions (if provided).
+    ///
+    /// # Panics
+    /// * if start >= transaction count
+    /// * if start + limit exceeds the transaction count
+    fn transaction_list(
+        self: @TContractState, start: Option<u64>, limit: Option<u64>
+    ) -> Array<Transaction>;
 }
