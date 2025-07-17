@@ -490,8 +490,6 @@ pub mod AccountData {
         fn transaction_list(
             self: @ComponentState<TContractState>, start: Option<u64>, limit: Option<u64>
         ) -> Array<Transaction> {
-
-            
             let transaction_count = self.tx_count.read();
 
             if transaction_count == 0 {

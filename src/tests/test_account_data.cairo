@@ -1336,10 +1336,7 @@ fn test_transaction_list_all_with_start_first() {
     let tx_id_7 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     let tx_id_8 = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
     stop_cheat_caller_address(mock_contract.contract_address);
-    
     let transaction = mock_contract.transaction_list_pub(Option::Some(1), Option::None);
-
-   
     assert!(transaction.len() == 8, "Wrong Transaction length");
     assert!(*transaction.at(0).id == tx_id_1, "First transaction should match first created");
     assert!(*transaction.at(7).id == tx_id_8, "Last transaction does not match");
