@@ -7,7 +7,8 @@ use spherre::types::{Transaction, MemberDetails};
 /// details.
 
 #[starknet::interface]
-pub trait IAccountData<TContractState> {
+pub trait IAccountData<TContractState> { 
+    
     /// Retrieves the list of account members
     ///
     /// # Returns
@@ -161,4 +162,6 @@ pub trait IAccountData<TContractState> {
     /// # Panics
     /// * If member address is not a member
     fn can_update_will(self: @TContractState, member: ContractAddress) -> bool;
+
+    fn reset_will_duration(ref self: TContractState, member: ContractAddress);
 }

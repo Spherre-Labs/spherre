@@ -27,7 +27,12 @@ pub mod AccountData {
     use starknet::storage::MutableVecTrait;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp, get_contract_address};
 
+    use crate::errors::Errors::{
+        ERR_WILL_DURATION_HAS_ELAPSED, ERR_RESET_WINDOW_NOT_ACTIVE,
+    };
+    use crate::types::WillData;
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days in seconds
+    const THIRTY_DAYS_IN_SECONDS: u64 = 30 * 24 * 60 * 60;
 
     #[storage]
     pub struct Storage {
@@ -50,6 +55,7 @@ pub mod AccountData {
         pub member_to_smart_will: Map<ContractAddress, ContractAddress>,
         pub member_to_will_duration: Map<ContractAddress, u64>,
         pub member_will_creation_time: Map<ContractAddress, u64>,
+        pub will_data: Map<ContractAddress, WillData>, 
     }
 
     #[starknet::storage_node]
@@ -76,6 +82,8 @@ pub mod AccountData {
         TransactionExecuted: TransactionExecuted,
         // Smart Will events
         SmartWillUpdated: SmartWillUpdated,
+        WillDurationReset: WillDurationReset,
+
     }
 
     #[derive(Drop, starknet::Event)]
@@ -133,6 +141,19 @@ pub mod AccountData {
         creation_time: u64,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct  WillDurationReset {
+        #[key]
+        member: ContractAddress,
+        #[key]
+        old_expiry: u64,
+        #[key]
+        new_expiration: u64,
+    }
+
+
+
+
     #[embeddable_as(AccountData)]
     pub impl AccountDataImpl<
         TContractState,
@@ -141,6 +162,8 @@ pub mod AccountData {
         impl PermissionControl: permission_control::PermissionControl::HasComponent<TContractState>,
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IAccountData<ComponentState<TContractState>> {
+
+        
         fn get_account_members(self: @ComponentState<TContractState>) -> Array<ContractAddress> {
             let mut members_of_account: Array<ContractAddress> = array![];
             let no_of_members = self.members_count.read();
@@ -486,6 +509,40 @@ pub mod AccountData {
             } else {
                 false
             }
+        }
+
+
+        fn reset_will_duration(ref self: ComponentState<TContractState>, member: ContractAddress) {
+            // Validate member exists
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+            
+            // Check will wallet exists
+            let will_wallet = self.member_to_smart_will.entry(member).read();
+            assert(!will_wallet.is_zero(), 'Member has no will wallet');
+            
+            // Get current expiration
+            let current_expiration = self.member_to_will_duration.entry(member).read();
+            let current_time = get_block_timestamp();
+            
+            // Check will hasn't expired
+            assert(current_expiration > current_time, ERR_WILL_DURATION_HAS_ELAPSED.into());
+            
+            // Check within reset window (30 days before expiration)
+            let reset_window_start = current_expiration - THIRTY_DAYS_IN_SECONDS;
+            assert(current_time >= reset_window_start, ERR_RESET_WINDOW_NOT_ACTIVE.into());
+            
+            // Calculate new expiration
+            let new_expiration = current_expiration + DEFAULT_WILL_DURATION;
+            
+            // Update storage
+            self.member_to_will_duration.entry(member).write(new_expiration);
+            
+            // Emit event with proper syntax
+            self.emit(Event::WillDurationReset(WillDurationReset { 
+                member, 
+                old_expiry: current_expiration,
+                new_expiration 
+            }));
         }
     }
 
@@ -874,6 +931,14 @@ pub mod AccountData {
                 assert(remaining_time == 0, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
                 (member, caller)
             }
+        }
+
+        fn assert_valid_member(self: @ComponentState<TContractState>, member: ContractAddress) {
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+        }
+    
+        fn get_will_wallet(self: @ComponentState<TContractState>, member: ContractAddress) -> ContractAddress {
+            self.member_to_smart_will.entry(member).read()
         }
     }
 }

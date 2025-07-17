@@ -90,6 +90,7 @@ pub trait IMockContract<TContractState> {
     fn get_member_will_duration_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn get_remaining_will_time_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn can_update_will_pub(self: @TContractState, member: ContractAddress) -> bool;
+    fn reset_will_duration(ref self: TContractState, member: ContractAddress);
 }
 
 
