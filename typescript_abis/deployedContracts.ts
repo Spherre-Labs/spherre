@@ -47,6 +47,42 @@ const deployedContracts = {
           ],
         },
         {
+          type: "enum",
+          name: "spherre::types::FeesType",
+          variants: [
+            {
+              name: "PROPOSAL_FEE",
+              type: "()",
+            },
+            {
+              name: "VOTING_FEE",
+              type: "()",
+            },
+            {
+              name: "EXECUTION_FEE",
+              type: "()",
+            },
+            {
+              name: "DEPLOYMENT_FEE",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "core::integer::u256",
+          members: [
+            {
+              name: "low",
+              type: "core::integer::u128",
+            },
+            {
+              name: "high",
+              type: "core::integer::u128",
+            },
+          ],
+        },
+        {
           type: "interface",
           name: "spherre::interfaces::ispherre::ISpherre",
           items: [
@@ -227,6 +263,117 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "update_fee",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "update_fee_token",
+              inputs: [
+                {
+                  name: "token_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_fee",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "account",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_fee_token",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "is_fee_enabled",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "update_fee_collection_statistics",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_fees_collected",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "account",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
           ],
         },
         {
@@ -304,6 +451,82 @@ const deployedContracts = {
             {
               name: "caller",
               type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "fee_type",
+              type: "spherre::types::FeesType",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "enabled",
+              type: "core::bool",
+              kind: "data",
+            },
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeTokenUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "old_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeCollected",
+          kind: "struct",
+          members: [
+            {
+              name: "fee_type",
+              type: "spherre::types::FeesType",
+              kind: "data",
+            },
+            {
+              name: "fee_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "account",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
               kind: "data",
             },
           ],
@@ -537,6 +760,21 @@ const deployedContracts = {
             {
               name: "AccountClassHashUpdated",
               type: "spherre::spherre::Spherre::AccountClassHashUpdated",
+              kind: "nested",
+            },
+            {
+              name: "FeeUpdated",
+              type: "spherre::spherre::Spherre::FeeUpdated",
+              kind: "nested",
+            },
+            {
+              name: "FeeTokenUpdated",
+              type: "spherre::spherre::Spherre::FeeTokenUpdated",
+              kind: "nested",
+            },
+            {
+              name: "FeeCollected",
+              type: "spherre::spherre::Spherre::FeeCollected",
               kind: "nested",
             },
             {
@@ -617,6 +855,20 @@ const deployedContracts = {
           ],
         },
         {
+          type: "struct",
+          name: "core::integer::u256",
+          members: [
+            {
+              name: "low",
+              type: "core::integer::u128",
+            },
+            {
+              name: "high",
+              type: "core::integer::u128",
+            },
+          ],
+        },
+        {
           type: "interface",
           name: "spherre::interfaces::iaccount::IAccount",
           items: [
@@ -678,6 +930,18 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "execute_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
           ],
         },
         {
@@ -709,20 +973,6 @@ const deployedContracts = {
           interface_name: "spherre::interfaces::iaccount_data::IAccountData",
         },
         {
-          type: "struct",
-          name: "core::integer::u256",
-          members: [
-            {
-              name: "low",
-              type: "core::integer::u128",
-            },
-            {
-              name: "high",
-              type: "core::integer::u128",
-            },
-          ],
-        },
-        {
           type: "enum",
           name: "spherre::types::TransactionType",
           variants: [
@@ -752,6 +1002,10 @@ const deployedContracts = {
             },
             {
               name: "NFT_SEND",
+              type: "()",
+            },
+            {
+              name: "SMART_TOKEN_LOCK",
               type: "()",
             },
           ],
@@ -844,6 +1098,50 @@ const deployedContracts = {
             },
             {
               name: "True",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberDetails",
+          members: [
+            {
+              name: "address",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "proposed_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "approved_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "rejected_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "executed_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "date_joined",
+              type: "core::integer::u64",
+            },
+          ],
+        },
+        {
+          type: "enum",
+          name: "core::option::Option::<core::integer::u64>",
+          variants: [
+            {
+              name: "Some",
+              type: "core::integer::u64",
+            },
+            {
+              name: "None",
               type: "()",
             },
           ],
@@ -974,6 +1272,118 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "get_member_full_details",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberDetails",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "update_smart_will",
+              inputs: [
+                {
+                  name: "will_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_will_address",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_member_will_duration",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u64",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_remaining_will_time",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u64",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "can_update_will",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "transaction_list",
+              inputs: [
+                {
+                  name: "start",
+                  type: "core::option::Option::<core::integer::u64>",
+                },
+                {
+                  name: "limit",
+                  type: "core::option::Option::<core::integer::u64>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::Transaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
           ],
         },
         {
@@ -1092,6 +1502,121 @@ const deployedContracts = {
         },
         {
           type: "impl",
+          name: "TreasuryHandlerImpl",
+          interface_name:
+            "spherre::interfaces::itreasury_handler::ITreasuryHandler",
+        },
+        {
+          type: "enum",
+          name: "spherre::types::LockStatus",
+          variants: [
+            {
+              name: "LOCKED",
+              type: "()",
+            },
+            {
+              name: "PAIDOUT",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "spherre::types::SmartTokenLock",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "date_locked",
+              type: "core::integer::u64",
+            },
+            {
+              name: "lock_duration",
+              type: "core::integer::u64",
+            },
+            {
+              name: "token_amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "lock_status",
+              type: "spherre::types::LockStatus",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::itreasury_handler::ITreasuryHandler",
+          items: [
+            {
+              type: "function",
+              name: "get_token_balance",
+              inputs: [
+                {
+                  name: "token_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "is_nft_owner",
+              inputs: [
+                {
+                  name: "nft_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_all_locked_plans",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::SmartTokenLock>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_locked_plan",
+              inputs: [
+                {
+                  name: "lock_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::SmartTokenLock",
+                },
+              ],
+              state_mutability: "view",
+            },
+          ],
+        },
+        {
+          type: "impl",
           name: "PausableImpl",
           interface_name: "openzeppelin_security::interface::IPausable",
         },
@@ -1169,6 +1694,100 @@ const deployedContracts = {
               inputs: [],
               outputs: [],
               state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "ERC721ReceiverMixinImpl",
+          interface_name:
+            "openzeppelin_token::erc721::interface::ERC721ReceiverMixin",
+        },
+        {
+          type: "struct",
+          name: "core::array::Span::<core::felt252>",
+          members: [
+            {
+              name: "snapshot",
+              type: "@core::array::Array::<core::felt252>",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "openzeppelin_token::erc721::interface::ERC721ReceiverMixin",
+          items: [
+            {
+              type: "function",
+              name: "on_erc721_received",
+              inputs: [
+                {
+                  name: "operator",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "from",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "data",
+                  type: "core::array::Span::<core::felt252>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::felt252",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "onERC721Received",
+              inputs: [
+                {
+                  name: "operator",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "from",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "tokenId",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "data",
+                  type: "core::array::Span::<core::felt252>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::felt252",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "supports_interface",
+              inputs: [
+                {
+                  name: "interface_id",
+                  type: "core::felt252",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
             },
           ],
         },
@@ -1498,6 +2117,107 @@ const deployedContracts = {
         },
         {
           type: "impl",
+          name: "SmartTokenLockTransactionImpl",
+          interface_name:
+            "spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::SmartTokenLockTransaction",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+            },
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "token",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "duration",
+                  type: "core::integer::u64",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::SmartTokenLockTransaction",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "smart_token_lock_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::SmartTokenLockTransaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
           name: "NFTTransactionImpl",
           interface_name: "spherre::interfaces::inft_tx::INFTTransaction",
         },
@@ -1819,6 +2539,33 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "spherre::account_data::AccountData::SmartWillUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "key",
+            },
+            {
+              name: "will_address",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "key",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+            {
+              name: "creation_time",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
           name: "spherre::account_data::AccountData::Event",
           kind: "enum",
           variants: [
@@ -1850,6 +2597,11 @@ const deployedContracts = {
             {
               name: "TransactionExecuted",
               type: "spherre::account_data::AccountData::TransactionExecuted",
+              kind: "nested",
+            },
+            {
+              name: "SmartWillUpdated",
+              type: "spherre::account_data::AccountData::SmartWillUpdated",
               kind: "nested",
             },
           ],
@@ -1901,6 +2653,126 @@ const deployedContracts = {
             {
               name: "PermissionRevoked",
               type: "spherre::components::permission_control::PermissionControl::PermissionRevoked",
+              kind: "nested",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenTransferred",
+          kind: "struct",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "to",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::NftTransferred",
+          kind: "struct",
+          members: [
+            {
+              name: "nft",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "to",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "token_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenLocked",
+          kind: "struct",
+          members: [
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "lock_duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenUnlocked",
+          kind: "struct",
+          members: [
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::Event",
+          kind: "enum",
+          variants: [
+            {
+              name: "TokenTransferred",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenTransferred",
+              kind: "nested",
+            },
+            {
+              name: "NftTransferred",
+              type: "spherre::components::treasury_handler::TreasuryHandler::NftTransferred",
+              kind: "nested",
+            },
+            {
+              name: "TokenLocked",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenLocked",
+              kind: "nested",
+            },
+            {
+              name: "TokenUnlocked",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenUnlocked",
               kind: "nested",
             },
           ],
@@ -2125,6 +2997,87 @@ const deployedContracts = {
             {
               name: "PermissionEditExecuted",
               type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+              kind: "nested",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionProposed",
+          kind: "struct",
+          members: [
+            {
+              name: "id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionExecuted",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+            {
+              name: "date_executed",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::Event",
+          kind: "enum",
+          variants: [
+            {
+              name: "SmartTokenLockTransactionProposed",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionProposed",
+              kind: "nested",
+            },
+            {
+              name: "SmartTokenLockTransactionExecuted",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionExecuted",
               kind: "nested",
             },
           ],
@@ -2389,6 +3342,18 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "openzeppelin_token::erc721::erc721_receiver::ERC721ReceiverComponent::Event",
+          kind: "enum",
+          variants: [],
+        },
+        {
+          type: "event",
+          name: "openzeppelin_introspection::src5::SRC5Component::Event",
+          kind: "enum",
+          variants: [],
+        },
+        {
+          type: "event",
           name: "spherre::account::SpherreAccount::Event",
           kind: "enum",
           variants: [
@@ -2400,6 +3365,11 @@ const deployedContracts = {
             {
               name: "PermissionControlEvent",
               type: "spherre::components::permission_control::PermissionControl::Event",
+              kind: "flat",
+            },
+            {
+              name: "TreasuryHandlerEvent",
+              type: "spherre::components::treasury_handler::TreasuryHandler::Event",
               kind: "flat",
             },
             {
@@ -2420,6 +3390,11 @@ const deployedContracts = {
             {
               name: "MemberPermissionTransactionEvent",
               type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::Event",
+              kind: "flat",
+            },
+            {
+              name: "SmartTokenLockTransactionEvent",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::Event",
               kind: "flat",
             },
             {
@@ -2447,6 +3422,16 @@ const deployedContracts = {
               type: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event",
               kind: "flat",
             },
+            {
+              name: "ERC721ReceiverEvent",
+              type: "openzeppelin_token::erc721::erc721_receiver::ERC721ReceiverComponent::Event",
+              kind: "flat",
+            },
+            {
+              name: "SRC5Event",
+              type: "openzeppelin_introspection::src5::SRC5Component::Event",
+              kind: "flat",
+            },
           ],
         },
       ],
@@ -2457,7 +3442,7 @@ const deployedContracts = {
   sepolia: {
     Spherre: {
       address:
-        "0x72e1387bbd6cdd783696ddee58b9bb69b5004ae333a48e1ae187d58a8e03974",
+        "0x5cea714a2e7566164243ea4f66f17b35551ab54b6d55496238124ec688e58b7",
       abi: [
         {
           type: "impl",
@@ -2493,6 +3478,42 @@ const deployedContracts = {
             {
               name: "pending_word_len",
               type: "core::integer::u32",
+            },
+          ],
+        },
+        {
+          type: "enum",
+          name: "spherre::types::FeesType",
+          variants: [
+            {
+              name: "PROPOSAL_FEE",
+              type: "()",
+            },
+            {
+              name: "VOTING_FEE",
+              type: "()",
+            },
+            {
+              name: "EXECUTION_FEE",
+              type: "()",
+            },
+            {
+              name: "DEPLOYMENT_FEE",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "core::integer::u256",
+          members: [
+            {
+              name: "low",
+              type: "core::integer::u128",
+            },
+            {
+              name: "high",
+              type: "core::integer::u128",
             },
           ],
         },
@@ -2677,6 +3698,117 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "update_fee",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "update_fee_token",
+              inputs: [
+                {
+                  name: "token_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_fee",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "account",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_fee_token",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "is_fee_enabled",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "update_fee_collection_statistics",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_fees_collected",
+              inputs: [
+                {
+                  name: "fee_type",
+                  type: "spherre::types::FeesType",
+                },
+                {
+                  name: "account",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
           ],
         },
         {
@@ -2754,6 +3886,82 @@ const deployedContracts = {
             {
               name: "caller",
               type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "fee_type",
+              type: "spherre::types::FeesType",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "enabled",
+              type: "core::bool",
+              kind: "data",
+            },
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeTokenUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "old_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "new_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::spherre::Spherre::FeeCollected",
+          kind: "struct",
+          members: [
+            {
+              name: "fee_type",
+              type: "spherre::types::FeesType",
+              kind: "data",
+            },
+            {
+              name: "fee_token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "account",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
               kind: "data",
             },
           ],
@@ -2990,6 +4198,21 @@ const deployedContracts = {
               kind: "nested",
             },
             {
+              name: "FeeUpdated",
+              type: "spherre::spherre::Spherre::FeeUpdated",
+              kind: "nested",
+            },
+            {
+              name: "FeeTokenUpdated",
+              type: "spherre::spherre::Spherre::FeeTokenUpdated",
+              kind: "nested",
+            },
+            {
+              name: "FeeCollected",
+              type: "spherre::spherre::Spherre::FeeCollected",
+              kind: "nested",
+            },
+            {
               name: "OwnableEvent",
               type: "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
               kind: "flat",
@@ -3023,11 +4246,11 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0x7eeb853c8586499d858dabf79241538a0c71b83fa82d2560118db1765cc8be2",
+        "0x13a447f3680a1c050275e65bf3e2e13ceb8e6caa6dc6259aed2675c7c1d4896",
     },
     SpherreAccount: {
       address:
-        "0x3f3b1fef05ff4a85e8d00dbcd265ae1a654e2bcce6d8ad576387bc68f204a6d",
+        "0xcaaf4903ec077207db11bc020e64f78fa8e8f7a24a18cab95466e08a09b788",
       abi: [
         {
           type: "impl",
@@ -3063,6 +4286,20 @@ const deployedContracts = {
             {
               name: "description",
               type: "core::byte_array::ByteArray",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "core::integer::u256",
+          members: [
+            {
+              name: "low",
+              type: "core::integer::u128",
+            },
+            {
+              name: "high",
+              type: "core::integer::u128",
             },
           ],
         },
@@ -3128,6 +4365,18 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "execute_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
           ],
         },
         {
@@ -3159,20 +4408,6 @@ const deployedContracts = {
           interface_name: "spherre::interfaces::iaccount_data::IAccountData",
         },
         {
-          type: "struct",
-          name: "core::integer::u256",
-          members: [
-            {
-              name: "low",
-              type: "core::integer::u128",
-            },
-            {
-              name: "high",
-              type: "core::integer::u128",
-            },
-          ],
-        },
-        {
           type: "enum",
           name: "spherre::types::TransactionType",
           variants: [
@@ -3202,6 +4437,10 @@ const deployedContracts = {
             },
             {
               name: "NFT_SEND",
+              type: "()",
+            },
+            {
+              name: "SMART_TOKEN_LOCK",
               type: "()",
             },
           ],
@@ -3294,6 +4533,50 @@ const deployedContracts = {
             },
             {
               name: "True",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "spherre::types::MemberDetails",
+          members: [
+            {
+              name: "address",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "proposed_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "approved_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "rejected_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "executed_count",
+              type: "core::integer::u256",
+            },
+            {
+              name: "date_joined",
+              type: "core::integer::u64",
+            },
+          ],
+        },
+        {
+          type: "enum",
+          name: "core::option::Option::<core::integer::u64>",
+          variants: [
+            {
+              name: "Some",
+              type: "core::integer::u64",
+            },
+            {
+              name: "None",
               type: "()",
             },
           ],
@@ -3424,6 +4707,118 @@ const deployedContracts = {
               outputs: [],
               state_mutability: "external",
             },
+            {
+              type: "function",
+              name: "get_member_full_details",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::MemberDetails",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "update_smart_will",
+              inputs: [
+                {
+                  name: "will_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_member_will_address",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_member_will_duration",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u64",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_remaining_will_time",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u64",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "can_update_will",
+              inputs: [
+                {
+                  name: "member",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "transaction_list",
+              inputs: [
+                {
+                  name: "start",
+                  type: "core::option::Option::<core::integer::u64>",
+                },
+                {
+                  name: "limit",
+                  type: "core::option::Option::<core::integer::u64>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::Transaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
           ],
         },
         {
@@ -3542,6 +4937,121 @@ const deployedContracts = {
         },
         {
           type: "impl",
+          name: "TreasuryHandlerImpl",
+          interface_name:
+            "spherre::interfaces::itreasury_handler::ITreasuryHandler",
+        },
+        {
+          type: "enum",
+          name: "spherre::types::LockStatus",
+          variants: [
+            {
+              name: "LOCKED",
+              type: "()",
+            },
+            {
+              name: "PAIDOUT",
+              type: "()",
+            },
+          ],
+        },
+        {
+          type: "struct",
+          name: "spherre::types::SmartTokenLock",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "date_locked",
+              type: "core::integer::u64",
+            },
+            {
+              name: "lock_duration",
+              type: "core::integer::u64",
+            },
+            {
+              name: "token_amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "lock_status",
+              type: "spherre::types::LockStatus",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::itreasury_handler::ITreasuryHandler",
+          items: [
+            {
+              type: "function",
+              name: "get_token_balance",
+              inputs: [
+                {
+                  name: "token_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "is_nft_owner",
+              inputs: [
+                {
+                  name: "nft_address",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_all_locked_plans",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::SmartTokenLock>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "get_locked_plan",
+              inputs: [
+                {
+                  name: "lock_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::SmartTokenLock",
+                },
+              ],
+              state_mutability: "view",
+            },
+          ],
+        },
+        {
+          type: "impl",
           name: "PausableImpl",
           interface_name: "openzeppelin_security::interface::IPausable",
         },
@@ -3619,6 +5129,100 @@ const deployedContracts = {
               inputs: [],
               outputs: [],
               state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
+          name: "ERC721ReceiverMixinImpl",
+          interface_name:
+            "openzeppelin_token::erc721::interface::ERC721ReceiverMixin",
+        },
+        {
+          type: "struct",
+          name: "core::array::Span::<core::felt252>",
+          members: [
+            {
+              name: "snapshot",
+              type: "@core::array::Array::<core::felt252>",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "openzeppelin_token::erc721::interface::ERC721ReceiverMixin",
+          items: [
+            {
+              type: "function",
+              name: "on_erc721_received",
+              inputs: [
+                {
+                  name: "operator",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "from",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "token_id",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "data",
+                  type: "core::array::Span::<core::felt252>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::felt252",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "onERC721Received",
+              inputs: [
+                {
+                  name: "operator",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "from",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "tokenId",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "data",
+                  type: "core::array::Span::<core::felt252>",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::felt252",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "supports_interface",
+              inputs: [
+                {
+                  name: "interface_id",
+                  type: "core::felt252",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::bool",
+                },
+              ],
+              state_mutability: "view",
             },
           ],
         },
@@ -3948,6 +5552,107 @@ const deployedContracts = {
         },
         {
           type: "impl",
+          name: "SmartTokenLockTransactionImpl",
+          interface_name:
+            "spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction",
+        },
+        {
+          type: "struct",
+          name: "spherre::types::SmartTokenLockTransaction",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+            },
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+            },
+          ],
+        },
+        {
+          type: "interface",
+          name: "spherre::interfaces::ismart_token_lock_transaction::ISmartTokenLockTransaction",
+          items: [
+            {
+              type: "function",
+              name: "propose_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "token",
+                  type: "core::starknet::contract_address::ContractAddress",
+                },
+                {
+                  name: "amount",
+                  type: "core::integer::u256",
+                },
+                {
+                  name: "duration",
+                  type: "core::integer::u64",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+            {
+              type: "function",
+              name: "get_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "spherre::types::SmartTokenLockTransaction",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "smart_token_lock_transaction_list",
+              inputs: [],
+              outputs: [
+                {
+                  type: "core::array::Array::<spherre::types::SmartTokenLockTransaction>",
+                },
+              ],
+              state_mutability: "view",
+            },
+            {
+              type: "function",
+              name: "execute_smart_token_lock_transaction",
+              inputs: [
+                {
+                  name: "transaction_id",
+                  type: "core::integer::u256",
+                },
+              ],
+              outputs: [
+                {
+                  type: "core::integer::u256",
+                },
+              ],
+              state_mutability: "external",
+            },
+          ],
+        },
+        {
+          type: "impl",
           name: "NFTTransactionImpl",
           interface_name: "spherre::interfaces::inft_tx::INFTTransaction",
         },
@@ -4269,6 +5974,33 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "spherre::account_data::AccountData::SmartWillUpdated",
+          kind: "struct",
+          members: [
+            {
+              name: "member",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "key",
+            },
+            {
+              name: "will_address",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "key",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+            {
+              name: "creation_time",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
           name: "spherre::account_data::AccountData::Event",
           kind: "enum",
           variants: [
@@ -4300,6 +6032,11 @@ const deployedContracts = {
             {
               name: "TransactionExecuted",
               type: "spherre::account_data::AccountData::TransactionExecuted",
+              kind: "nested",
+            },
+            {
+              name: "SmartWillUpdated",
+              type: "spherre::account_data::AccountData::SmartWillUpdated",
               kind: "nested",
             },
           ],
@@ -4351,6 +6088,126 @@ const deployedContracts = {
             {
               name: "PermissionRevoked",
               type: "spherre::components::permission_control::PermissionControl::PermissionRevoked",
+              kind: "nested",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenTransferred",
+          kind: "struct",
+          members: [
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "to",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::NftTransferred",
+          kind: "struct",
+          members: [
+            {
+              name: "nft",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "to",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "token_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenLocked",
+          kind: "struct",
+          members: [
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "lock_duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::TokenUnlocked",
+          kind: "struct",
+          members: [
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::components::treasury_handler::TreasuryHandler::Event",
+          kind: "enum",
+          variants: [
+            {
+              name: "TokenTransferred",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenTransferred",
+              kind: "nested",
+            },
+            {
+              name: "NftTransferred",
+              type: "spherre::components::treasury_handler::TreasuryHandler::NftTransferred",
+              kind: "nested",
+            },
+            {
+              name: "TokenLocked",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenLocked",
+              kind: "nested",
+            },
+            {
+              name: "TokenUnlocked",
+              type: "spherre::components::treasury_handler::TreasuryHandler::TokenUnlocked",
               kind: "nested",
             },
           ],
@@ -4575,6 +6432,87 @@ const deployedContracts = {
             {
               name: "PermissionEditExecuted",
               type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::PermissionEditExecuted",
+              kind: "nested",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionProposed",
+          kind: "struct",
+          members: [
+            {
+              name: "id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionExecuted",
+          kind: "struct",
+          members: [
+            {
+              name: "transaction_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "lock_id",
+              type: "core::integer::u256",
+              kind: "key",
+            },
+            {
+              name: "token",
+              type: "core::starknet::contract_address::ContractAddress",
+              kind: "data",
+            },
+            {
+              name: "amount",
+              type: "core::integer::u256",
+              kind: "data",
+            },
+            {
+              name: "duration",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+            {
+              name: "date_executed",
+              type: "core::integer::u64",
+              kind: "data",
+            },
+          ],
+        },
+        {
+          type: "event",
+          name: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::Event",
+          kind: "enum",
+          variants: [
+            {
+              name: "SmartTokenLockTransactionProposed",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionProposed",
+              kind: "nested",
+            },
+            {
+              name: "SmartTokenLockTransactionExecuted",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::SmartTokenLockTransactionExecuted",
               kind: "nested",
             },
           ],
@@ -4839,6 +6777,18 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "openzeppelin_token::erc721::erc721_receiver::ERC721ReceiverComponent::Event",
+          kind: "enum",
+          variants: [],
+        },
+        {
+          type: "event",
+          name: "openzeppelin_introspection::src5::SRC5Component::Event",
+          kind: "enum",
+          variants: [],
+        },
+        {
+          type: "event",
           name: "spherre::account::SpherreAccount::Event",
           kind: "enum",
           variants: [
@@ -4850,6 +6800,11 @@ const deployedContracts = {
             {
               name: "PermissionControlEvent",
               type: "spherre::components::permission_control::PermissionControl::Event",
+              kind: "flat",
+            },
+            {
+              name: "TreasuryHandlerEvent",
+              type: "spherre::components::treasury_handler::TreasuryHandler::Event",
               kind: "flat",
             },
             {
@@ -4870,6 +6825,11 @@ const deployedContracts = {
             {
               name: "MemberPermissionTransactionEvent",
               type: "spherre::actions::member_permission_tx::MemberPermissionTransaction::Event",
+              kind: "flat",
+            },
+            {
+              name: "SmartTokenLockTransactionEvent",
+              type: "spherre::actions::smart_token_lock_transaction::SmartTokenLockTransactionComponent::Event",
               kind: "flat",
             },
             {
@@ -4897,11 +6857,21 @@ const deployedContracts = {
               type: "openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event",
               kind: "flat",
             },
+            {
+              name: "ERC721ReceiverEvent",
+              type: "openzeppelin_token::erc721::erc721_receiver::ERC721ReceiverComponent::Event",
+              kind: "flat",
+            },
+            {
+              name: "SRC5Event",
+              type: "openzeppelin_introspection::src5::SRC5Component::Event",
+              kind: "flat",
+            },
           ],
         },
       ],
       classHash:
-        "0x7e76d1168d5cadb4fa75b4b289edcbf9f82bd21e4558e5afdf7d71cd1df8811",
+        "0x4d33c9b46343ff6f389e0b5c6193b77b16f91325054129e99c3df5679c8f26c",
     },
   },
 } as const;
