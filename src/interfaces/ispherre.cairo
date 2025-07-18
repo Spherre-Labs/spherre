@@ -183,4 +183,40 @@ pub trait ISpherre<TContractState> {
     fn get_fees_collected(
         self: @TContractState, fee_type: FeesType, account: ContractAddress
     ) -> u256;
+    /// Whitelist an account.
+    ///
+    /// # Parameters
+    /// * `account` - The account to whitelist.
+    fn whitelist_account(ref self: TContractState, account: ContractAddress);
+    /// Whitelist a user.
+    ///
+    /// # Parameters
+    /// * `user` - The user to whitelist.
+    fn whitelist_user(ref self: TContractState, user: ContractAddress);
+    /// Check if an account is whitelisted.
+    ///
+    /// # Parameters
+    /// * `account` - The account to check.
+    ///
+    /// # Returns
+    /// * `bool` - Returns true if account is whitelisted, false otherwise.
+    fn is_whitelisted_account(self: @TContractState, account: ContractAddress) -> bool;
+    /// Check if a user is whitelisted.
+    ///
+    /// # Parameters
+    /// * `user` - The user to check.
+    ///
+    /// # Returns
+    /// * `bool` - Returns true if user is whitelisted, false otherwise.
+    fn is_whitelisted_user(self: @TContractState, user: ContractAddress) -> bool;
+    /// Get the total number of whitelisted accounts.
+    ///
+    /// # Returns
+    /// * `u256` - The total number of whitelisted accounts.
+    fn get_whitelisted_accounts_count(self: @TContractState) -> u256;
+    /// Get the total number of whitelisted users.
+    ///
+    /// # Returns
+    /// * `u256` - The total number of whitelisted users.
+    fn get_whitelisted_users_count(self: @TContractState) -> u256;
 }

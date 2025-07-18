@@ -94,4 +94,12 @@ pub mod Errors {
     pub const ERR_INVALID_WILL_ADDRESS: felt252 = 'Invalid will address';
     pub const ERR_WILL_DURATION_HAS_ELAPSED: felt252 = 'Will duration has elapsed';
     pub const AUTHORITY_DELEGATED_TO_WILL: felt252 = 'Authority delegated to will';
+
+    // errors for whitelist management
+    pub const ERR_ACCOUNT_NOT_DEPLOYED: felt252 = 'Account is not deployed';
+    pub const ERR_ACCOUNT_ALREADY_WHITELISTED: felt252 = 'Account already whitelisted';
+    pub const ERR_USER_ALREADY_WHITELISTED: felt252 = 'User already whitelisted';
+    pub const ERR_USER_ADDRESS_IS_ZERO: felt252 = 'User address is zero';
+    pub const ERR_ACCOUNT_NOT_WHITELISTED: felt252 = 'Account not whitelisted';
+    pub const ERR_USER_NOT_WHITELISTED: felt252 = 'User not whitelisted';
 }
