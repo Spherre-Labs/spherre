@@ -1329,8 +1329,7 @@ mod test_reset_will_duration {
 
     const THIRTY_DAYS_IN_SECONDS: u64 = 2592000;
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days
-    const THIRTY_DAYS: u64 = 30 * 24 * 60 * 60; // 2,592,000 seconds
-    const NINETY_DAYS: u64 = 90 * 24 * 60 * 60; // 7,776,000 seconds
+
 
 
     #[test]
@@ -1339,18 +1338,22 @@ mod test_reset_will_duration {
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
 
         // Move time to 29 days before expiration
-        let creation_time = dispatcher.get_member_will_creation_time(account);
+         let creation_time = dispatcher.get_member_will_creation_time(account);
         let initial_expiry = creation_time + DEFAULT_WILL_DURATION;
         advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 86400); // 29 days before
 
         dispatcher.reset_will_duration(account);
 
-        let new_expiry = dispatcher.get_member_will_duration(account);
-        assert(new_expiry == initial_expiry + DEFAULT_WILL_DURATION, 'Duration not extended');
+        let new_expiration = dispatcher.get_member_will_expiration(account);
+        assert(
+            new_expiration == initial_expiry + DEFAULT_WILL_DURATION,
+            'Will expiration not extended'
+        );
     }
+    
 
     #[test]
-    #[should_panic(expected: ('Member has no will wallet'))]
+    #[should_panic(expected: 'Member has no will wallet')]
     fn test_reset_without_will() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
@@ -1361,7 +1364,7 @@ mod test_reset_will_duration {
     }
 
     #[test]
-    #[should_panic(expected: ('ERR_WILL_DURATION_HAS_ELAPSED'))]
+    #[should_panic(expected: 'ERR_WILL_DURATION_HAS_ELAPSED')]
     fn test_reset_after_expiration() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
@@ -1374,7 +1377,7 @@ mod test_reset_will_duration {
     }
 
     #[test]
-    #[should_panic(expected: ('ERR_RESET_WINDOW_NOT_ACTIVE'))]
+    #[should_panic(expected: 'ERR_RESET_WINDOW_NOT_ACTIVE')]
     fn test_reset_too_early() {
         let (account, _) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
@@ -1434,7 +1437,7 @@ mod test_reset_will_duration {
         stop_prank(CheatTarget::One(contract_address));
 
         // 5. Advance to a timestamp within reset window (e.g., 29 days before expiry)
-        let reset_window_time = start_time + NINETY_DAYS - THIRTY_DAYS + 86_400;
+        let reset_window_time = start_time + DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS + 86_400;
         set_block_timestamp(reset_window_time);
 
         // 6. Call reset_will_duration (the actual functionality under test)
@@ -1442,7 +1445,7 @@ mod test_reset_will_duration {
 
         // 7. Verify: new expiration = old_expiry + DEFAULT_WILL_DURATION (NINETY_DAYS)
         let new_expiry = dispatcher.get_member_will_duration(test_member);
-        let expected_expiry = (start_time + NINETY_DAYS) + NINETY_DAYS;
+        let expected_expiry = (start_time + DEFAULT_WILL_DURATION) + DEFAULT_WILL_DURATION;
 
         assert(new_expiry == expected_expiry, 'Will duration not properly extended');
     }
