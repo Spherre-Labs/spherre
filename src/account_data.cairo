@@ -498,7 +498,10 @@ pub mod AccountData {
 
             let start_idx: u256 = match start {
                 Option::Some(s) => {
-                    assert(s > 0 && s <= transaction_count, Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE);
+                    assert(
+                        s > 0 && s.into() <= transaction_count,
+                        Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE
+                    );
                     s.into()
                 },
                 Option::None => 1,
