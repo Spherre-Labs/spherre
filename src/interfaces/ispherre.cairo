@@ -193,6 +193,16 @@ pub trait ISpherre<TContractState> {
     /// # Parameters
     /// * `user` - The user to whitelist.
     fn whitelist_user(ref self: TContractState, user: ContractAddress);
+    /// Remove an account from whitelist.
+    ///
+    /// # Parameters
+    /// * `account` - The account to remove from whitelist.
+    fn remove_account_from_whitelist(ref self: TContractState, account: ContractAddress);
+    /// Remove a user from whitelist.
+    ///
+    /// # Parameters
+    /// * `user` - The user to remove from whitelist.
+    fn remove_user_from_whitelist(ref self: TContractState, user: ContractAddress);
     /// Check if an account is whitelisted.
     ///
     /// # Parameters
@@ -219,4 +229,12 @@ pub trait ISpherre<TContractState> {
     /// # Returns
     /// * `u256` - The total number of whitelisted users.
     fn get_whitelisted_users_count(self: @TContractState) -> u256;
+    /// Get the timestamp when an address was whitelisted.
+    ///
+    /// # Parameters
+    /// * `address` - The address to check
+    /// * `is_account` - True for account whitelist, false for user whitelist
+    ///
+    /// # Returns
+    fn get_whitelist_time(self: @TContractState, address: ContractAddress, is_account: bool) -> u64;
 }

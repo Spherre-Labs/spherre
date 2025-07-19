@@ -401,7 +401,7 @@ pub mod Spherre {
             self.fee_collection_amounts.entry((fee_type, fee_token, account)).read()
         }
 
-        /// Whitelists an account. Only STAFF_ROLE can call. The account must be a deployed account.
+        /// Whitelists an account. Only STAFF_ROLE can call.
         fn whitelist_account(ref self: ContractState, account: ContractAddress) {
             // Validate that the account parameter is not zero
             assert(account.is_non_zero(), Errors::ERR_NON_ZERO_ACCOUNT);
@@ -448,7 +448,47 @@ pub mod Spherre {
             self.emit(event);
         }
 
-        /// Returns true if the account is whitelisted, false otherwise.
+        /// Remove an account from whitelist. Only STAFF_ROLE can call.
+        fn remove_account_from_whitelist(ref self: ContractState, account: ContractAddress) {
+            self.assert_only_staff();
+            // Validate that the account parameter is not zero
+            assert(account.is_non_zero(), Errors::ERR_NON_ZERO_ACCOUNT);
+            // Check if the account is whitelisted
+            let is_whitelisted = self.whitelisted_accounts.entry(account).read();
+            assert(is_whitelisted, Errors::ERR_ACCOUNT_NOT_WHITELISTED);
+            // Remove the account from the whitelist
+            self.whitelisted_accounts.entry(account).write(false);
+            // Decrement whitelisted accounts count
+            self.whitelisted_accounts_count.write(self.whitelisted_accounts_count.read() - 1);
+
+            // Emit AccountRemovedFromWhitelist event
+            let timestamp = get_block_timestamp();
+            let event = AccountRemovedFromWhitelist {
+                account, timestamp, admin: get_caller_address(),
+            };
+            self.emit(event);
+        }
+
+        /// Remove a user from whitelist. Only STAFF_ROLE can call.
+        fn remove_user_from_whitelist(ref self: ContractState, user: ContractAddress) {
+            self.assert_only_staff();
+            // Validate that the user parameter is not zero
+            assert(user.is_non_zero(), Errors::ERR_USER_ADDRESS_IS_ZERO);
+            // Check if the user is whitelisted
+            let is_whitelisted = self.whitelisted_users.entry(user).read();
+            assert(is_whitelisted, Errors::ERR_USER_NOT_WHITELISTED);
+            // Remove the user from the whitelist
+            self.whitelisted_users.entry(user).write(false);
+            // Decrement whitelisted users count
+            self.whitelisted_users_count.write(self.whitelisted_users_count.read() - 1);
+
+            // Emit UserRemovedFromWhitelist event
+            let timestamp = get_block_timestamp();
+            let event = UserRemovedFromWhitelist { user, timestamp, admin: get_caller_address(), };
+            self.emit(event);
+        }
+
+        /// Check if an account is whitelisted.
         fn is_whitelisted_account(self: @ContractState, account: ContractAddress) -> bool {
             if account.is_zero() {
                 return false;
@@ -456,7 +496,7 @@ pub mod Spherre {
             self.whitelisted_accounts.entry(account).read()
         }
 
-        /// Returns true if the user is whitelisted, false otherwise.
+        /// Check if a user is whitelisted.
         fn is_whitelisted_user(self: @ContractState, user: ContractAddress) -> bool {
             if user.is_zero() {
                 return false;
@@ -464,14 +504,26 @@ pub mod Spherre {
             self.whitelisted_users.entry(user).read()
         }
 
-        /// Returns the total number of whitelisted accounts.
+        /// Get the total number of whitelisted accounts.
         fn get_whitelisted_accounts_count(self: @ContractState) -> u256 {
             self.whitelisted_accounts_count.read()
         }
 
-        /// Returns the total number of whitelisted users.
+        /// Get the total number of whitelisted users.
         fn get_whitelisted_users_count(self: @ContractState) -> u256 {
             self.whitelisted_users_count.read()
+        }
+
+        /// Get the timestamp when an address was whitelisted.
+        /// Returns 0 if the address is not whitelisted or is zero.
+        fn get_whitelist_time(
+            self: @ContractState, address: ContractAddress, is_account: bool
+        ) -> u64 {
+            if is_account {
+                self.account_whitelist_time.entry(address).read()
+            } else {
+                self.user_whitelist_time.entry(address).read()
+            }
         }
     }
 
@@ -504,63 +556,6 @@ pub mod Spherre {
             let caller = get_caller_address();
             let is_deployed_account = self.is_deployed_account(caller);
             assert(is_deployed_account, Errors::ERR_CALLER_NOT_DEPLOYED_ACCOUNT);
-        }
-        /// Remove an account from whitelist.
-        ///
-        /// # Panics
-        /// If caller is not staff or account is not whitelisted.
-        fn remove_account_from_whitelist(ref self: ContractState, account: ContractAddress) {
-            self.assert_only_staff();
-            // Check if the account is whitelisted
-            let is_whitelisted = self.whitelisted_accounts.entry(account).read();
-            assert(is_whitelisted, Errors::ERR_ACCOUNT_NOT_WHITELISTED);
-            // Remove the account from the whitelist
-            self.whitelisted_accounts.entry(account).write(false);
-            // Decrement whitelisted accounts count
-            self.whitelisted_accounts_count.write(self.whitelisted_accounts_count.read() - 1);
-
-            // Emit AccountRemovedFromWhitelist event
-            let timestamp = get_block_timestamp();
-            let event = AccountRemovedFromWhitelist {
-                account, timestamp, admin: get_caller_address(),
-            };
-            self.emit(event);
-        }
-        /// Remove a user from whitelist.
-        ///
-        /// # Panics
-        /// If caller is not staff or user is not whitelisted.
-        fn remove_user_from_whitelist(ref self: ContractState, user: ContractAddress) {
-            self.assert_only_staff();
-            // Check if the user is whitelisted
-            let is_whitelisted = self.whitelisted_users.entry(user).read();
-            assert(is_whitelisted, Errors::ERR_USER_NOT_WHITELISTED);
-            // Remove the user from the whitelist
-            self.whitelisted_users.entry(user).write(false);
-            // Decrement whitelisted users count
-            self.whitelisted_users_count.write(self.whitelisted_users_count.read() - 1);
-
-            // Emit UserRemovedFromWhitelist event
-            let timestamp = get_block_timestamp();
-            let event = UserRemovedFromWhitelist { user, timestamp, admin: get_caller_address(), };
-            self.emit(event);
-        }
-        /// Get the timestamp when an address was whitelisted.
-        ///
-        /// # Arguments
-        /// * `address` - The address to check
-        /// * `is_account` - True for account whitelist, false for user whitelist
-        ///
-        /// # Returns
-        /// Timestamp when whitelisted, or 0 if not whitelisted
-        fn get_whitelist_time(
-            self: @ContractState, address: ContractAddress, is_account: bool
-        ) -> u64 {
-            if is_account {
-                self.account_whitelist_time.entry(address).read()
-            } else {
-                self.user_whitelist_time.entry(address).read()
-            }
         }
     }
 }
