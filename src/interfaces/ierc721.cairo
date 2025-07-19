@@ -41,7 +41,7 @@ pub trait IERC721<TContractState> {
         from: ContractAddress,
         to: ContractAddress,
         token_id: u256,
-        data: Span<felt252>
+        data: Span<felt252>,
     );
     /// Transfers a token from one account to another
     ///
@@ -54,7 +54,7 @@ pub trait IERC721<TContractState> {
     /// This function raises an error if the caller is not the owner of the token or approved to
     /// transfer it.
     fn transfer_from(
-        ref self: TContractState, from: ContractAddress, to: ContractAddress, token_id: u256
+        ref self: TContractState, from: ContractAddress, to: ContractAddress, token_id: u256,
     );
     /// Approves a specific account to transfer a token on behalf of the owner
     ///
@@ -86,7 +86,7 @@ pub trait IERC721<TContractState> {
     /// * `bool` A boolean indicating whether the operator is approved to manage all tokens of the
     /// owner
     fn is_approved_for_all(
-        self: @TContractState, owner: ContractAddress, operator: ContractAddress
+        self: @TContractState, owner: ContractAddress, operator: ContractAddress,
     ) -> bool;
 
     // IERC721Metadata

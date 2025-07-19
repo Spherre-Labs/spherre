@@ -1,13 +1,13 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
@@ -96,7 +96,7 @@ fn test_propose_smart_token_lock() {
     assert(transaction.tx_type == TransactionType::SMART_TOKEN_LOCK, 'Invalid Transaction');
     let smart_token_lock_transaction = mock_contract.get_smart_token_lock_transaction_pub(tx_id);
     assert(
-        smart_token_lock_transaction.token == token.contract_address, 'Contract Address Invalid'
+        smart_token_lock_transaction.token == token.contract_address, 'Contract Address Invalid',
     );
     assert(smart_token_lock_transaction.amount == amount_to_send, 'Amount is Invalid');
     assert(smart_token_lock_transaction.duration == duration, 'Duration is Invalid');
@@ -188,7 +188,7 @@ fn test_execute_smart_token_lock_transaction_success() {
     // Verify transaction status changed to executed
     let executed_transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        executed_transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction not executed'
+        executed_transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction not executed',
     );
 
     // Verify lock_id was returned (should be non-zero)
@@ -260,7 +260,7 @@ fn test_execute_smart_token_lock_transaction_wrong_type() {
     // Created a different type of transaction (token transaction instead of smart lock)
     let tx_id = mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, 1000, contract_address_const::<'recipient'>()
+            token.contract_address, 1000, contract_address_const::<'recipient'>(),
         );
 
     // Approve the transaction

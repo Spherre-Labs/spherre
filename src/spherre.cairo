@@ -46,7 +46,7 @@ pub mod Spherre {
         pub fee_type: FeesType,
         pub fee_token: ContractAddress,
         pub account: ContractAddress,
-        pub amount: u256
+        pub amount: u256,
     }
 
     #[storage]
@@ -301,10 +301,7 @@ pub mod Spherre {
                 self.fee_enabled.entry(fee_type).write(true);
             }
             // Emit event
-            self
-                .emit(
-                    FeeUpdated { fee_type, amount, enabled: true, caller: get_caller_address(), }
-                );
+            self.emit(FeeUpdated { fee_type, amount, enabled: true, caller: get_caller_address() });
         }
         /// Update the fee token address. Only SUPERADMIN_ROLE can call.
         fn update_fee_token(ref self: ContractState, token_address: ContractAddress) {
@@ -318,7 +315,7 @@ pub mod Spherre {
                 .emit(
                     FeeTokenUpdated {
                         old_token, new_token: token_address, caller: get_caller_address(),
-                    }
+                    },
                 );
         }
         /// Get the fee amount for a given fee type. Returns 0 if not set.
@@ -341,7 +338,7 @@ pub mod Spherre {
         }
         /// Update fee collection statistics
         fn update_fee_collection_statistics(
-            ref self: ContractState, fee_type: FeesType, amount: u256
+            ref self: ContractState, fee_type: FeesType, amount: u256,
         ) {
             let account = get_caller_address();
             self.assert_only_deployed_account();
@@ -356,7 +353,7 @@ pub mod Spherre {
             self.emit(FeeCollected { fee_type, fee_token, amount, account });
         }
         fn get_fees_collected(
-            self: @ContractState, fee_type: FeesType, account: ContractAddress
+            self: @ContractState, fee_type: FeesType, account: ContractAddress,
         ) -> u256 {
             self.assert_only_deployed_account();
             // Get the current fee token

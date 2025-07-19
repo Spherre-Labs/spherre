@@ -6,10 +6,10 @@ mod tests {
     use crate::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
     use openzeppelin::introspection::interface::ISRC5_ID;
     use openzeppelin::introspection::src5::SRC5Component::SRC5Impl;
-    use openzeppelin::token::erc721::interface::{IERC721_RECEIVER_ID, IERC721Receiver,};
+    use openzeppelin::token::erc721::interface::{IERC721Receiver, IERC721_RECEIVER_ID};
     use snforge_std::{
-        declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-        DeclareResultTrait, test_address
+        ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+        stop_cheat_caller_address, test_address,
     };
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use spherre::tests::mocks::mock_account_data::{IMockContractDispatcher};
@@ -38,7 +38,7 @@ mod tests {
             "TestAccount", // name
             "TestDescription", // description
             array![contract_address_const::<3>()], // members
-            1, // threshold
+            1 // threshold
         );
 
         contract_state
@@ -63,7 +63,7 @@ mod tests {
         let owner = OWNER();
         let deployer: ContractAddress = contract_address_const::<'deployer'>();
         let members: Array<ContractAddress> = array![
-            contract_address_const::<'member1'>(), contract_address_const::<'member2'>()
+            contract_address_const::<'member1'>(), contract_address_const::<'member2'>(),
         ];
         let threshold: u64 = 1;
         let name: ByteArray = "SpherreTestAccount";
@@ -120,7 +120,7 @@ mod tests {
             .erc721_receiver
             .on_erc721_received(OPERATOR(), OWNER(), TOKEN_ID, with_data);
         assert_eq!(
-            result_with_data, IERC721_RECEIVER_ID, "Should also return ERC721Receiver interface ID"
+            result_with_data, IERC721_RECEIVER_ID, "Should also return ERC721Receiver interface ID",
         );
     }
 
@@ -152,7 +152,7 @@ mod tests {
         // Verify that Spherre contract now owns the token
         let new_owner = erc721_contract.owner_of(TOKEN_ID);
         assert_eq!(
-            new_owner, spherre_contract.contract_address, "Spherre contract should own the token"
+            new_owner, spherre_contract.contract_address, "Spherre contract should own the token",
         );
     }
 
@@ -189,7 +189,7 @@ mod tests {
         // Verify that Spherre contract now owns the token
         let new_owner = erc721_contract.owner_of(TOKEN_ID);
         assert_eq!(
-            new_owner, spherre_contract.contract_address, "Spherre contract should own the token"
+            new_owner, spherre_contract.contract_address, "Spherre contract should own the token",
         );
     }
 
@@ -280,7 +280,7 @@ mod tests {
         // Verify that Spherre contract now owns the token
         let new_owner = erc721_contract.owner_of(TOKEN_ID);
         assert_eq!(
-            new_owner, spherre_contract.contract_address, "Should receive tokens even when paused"
+            new_owner, spherre_contract.contract_address, "Should receive tokens even when paused",
         );
     }
 }

@@ -3,11 +3,11 @@ use crate::interfaces::iaccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use openzeppelin_upgrades::interface::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 use openzeppelin_upgrades::upgradeable::UpgradeableComponent::{Event as UpgradeEvent, Upgraded};
 use snforge_std::{
-    declare, start_cheat_caller_address, get_class_hash, stop_cheat_caller_address,
-    ContractClassTrait, DeclareResultTrait, spy_events, EventSpyTrait, EventSpyAssertionsTrait
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, EventSpyTrait, declare,
+    get_class_hash, spy_events, start_cheat_caller_address, stop_cheat_caller_address,
 };
 use spherre::tests::mocks::mock_accountV2::{IAccountV2Dispatcher, IAccountV2DispatcherTrait};
-use starknet::{ContractAddress, ClassHash, contract_address_const};
+use starknet::{ClassHash, ContractAddress, contract_address_const};
 
 
 // --- Helper Function ---
@@ -32,7 +32,7 @@ fn setup_test() -> (IAccountDispatcher, ClassHash) {
     let owner: ContractAddress = contract_address_const::<'owner'>();
     let deployer: ContractAddress = contract_address_const::<'deployer'>();
     let members: Array<ContractAddress> = array![
-        contract_address_const::<'member1'>(), contract_address_const::<'member2'>()
+        contract_address_const::<'member1'>(), contract_address_const::<'member2'>(),
     ];
     let threshold: u64 = 1;
     let name: ByteArray = "SpherreTestAccount";
@@ -83,7 +83,7 @@ fn test_upgrade_to_v2_success() {
 
     // Verify upgrade event
     let expected_upgrade_event = SpherreAccount::Event::UpgradeableEvent(
-        UpgradeEvent::Upgraded(Upgraded { class_hash: v2_class_hash })
+        UpgradeEvent::Upgraded(Upgraded { class_hash: v2_class_hash }),
     );
 
     let expected_events = array![(v1.contract_address, expected_upgrade_event)];
@@ -174,7 +174,7 @@ fn test_upgrade_emits_event() {
 
     // Verify upgrade event
     let expected_upgrade_event = SpherreAccount::Event::UpgradeableEvent(
-        UpgradeEvent::Upgraded(Upgraded { class_hash: v2_class_hash })
+        UpgradeEvent::Upgraded(Upgraded { class_hash: v2_class_hash }),
     );
 
     // Assert that the event was emitted

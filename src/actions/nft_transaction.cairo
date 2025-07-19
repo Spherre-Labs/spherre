@@ -25,15 +25,15 @@ pub mod NFTTransaction {
     use spherre::types::{NFTTransactionData, Transaction};
     use spherre::types::{TransactionType};
     use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
     use starknet::{ContractAddress, get_contract_address};
 
     #[storage]
     pub struct Storage {
         nft_transactions: Map<u256, NFTTransactionData>,
-        nft_transaction_ids: Vec<u256>
+        nft_transaction_ids: Vec<u256>,
     }
 
     #[event]
@@ -48,7 +48,7 @@ pub mod NFTTransaction {
         id: u256,
         nft_contract: ContractAddress,
         token_id: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -56,7 +56,7 @@ pub mod NFTTransaction {
         id: u256,
         nft_contract: ContractAddress,
         token_id: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     }
 
 
@@ -74,7 +74,7 @@ pub mod NFTTransaction {
             ref self: ComponentState<TContractState>,
             nft_contract: ContractAddress,
             token_id: u256,
-            recipient: ContractAddress
+            recipient: ContractAddress,
         ) -> u256 {
             // Check that nft_contract and recipient are not zero addresses
             assert(nft_contract.is_non_zero(), Errors::ERR_NON_ZERO_ADDRESS_NFT_CONTRACT);
@@ -100,20 +100,20 @@ pub mod NFTTransaction {
         }
 
         fn get_nft_transaction(
-            self: @ComponentState<TContractState>, id: u256
+            self: @ComponentState<TContractState>, id: u256,
         ) -> NFTTransactionData {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(id);
             // Verify the transaction type
             assert(
                 transaction.tx_type == TransactionType::NFT_SEND,
-                Errors::ERR_INVALID_NFT_TRANSACTION
+                Errors::ERR_INVALID_NFT_TRANSACTION,
             );
             self.nft_transactions.entry(id).read()
         }
 
         fn nft_transaction_list(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<NFTTransactionData> {
             let mut array: Array<NFTTransactionData> = array![];
             let range_stop = self.nft_transaction_ids.len();
@@ -133,7 +133,7 @@ pub mod NFTTransaction {
             let treasury_handler = get_dep_component!(@self, TreasuryHandler);
             assert(
                 treasury_handler.is_nft_owner(nft_tx_data.nft_contract, nft_tx_data.token_id),
-                Errors::ERR_NOT_OWNER
+                Errors::ERR_NOT_OWNER,
             );
             // Execute the transaction
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -142,7 +142,7 @@ pub mod NFTTransaction {
             let mut treasury_handler_mut = get_dep_component_mut!(ref self, TreasuryHandler);
             treasury_handler_mut
                 ._transfer_nft(
-                    nft_tx_data.nft_contract, nft_tx_data.recipient, nft_tx_data.token_id
+                    nft_tx_data.nft_contract, nft_tx_data.recipient, nft_tx_data.token_id,
                 );
             // Emit event for successful execution
             self
@@ -151,8 +151,8 @@ pub mod NFTTransaction {
                         id,
                         nft_contract: nft_tx_data.nft_contract,
                         token_id: nft_tx_data.token_id,
-                        recipient: nft_tx_data.recipient
-                    }
+                        recipient: nft_tx_data.recipient,
+                    },
                 );
         }
     }

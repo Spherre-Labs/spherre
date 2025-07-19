@@ -1,16 +1,16 @@
 use core::array::ArrayTrait;
-use core::starknet::storage::{StoragePathEntry, StoragePointerWriteAccess, MutableVecTrait,};
+use core::starknet::storage::{MutableVecTrait, StoragePathEntry, StoragePointerWriteAccess};
 use crate::account::{SpherreAccount::AccountImpl};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait, start_cheat_block_timestamp, stop_cheat_block_timestamp
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_block_timestamp,
+    start_cheat_caller_address, stop_cheat_block_timestamp, stop_cheat_caller_address,
 };
 
 
 use spherre::tests::mocks::mock_account_data::{
-    MockContract, MockContract::PrivateTrait, IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait, MockContract, MockContract::PrivateTrait,
 };
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::ContractAddress;
 use starknet::{contract_address_const};
 
@@ -165,11 +165,11 @@ fn test_get_transaction() {
     // Verify the retrieved transaction matches the expected values
     assert(retrieved_transaction.id == transaction_id, 'Transaction ID mismatch');
     assert(
-        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch'
+        retrieved_transaction.tx_type == TransactionType::TOKEN_SEND, 'Transaction type mismatch',
     );
     assert(
         retrieved_transaction.tx_status == TransactionStatus::APPROVED,
-        'Transaction status mismatch'
+        'Transaction status mismatch',
     );
     assert(retrieved_transaction.proposer == proposer, 'Proposer mismatch');
     assert(retrieved_transaction.executor == executor, 'Executor mismatch');
@@ -205,7 +205,7 @@ fn test_is_member() {
     assert!(state.is_member(new_member), "New member should be recognized as a member");
 
     assert!(
-        state.is_member(another_new_member), "Another new member should be recognized as a member"
+        state.is_member(another_new_member), "Another new member should be recognized as a member",
     );
 
     assert!(!state.is_member(non_member), "Non-member should not be recognized as a member");
@@ -1188,7 +1188,7 @@ fn test_smart_will_full_functionality_successful() {
     // Checks
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated',
     );
     assert(transaction.proposer == caller, 'Proposer should be caller');
     stop_cheat_caller_address(mock_contract.contract_address);
@@ -1234,7 +1234,7 @@ fn test_smart_will_cannot_perform_transaction_before_duration_elapses() {
     // Checks
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated',
     );
     assert(transaction.proposer == caller, 'Proposer should be caller');
 
@@ -1316,6 +1316,99 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 
     stop_cheat_caller_address(mock_contract.contract_address);
 }
+
+
+const THIRTY_DAYS_IN_SECONDS: u64 = 2592000;
+
+
+#[test]
+fn test_reset_will_success() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Set cheat block timestamp for 30 days before expiration
+    let current_time = DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS + 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+    // try to reset will duration
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Check new will duration
+    let new_expiry = mock_contract.get_member_will_duration_pub(caller);
+    let expected_expiry = DEFAULT_WILL_DURATION + 1000 + DEFAULT_WILL_DURATION;
+    assert(new_expiry == expected_expiry, 'duration not reset correctly');
+}
+
+
+#[test]
+#[should_panic(expected: 'Will wallet not set')]
+fn test_reset_without_will() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Will duration has elapsed')]
+fn test_reset_will_after_expiration() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Set cheat block timestamp for after expiration
+    let current_time = DEFAULT_WILL_DURATION + 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Reset window is not active')]
+fn test_reset_will_too_early() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Set cheat block timestamp for before reset window
+    let current_time = DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS - 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
 
 #[test]
 fn test_transaction_list_all_with_start_first() {
@@ -1440,7 +1533,7 @@ fn test_transaction_list_with_start_and_limit() {
     assert!(*transaction.at(2).id == tx_id_4, "Last transaction should match last created");
     assert!(
         *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK,
-        "Last transaction should match TransactionType"
+        "Last transaction should match TransactionType",
     );
 }
 
@@ -1568,7 +1661,7 @@ fn test_transaction_list_check_transaction_attr() {
 
     assert!(*transaction.at(2).id == tx_id_4, "transaction should match the created");
     assert!(
-        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK, "Should be Smart Lock"
+        *transaction.at(2).tx_type == TransactionType::SMART_TOKEN_LOCK, "Should be Smart Lock",
     );
     assert!(*transaction.at(2).proposer == caller, "Should be Caller");
     assert!(*transaction.at(2).tx_status == TransactionStatus::EXECUTED, "Should be executed");

@@ -94,4 +94,6 @@ pub mod Errors {
     pub const ERR_INVALID_WILL_ADDRESS: felt252 = 'Invalid will address';
     pub const ERR_WILL_DURATION_HAS_ELAPSED: felt252 = 'Will duration has elapsed';
     pub const AUTHORITY_DELEGATED_TO_WILL: felt252 = 'Authority delegated to will';
+    pub const ERR_RESET_WINDOW_NOT_ACTIVE: felt252 = 'Reset window is not active';
+    pub const ERR_WILL_WALLET_NOT_SET: felt252 = 'Will wallet not set';
 }

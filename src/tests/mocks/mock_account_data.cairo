@@ -1,7 +1,7 @@
 use spherre::types::{
-    TransactionType, Transaction, NFTTransactionData, TransactionStatus, TokenTransactionData,
-    ThresholdChangeData, MemberRemoveData, MemberAddData, EditPermissionTransaction,
-    SmartTokenLockTransaction, MemberDetails, FeesType
+    EditPermissionTransaction, FeesType, MemberAddData, MemberDetails, MemberRemoveData,
+    NFTTransactionData, SmartTokenLockTransaction, ThresholdChangeData, TokenTransactionData,
+    Transaction, TransactionStatus, TransactionType,
 };
 use starknet::{ContractAddress};
 
@@ -18,7 +18,7 @@ pub trait IMockContract<TContractState> {
     fn add_member_pub(ref self: TContractState, member: ContractAddress);
     fn is_member_pub(self: @TContractState, member: ContractAddress) -> bool;
     fn has_permission_pub(
-        self: @TContractState, member: ContractAddress, permission: felt252
+        self: @TContractState, member: ContractAddress, permission: felt252,
     ) -> bool;
     fn assign_proposer_permission_pub(ref self: TContractState, member: ContractAddress);
     fn assign_voter_permission_pub(ref self: TContractState, member: ContractAddress);
@@ -27,46 +27,46 @@ pub trait IMockContract<TContractState> {
     fn pause(ref self: TContractState);
     fn unpause(ref self: TContractState);
     fn propose_token_transaction_pub(
-        ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress
+        ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress,
     ) -> u256;
     fn execute_token_transaction_pub(ref self: TContractState, id: u256);
     fn get_token_transaction_pub(ref self: TContractState, id: u256) -> TokenTransactionData;
     fn execute_transaction_pub(ref self: TContractState, tx_id: u256);
     fn propose_smart_token_lock_transaction_pub(
-        ref self: TContractState, token: ContractAddress, amount: u256, duration: u64
+        ref self: TContractState, token: ContractAddress, amount: u256, duration: u64,
     ) -> u256;
     fn get_smart_token_lock_transaction_pub(
-        self: @TContractState, transaction_id: u256
+        self: @TContractState, transaction_id: u256,
     ) -> SmartTokenLockTransaction;
     fn smart_token_lock_transaction_list_pub(
-        self: @TContractState
+        self: @TContractState,
     ) -> Array<SmartTokenLockTransaction>;
     fn execute_smart_token_lock_transaction_pub(
-        ref self: TContractState, transaction_id: u256
+        ref self: TContractState, transaction_id: u256,
     ) -> u256;
     fn assign_executor_permission_pub(ref self: TContractState, member: ContractAddress);
     fn propose_nft_transaction_pub(
         ref self: TContractState,
         nft_contract: ContractAddress,
         token_id: u256,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     ) -> u256;
     fn get_nft_transaction_pub(ref self: TContractState, id: u256) -> NFTTransactionData;
     fn nft_transaction_list_pub(ref self: TContractState) -> Array<NFTTransactionData>;
     fn propose_threshold_change_transaction_pub(
-        ref self: TContractState, new_threshold: u64
+        ref self: TContractState, new_threshold: u64,
     ) -> u256;
     fn get_threshold_change_transaction_pub(self: @TContractState, id: u256) -> ThresholdChangeData;
     fn get_all_threshold_change_transactions_pub(
-        self: @TContractState
+        self: @TContractState,
     ) -> Array<ThresholdChangeData>;
     fn propose_remove_member_transaction_pub(
-        ref self: TContractState, member_address: ContractAddress
+        ref self: TContractState, member_address: ContractAddress,
     ) -> u256;
     fn get_member_removal_transaction_pub(self: @TContractState, id: u256) -> MemberRemoveData;
     fn member_removal_transaction_list_pub(self: @TContractState) -> Array<MemberRemoveData>;
     fn propose_member_add_transaction_pub(
-        ref self: TContractState, member: ContractAddress, permissions: u8
+        ref self: TContractState, member: ContractAddress, permissions: u8,
     ) -> u256;
     fn get_member_add_transaction_pub(self: @TContractState, transaction_id: u256) -> MemberAddData;
     fn member_add_transaction_list_pub(self: @TContractState) -> Array<MemberAddData>;
@@ -76,22 +76,23 @@ pub trait IMockContract<TContractState> {
     fn execute_member_add_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn execute_nft_transaction_pub(ref self: TContractState, id: u256);
     fn propose_edit_permission_transaction_pub(
-        ref self: TContractState, member: ContractAddress, new_permissions: u8
+        ref self: TContractState, member: ContractAddress, new_permissions: u8,
     ) -> u256;
     fn get_edit_permission_transaction_pub(
-        self: @TContractState, transaction_id: u256
+        self: @TContractState, transaction_id: u256,
     ) -> EditPermissionTransaction;
     fn execute_edit_permission_transaction_pub(ref self: TContractState, transaction_id: u256);
     fn get_member_full_details_pub(self: @TContractState, member: ContractAddress) -> MemberDetails;
     fn update_smart_will_pub(ref self: TContractState, will_address: ContractAddress);
     fn get_member_will_address_pub(
-        self: @TContractState, member: ContractAddress
+        self: @TContractState, member: ContractAddress,
     ) -> ContractAddress;
     fn get_member_will_duration_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn get_remaining_will_time_pub(self: @TContractState, member: ContractAddress) -> u64;
     fn can_update_will_pub(self: @TContractState, member: ContractAddress) -> bool;
+    fn reset_will_duration_pub(ref self: TContractState, member: ContractAddress);
     fn transaction_list_pub(
-        self: @TContractState, start: Option<u64>, limit: Option<u64>
+        self: @TContractState, start: Option<u64>, limit: Option<u64>,
     ) -> Array<Transaction>;
 }
 
@@ -112,12 +113,12 @@ pub mod MockContract {
     use spherre::components::treasury_handler::{TreasuryHandler};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
     use spherre::types::{
-        Transaction, TransactionType, TransactionStatus, TokenTransactionData, NFTTransactionData,
-        ThresholdChangeData, MemberRemoveData, MemberAddData, SmartTokenLockTransaction,
-        MemberDetails, FeesType
+        FeesType, MemberAddData, MemberDetails, MemberRemoveData, NFTTransactionData,
+        SmartTokenLockTransaction, ThresholdChangeData, TokenTransactionData, Transaction,
+        TransactionStatus, TransactionType,
     };
     use spherre::types::{EditPermissionTransaction};
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess,};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_contract_address};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
@@ -127,17 +128,17 @@ pub mod MockContract {
     component!(
         path: SmartTokenLockTransactionComponent,
         storage: smart_token_lock_transaction,
-        event: SmartTokenLockTransactionEvent
+        event: SmartTokenLockTransactionEvent,
     );
     component!(path: TreasuryHandler, storage: treasury_handler, event: TreasuryHandlerEvent);
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(
-        path: ChangeThresholdTransaction, storage: change_threshold, event: ChangeThresholdEvent
+        path: ChangeThresholdTransaction, storage: change_threshold, event: ChangeThresholdEvent,
     );
     component!(path: MemberRemoveTransaction, storage: member_remove, event: MemberRemoveEvent);
     component!(path: MemberAddTransaction, storage: member_add, event: MemberAddEvent);
     component!(
-        path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent
+        path: MemberPermissionTransaction, storage: member_permission, event: MemberPermissionEvent,
     );
 
     #[abi(embed_v0)]
@@ -239,7 +240,7 @@ pub mod MockContract {
     #[abi(embed_v0)]
     pub impl MockContractImpl of super::IMockContract<ContractState> {
         fn update_fee_collection_statistics(
-            ref self: ContractState, fee_type: FeesType, amount: u256
+            ref self: ContractState, fee_type: FeesType, amount: u256,
         ) {}
         fn get_deployer(self: @ContractState) -> ContractAddress {
             get_contract_address()
@@ -262,7 +263,7 @@ pub mod MockContract {
             self.account_data.reject_transaction(tx_id)
         }
         fn update_transaction_status(
-            ref self: ContractState, tx_id: u256, status: TransactionStatus
+            ref self: ContractState, tx_id: u256, status: TransactionStatus,
         ) {
             self.account_data._update_transaction_status(tx_id, status)
         }
@@ -273,7 +274,7 @@ pub mod MockContract {
             self.account_data.is_member(member)
         }
         fn has_permission_pub(
-            self: @ContractState, member: ContractAddress, permission: felt252
+            self: @ContractState, member: ContractAddress, permission: felt252,
         ) -> bool {
             self.permission_control.has_permission(member, permission)
         }
@@ -304,7 +305,7 @@ pub mod MockContract {
             ref self: ContractState,
             token: ContractAddress,
             amount: u256,
-            recipient: ContractAddress
+            recipient: ContractAddress,
         ) -> u256 {
             self.token_transaction.propose_token_transaction(token, amount, recipient)
         }
@@ -312,24 +313,24 @@ pub mod MockContract {
             self.token_transaction.execute_token_transaction(id)
         }
         fn propose_smart_token_lock_transaction_pub(
-            ref self: ContractState, token: ContractAddress, amount: u256, duration: u64
+            ref self: ContractState, token: ContractAddress, amount: u256, duration: u64,
         ) -> u256 {
             self
                 .smart_token_lock_transaction
                 .propose_smart_token_lock_transaction(token, amount, duration)
         }
         fn get_smart_token_lock_transaction_pub(
-            self: @ContractState, transaction_id: u256
+            self: @ContractState, transaction_id: u256,
         ) -> SmartTokenLockTransaction {
             self.smart_token_lock_transaction.get_smart_token_lock_transaction(transaction_id)
         }
         fn smart_token_lock_transaction_list_pub(
-            self: @ContractState
+            self: @ContractState,
         ) -> Array<SmartTokenLockTransaction> {
             self.smart_token_lock_transaction.smart_token_lock_transaction_list()
         }
         fn execute_smart_token_lock_transaction_pub(
-            ref self: ContractState, transaction_id: u256
+            ref self: ContractState, transaction_id: u256,
         ) -> u256 {
             self.smart_token_lock_transaction.execute_smart_token_lock_transaction(transaction_id)
         }
@@ -345,7 +346,7 @@ pub mod MockContract {
             ref self: ContractState,
             nft_contract: ContractAddress,
             token_id: u256,
-            recipient: ContractAddress
+            recipient: ContractAddress,
         ) -> u256 {
             self.nft_transaction.propose_nft_transaction(nft_contract, token_id, recipient)
         }
@@ -359,19 +360,19 @@ pub mod MockContract {
         }
 
         fn propose_threshold_change_transaction_pub(
-            ref self: ContractState, new_threshold: u64
+            ref self: ContractState, new_threshold: u64,
         ) -> u256 {
             self.change_threshold.propose_threshold_change_transaction(new_threshold)
         }
 
         fn get_threshold_change_transaction_pub(
-            self: @ContractState, id: u256
+            self: @ContractState, id: u256,
         ) -> ThresholdChangeData {
             self.change_threshold.get_threshold_change_transaction(id)
         }
 
         fn get_all_threshold_change_transactions_pub(
-            self: @ContractState
+            self: @ContractState,
         ) -> Array<ThresholdChangeData> {
             let threshold_change_txs = self
                 .change_threshold
@@ -380,7 +381,7 @@ pub mod MockContract {
         }
 
         fn propose_remove_member_transaction_pub(
-            ref self: ContractState, member_address: ContractAddress
+            ref self: ContractState, member_address: ContractAddress,
         ) -> u256 {
             self.member_remove.propose_remove_member_transaction(member_address)
         }
@@ -393,12 +394,12 @@ pub mod MockContract {
             self.member_remove.member_removal_transaction_list()
         }
         fn propose_member_add_transaction_pub(
-            ref self: ContractState, member: ContractAddress, permissions: u8
+            ref self: ContractState, member: ContractAddress, permissions: u8,
         ) -> u256 {
             self.member_add.propose_member_add_transaction(member, permissions)
         }
         fn get_member_add_transaction_pub(
-            self: @ContractState, transaction_id: u256
+            self: @ContractState, transaction_id: u256,
         ) -> MemberAddData {
             self.member_add.get_member_add_transaction(transaction_id)
         }
@@ -421,12 +422,12 @@ pub mod MockContract {
             self.nft_transaction.execute_nft_transaction(id);
         }
         fn propose_edit_permission_transaction_pub(
-            ref self: ContractState, member: ContractAddress, new_permissions: u8
+            ref self: ContractState, member: ContractAddress, new_permissions: u8,
         ) -> u256 {
             self.member_permission.propose_edit_permission_transaction(member, new_permissions)
         }
         fn get_edit_permission_transaction_pub(
-            self: @ContractState, transaction_id: u256
+            self: @ContractState, transaction_id: u256,
         ) -> EditPermissionTransaction {
             self.member_permission.get_edit_permission_transaction(transaction_id)
         }
@@ -434,7 +435,7 @@ pub mod MockContract {
             self.member_permission.execute_edit_permission_transaction(transaction_id);
         }
         fn get_member_full_details_pub(
-            self: @ContractState, member: ContractAddress
+            self: @ContractState, member: ContractAddress,
         ) -> MemberDetails {
             self.account_data.get_member_full_details(member)
         }
@@ -442,7 +443,7 @@ pub mod MockContract {
             self.account_data.update_smart_will(will_address);
         }
         fn get_member_will_address_pub(
-            self: @ContractState, member: ContractAddress
+            self: @ContractState, member: ContractAddress,
         ) -> ContractAddress {
             self.account_data.get_member_will_address(member)
         }
@@ -455,8 +456,11 @@ pub mod MockContract {
         fn can_update_will_pub(self: @ContractState, member: ContractAddress) -> bool {
             self.account_data.can_update_will(member)
         }
+        fn reset_will_duration_pub(ref self: ContractState, member: ContractAddress) {
+            self.account_data.reset_will_duration(member);
+        }
         fn transaction_list_pub(
-            self: @ContractState, start: Option<u64>, limit: Option<u64>
+            self: @ContractState, start: Option<u64>, limit: Option<u64>,
         ) -> Array<Transaction> {
             self.account_data.transaction_list(start, limit)
         }
@@ -518,7 +522,7 @@ pub mod MockContract {
             self.account_data.update_smart_will(will_address);
         }
         fn get_member_will_address(
-            self: @ContractState, member: ContractAddress
+            self: @ContractState, member: ContractAddress,
         ) -> ContractAddress {
             self.account_data.get_member_will_address(member)
         }
@@ -532,7 +536,7 @@ pub mod MockContract {
             self.account_data.can_update_will(member)
         }
         fn transaction_list(
-            self: @ContractState, start: Option<u64>, limit: Option<u64>
+            self: @ContractState, start: Option<u64>, limit: Option<u64>,
         ) -> Array<Transaction> {
             self.account_data.transaction_list(start, limit)
         }

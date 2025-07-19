@@ -11,18 +11,18 @@ pub mod PermissionControl {
     use core::pedersen::pedersen; // Import the pedersen function
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::{
-        Permissions, PermissionEnum, PermissionTrait
+        PermissionEnum, PermissionTrait, Permissions,
     }; // Import permission constants
     use starknet::ContractAddress;
     use starknet::storage::{
-        StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
 
     #[storage]
     pub struct Storage {
         member_permission: Map<
-            (felt252, ContractAddress), bool
-        >, // (Permission, Member) => bool (has_permission)
+            (felt252, ContractAddress), bool,
+        > // (Permission, Member) => bool (has_permission)
     }
     /// Events emitted by this component.
     #[event]
@@ -51,10 +51,10 @@ pub mod PermissionControl {
     /// External interface implementation.
     #[embeddable_as(PermissionControl)]
     impl PermissionControlImpl<
-        TContractState, +HasComponent<TContractState>
+        TContractState, +HasComponent<TContractState>,
     > of IPermissionControl<ComponentState<TContractState>> {
         fn has_permission(
-            self: @ComponentState<TContractState>, member: ContractAddress, permission: felt252
+            self: @ComponentState<TContractState>, member: ContractAddress, permission: felt252,
         ) -> bool {
             self
                 .member_permission
@@ -79,7 +79,7 @@ pub mod PermissionControl {
             return permissions;
         }
         fn permissions_to_mask(
-            self: @ComponentState<TContractState>, permissions: Array<PermissionEnum>
+            self: @ComponentState<TContractState>, permissions: Array<PermissionEnum>,
         ) -> u8 {
             let mut mask: u8 = 0;
             for index in 0..permissions.len() {
@@ -88,7 +88,7 @@ pub mod PermissionControl {
             mask
         }
         fn permissions_from_mask(
-            self: @ComponentState<TContractState>, mask: u8
+            self: @ComponentState<TContractState>, mask: u8,
         ) -> Array<PermissionEnum> {
             let mut permissions_array: Array<PermissionEnum> = array![];
             if PermissionEnum::PROPOSER.has_permission_from_mask(mask) {
@@ -111,7 +111,7 @@ pub mod PermissionControl {
     /// Internal implementation.
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
+        TContractState, +HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         /// Assigns the PROPOSER permission to a member.
         /// Emits a PermissionGranted event.
@@ -119,7 +119,7 @@ pub mod PermissionControl {
         /// # Parameters
         /// * `member` - The address of the member (ContractAddress).
         fn assign_proposer_permission(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::PROPOSER);
             if (!permissioned) {
@@ -130,8 +130,8 @@ pub mod PermissionControl {
                 self
                     .emit(
                         Event::PermissionGranted(
-                            PermissionGranted { permission: Permissions::PROPOSER, member }
-                        )
+                            PermissionGranted { permission: Permissions::PROPOSER, member },
+                        ),
                     ); // Emit the PermissionGranted event.
             }
         }
@@ -142,7 +142,7 @@ pub mod PermissionControl {
         /// # Parameters
         /// * `member` - The address of the member (ContractAddress).
         fn assign_voter_permission(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::VOTER);
             if (!permissioned) {
@@ -153,8 +153,8 @@ pub mod PermissionControl {
                 self
                     .emit(
                         Event::PermissionGranted(
-                            PermissionGranted { permission: Permissions::VOTER, member }
-                        )
+                            PermissionGranted { permission: Permissions::VOTER, member },
+                        ),
                     ); // Emit the PermissionGranted event.
             }
         }
@@ -165,7 +165,7 @@ pub mod PermissionControl {
         /// # Parameters
         /// * `member` - The address of the member (ContractAddress).
         fn assign_executor_permission(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let permissioned = self.has_permission(member, Permissions::EXECUTOR);
             if (!permissioned) {
@@ -176,8 +176,8 @@ pub mod PermissionControl {
                 self
                     .emit(
                         Event::PermissionGranted(
-                            PermissionGranted { permission: Permissions::EXECUTOR, member }
-                        )
+                            PermissionGranted { permission: Permissions::EXECUTOR, member },
+                        ),
                     ); // Emit the PermissionGranted event.
             }
         }
@@ -189,7 +189,7 @@ pub mod PermissionControl {
         /// - `member` - The address of the member (ContractAddress).
         /// - `permission` - The permission identifier (felt252).
         fn revoke_permission(
-            ref self: ComponentState<TContractState>, member: ContractAddress, permission: felt252
+            ref self: ComponentState<TContractState>, member: ContractAddress, permission: felt252,
         ) {
             self
                 .member_permission
@@ -197,7 +197,7 @@ pub mod PermissionControl {
                 .write(false); // Revoke the permission.
             self
                 .emit(
-                    Event::PermissionRevoked(PermissionRevoked { permission, account: member })
+                    Event::PermissionRevoked(PermissionRevoked { permission, account: member }),
                 ); // Emit the PermissionRevoked event.
         }
 
@@ -250,7 +250,7 @@ pub mod PermissionControl {
         /// # Parameters
         /// - `member` - The address of the member (ContractAddress).
         fn assign_all_permissions(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             self.assign_proposer_permission(member);
             self.assign_voter_permission(member);
@@ -264,7 +264,7 @@ pub mod PermissionControl {
         /// # Parameters
         /// - `member` - The address of the member (ContractAddress).
         fn revoke_all_permissions(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             self.revoke_proposer_permission(member);
             self.revoke_voter_permission(member);
@@ -281,7 +281,7 @@ pub mod PermissionControl {
         fn assign_permissions_from_enums(
             ref self: ComponentState<TContractState>,
             member: ContractAddress,
-            permissions: Array<PermissionEnum>
+            permissions: Array<PermissionEnum>,
         ) {
             for index in 0
                 ..permissions

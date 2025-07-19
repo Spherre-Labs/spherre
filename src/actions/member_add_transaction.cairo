@@ -22,15 +22,15 @@ pub mod MemberAddTransaction {
     use spherre::types::{MemberAddData, Transaction};
     use spherre::types::{TransactionType};
     use starknet::storage::{
-        Map, StoragePathEntry, Vec, VecTrait, MutableVecTrait, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
     use starknet::{ContractAddress};
 
     #[storage]
     pub struct Storage {
         member_add_transactions: Map<u256, MemberAddData>,
-        member_add_transaction_ids: Vec<u256>
+        member_add_transaction_ids: Vec<u256>,
     }
 
     #[event]
@@ -65,7 +65,7 @@ pub mod MemberAddTransaction {
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IMemberAddTransaction<ComponentState<TContractState>> {
         fn propose_member_add_transaction(
-            ref self: ComponentState<TContractState>, member: ContractAddress, permissions: u8
+            ref self: ComponentState<TContractState>, member: ContractAddress, permissions: u8,
         ) -> u256 {
             // validate that member is not zero
             assert(member.is_non_zero(), Errors::ERR_NON_ZERO_MEMBER_ADDRESS);
@@ -73,7 +73,7 @@ pub mod MemberAddTransaction {
             // Validate the provided permission
             assert(
                 permission_control_comp.is_valid_mask(permissions),
-                Errors::ERR_INVALID_PERMISSION_MASK
+                Errors::ERR_INVALID_PERMISSION_MASK,
             );
 
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -97,19 +97,19 @@ pub mod MemberAddTransaction {
         }
 
         fn get_member_add_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) -> MemberAddData {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(transaction_id);
             assert(
                 transaction.tx_type == TransactionType::MEMBER_ADD,
-                Errors::ERR_INVALID_MEMBER_ADD_TRANSACTION
+                Errors::ERR_INVALID_MEMBER_ADD_TRANSACTION,
             );
             self.member_add_transactions.entry(transaction_id).read()
         }
 
         fn member_add_transaction_list(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<MemberAddData> {
             let mut array: Array<MemberAddData> = array![];
             let range_stop = self.member_add_transaction_ids.len();
@@ -123,17 +123,17 @@ pub mod MemberAddTransaction {
             array
         }
         fn execute_member_add_transaction(
-            ref self: ComponentState<TContractState>, transaction_id: u256
+            ref self: ComponentState<TContractState>, transaction_id: u256,
         ) {
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
             let mut permission_control_comp = get_dep_component_mut!(ref self, PermissionControl);
             let member_add_data = self.get_member_add_transaction(transaction_id);
             assert(
-                !account_data_comp.is_member(member_add_data.member), Errors::ERR_ALREADY_A_MEMBER
+                !account_data_comp.is_member(member_add_data.member), Errors::ERR_ALREADY_A_MEMBER,
             );
             assert(
                 permission_control_comp.is_valid_mask(member_add_data.permissions),
-                Errors::ERR_INVALID_PERMISSION_MASK
+                Errors::ERR_INVALID_PERMISSION_MASK,
             );
             // Execute the transaction (error occurs if threshold is not met or caller is not an
             // executor)
@@ -156,8 +156,8 @@ pub mod MemberAddTransaction {
                     MemberAddTransactionExecuted {
                         transaction_id,
                         member: member_add_data.member,
-                        permissions: member_add_data.permissions
-                    }
+                        permissions: member_add_data.permissions,
+                    },
                 );
         }
     }

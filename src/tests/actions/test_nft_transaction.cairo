@@ -1,14 +1,14 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
 
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_nft() -> IERC721Dispatcher {

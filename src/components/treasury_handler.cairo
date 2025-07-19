@@ -5,12 +5,12 @@ pub mod TreasuryHandler {
     use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use spherre::interfaces::itreasury_handler::ITreasuryHandler;
-    use spherre::types::{SmartTokenLock, LockStatus};
+    use spherre::types::{LockStatus, SmartTokenLock};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
-        StoragePointerWriteAccess
+        StoragePointerWriteAccess,
     };
-    use starknet::{ContractAddress, get_contract_address, get_block_timestamp};
+    use starknet::{ContractAddress, get_block_timestamp, get_contract_address};
 
     #[storage]
     pub struct Storage {
@@ -120,7 +120,7 @@ pub mod TreasuryHandler {
         /// # Returns
         /// - `u64` – The duration in seconds.
         fn convert_duration_to_timestamp(
-            self: @ComponentState<TContractState>, duration: u64
+            self: @ComponentState<TContractState>, duration: u64,
         ) -> u64 {
             86400 * duration
         }
@@ -231,9 +231,9 @@ pub mod TreasuryHandler {
                 .emit(
                     Event::TokenLocked(
                         TokenLocked {
-                            lock_id: new_lock_id, token: token_address, amount, lock_duration
-                        }
-                    )
+                            lock_id: new_lock_id, token: token_address, amount, lock_duration,
+                        },
+                    ),
                 );
 
             new_lock_id
@@ -272,9 +272,9 @@ pub mod TreasuryHandler {
                 .emit(
                     Event::TokenUnlocked(
                         TokenUnlocked {
-                            lock_id, token: lock_plan.token, amount: lock_plan.token_amount
-                        }
-                    )
+                            lock_id, token: lock_plan.token, amount: lock_plan.token_amount,
+                        },
+                    ),
                 );
         }
     }

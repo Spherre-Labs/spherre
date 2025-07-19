@@ -23,18 +23,18 @@ pub mod SpherreAccountV2 {
     use openzeppelin_upgrades::UpgradeableComponent;
     use openzeppelin_upgrades::interface::IUpgradeable;
     use spherre::{
-        account_data::AccountData, components::permission_control::PermissionControl,
+        account_data::AccountData,
         actions::{
             change_threshold_transaction::ChangeThresholdTransaction,
-            member_permission_tx::MemberPermissionTransaction,
             member_add_transaction::MemberAddTransaction,
+            member_permission_tx::MemberPermissionTransaction,
             member_remove_transaction::MemberRemoveTransaction, nft_transaction::NFTTransaction,
             token_transaction::TokenTransaction,
         },
-        {errors::Errors}, types::AccountDetails,
+        components::permission_control::PermissionControl, types::AccountDetails, {errors::Errors},
     };
     use starknet::{
-        {ContractAddress, get_caller_address, contract_address_const, ClassHash},
+        {ClassHash, ContractAddress, contract_address_const, get_caller_address},
         {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
     };
     use super::IAccountV2;
@@ -49,12 +49,12 @@ pub mod SpherreAccountV2 {
     component!(
         path: MemberAddTransaction,
         storage: member_add_transaction,
-        event: MemberAddTransactionEvent
+        event: MemberAddTransactionEvent,
     );
     component!(
         path: MemberRemoveTransaction,
         storage: member_remove_transaction,
-        event: MemberRemoveTransactionEvent
+        event: MemberRemoveTransactionEvent,
     );
     component!(
         path: MemberPermissionTransaction,

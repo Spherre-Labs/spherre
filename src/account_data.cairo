@@ -12,6 +12,7 @@ pub mod AccountData {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
+
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::components::permission_control;
@@ -22,17 +23,17 @@ pub mod AccountData {
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::interfaces::ispherre::{ISpherreDispatcher, ISpherreDispatcherTrait};
     use spherre::types::{
-        TransactionStatus, TransactionType, Transaction, Permissions, MemberDetails, FeesType,
+        FeesType, MemberDetails, Permissions, Transaction, TransactionStatus, TransactionType,
     };
     use starknet::storage::MutableVecTrait;
-    use starknet::{ContractAddress, get_caller_address, get_block_timestamp, get_contract_address};
-
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days in seconds
+    const THIRTY_DAYS_IN_SECONDS: u64 = 30 * 24 * 60 * 60;
 
     #[storage]
     pub struct Storage {
         pub transactions: Map::<
-            u256, StorageTransaction
+            u256, StorageTransaction,
         >, // Map(tx_id, StorageTransaction) the transactions of the account
         pub tx_count: u256, // the transaction length
         pub threshold: u64, // the number of members required to approve a transaction for it to be executed
@@ -76,6 +77,7 @@ pub mod AccountData {
         TransactionExecuted: TransactionExecuted,
         // Smart Will events
         SmartWillUpdated: SmartWillUpdated,
+        WillDurationReset: WillDurationReset,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -97,21 +99,21 @@ pub mod AccountData {
         transaction_id: u256,
         #[key]
         voter: ContractAddress,
-        date_voted: u64
+        date_voted: u64,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct TransactionApproved {
         #[key]
         transaction_id: u256,
-        date_approved: u64
+        date_approved: u64,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct TransactionRejected {
         #[key]
         transaction_id: u256,
-        date_approved: u64
+        date_approved: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -120,7 +122,7 @@ pub mod AccountData {
         transaction_id: u256,
         #[key]
         executor: ContractAddress,
-        date_executed: u64
+        date_executed: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -132,6 +134,17 @@ pub mod AccountData {
         duration: u64,
         creation_time: u64,
     }
+
+    #[derive(Drop, starknet::Event)]
+    struct WillDurationReset {
+        #[key]
+        member: ContractAddress,
+        #[key]
+        old_expiry: u64,
+        #[key]
+        new_expiration: u64,
+    }
+
 
     #[embeddable_as(AccountData)]
     pub impl AccountDataImpl<
@@ -165,7 +178,7 @@ pub mod AccountData {
             (threshold, members_count)
         }
         fn get_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) -> Transaction {
             // Check if transaction ID is within valid range
             self.assert_valid_transaction(transaction_id);
@@ -311,7 +324,9 @@ pub mod AccountData {
             self.collect_fees(FeesType::VOTING_FEE);
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
+                    TransactionVoted {
+                        transaction_id: tx_id, voter: member, date_voted: timestamp,
+                    },
                 );
         }
         fn reject_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {
@@ -363,11 +378,13 @@ pub mod AccountData {
 
             self
                 .emit(
-                    TransactionVoted { transaction_id: tx_id, voter: member, date_voted: timestamp }
+                    TransactionVoted {
+                        transaction_id: tx_id, voter: member, date_voted: timestamp,
+                    },
                 );
         }
         fn get_member_full_details(
-            self: @ComponentState<TContractState>, member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> MemberDetails {
             // Verify member exists
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
@@ -390,7 +407,7 @@ pub mod AccountData {
             }
         }
         fn update_smart_will(
-            ref self: ComponentState<TContractState>, will_address: ContractAddress
+            ref self: ComponentState<TContractState>, will_address: ContractAddress,
         ) {
             // Get caller
             let caller = get_caller_address();
@@ -430,27 +447,27 @@ pub mod AccountData {
                         member: caller,
                         will_address,
                         duration: DEFAULT_WILL_DURATION,
-                        creation_time: current_time
-                    }
+                        creation_time: current_time,
+                    },
                 );
         }
 
         fn get_member_will_address(
-            self: @ComponentState<TContractState>, member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> ContractAddress {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
             self.member_to_smart_will.entry(member).read()
         }
 
         fn get_member_will_duration(
-            self: @ComponentState<TContractState>, member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> u64 {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
             self.member_to_will_duration.entry(member).read()
         }
 
         fn get_remaining_will_time(
-            self: @ComponentState<TContractState>, member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress,
         ) -> u64 {
             assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
 
@@ -487,8 +504,45 @@ pub mod AccountData {
                 false
             }
         }
+
+        fn reset_will_duration(ref self: ComponentState<TContractState>, member: ContractAddress) {
+            // Validate member exists
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+
+            // Check will wallet exists
+            let will_wallet = self.member_to_smart_will.entry(member).read();
+            assert(will_wallet.is_non_zero(), Errors::ERR_WILL_WALLET_NOT_SET);
+
+            // Get current expiration
+            let current_expiration = self.member_to_will_duration.entry(member).read();
+            let current_time = get_block_timestamp();
+
+            // Check will hasn't expired
+            assert(current_expiration > current_time, Errors::ERR_WILL_DURATION_HAS_ELAPSED);
+
+            // Check within reset window (30 days before expiration)
+            let reset_window_start = current_expiration - THIRTY_DAYS_IN_SECONDS;
+            assert(current_time >= reset_window_start, Errors::ERR_RESET_WINDOW_NOT_ACTIVE);
+
+            // Calculate new expiration
+            let new_expiration = current_expiration + DEFAULT_WILL_DURATION;
+
+            // Update storage
+            self.member_to_will_duration.entry(member).write(new_expiration);
+
+            // Emit event with proper syntax
+            self
+                .emit(
+                    Event::WillDurationReset(
+                        WillDurationReset {
+                            member, old_expiry: current_expiration, new_expiration,
+                        },
+                    ),
+                );
+        }
+
         fn transaction_list(
-            self: @ComponentState<TContractState>, start: Option<u64>, limit: Option<u64>
+            self: @ComponentState<TContractState>, start: Option<u64>, limit: Option<u64>,
         ) -> Array<Transaction> {
             let transaction_count = self.tx_count.read();
 
@@ -500,7 +554,7 @@ pub mod AccountData {
                 Option::Some(s) => {
                     assert(
                         s > 0 && s.into() <= transaction_count,
-                        Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE
+                        Errors::ERR_TRANSACTION_INDEX_OUT_OF_RANGE,
                     );
                     s.into()
                 },
@@ -511,7 +565,7 @@ pub mod AccountData {
                 Option::Some(l) => {
                     assert(
                         l > 0 && start_idx + l.into() <= transaction_count + 1,
-                        Errors::ERR_TRANSACTION_LIMIT_OUT_OF_RANGE
+                        Errors::ERR_TRANSACTION_LIMIT_OUT_OF_RANGE,
                     );
                     l.into()
                 },
@@ -641,7 +695,7 @@ pub mod AccountData {
         /// It raises an error if the caller is not a member of the account.
         /// It raises an error if the caller does not have the proposer permission.
         fn create_transaction(
-            ref self: ComponentState<TContractState>, tx_type: TransactionType
+            ref self: ComponentState<TContractState>, tx_type: TransactionType,
         ) -> u256 {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
@@ -653,7 +707,7 @@ pub mod AccountData {
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
                 permission_control_comp.has_permission(member, Permissions::PROPOSER),
-                Errors::ERR_NOT_PROPOSER
+                Errors::ERR_NOT_PROPOSER,
             );
 
             // increment the id
@@ -691,7 +745,7 @@ pub mod AccountData {
         /// It raises an error if the caller is not a member of the account.
         /// It raises an error if the caller does not have the executor permission.
         /// It raises an error if the contract is paused.
-        fn execute_transaction(ref self: ComponentState<TContractState>, transaction_id: u256,) {
+        fn execute_transaction(ref self: ComponentState<TContractState>, transaction_id: u256) {
             // PAUSE GUARD
             let pausable = get_dep_component!(@self, Pausable);
             pausable.assert_not_paused();
@@ -701,7 +755,7 @@ pub mod AccountData {
             let transaction = self.transactions.entry(transaction_id);
             assert(
                 transaction.tx_status.read() == TransactionStatus::APPROVED,
-                Errors::ERR_TRANSACTION_NOT_EXECUTABLE
+                Errors::ERR_TRANSACTION_NOT_EXECUTABLE,
             );
             // Validate member (with smart will support)
             let (member, _caller) = self.validate_member(get_caller_address());
@@ -709,7 +763,7 @@ pub mod AccountData {
             let permission_control_comp = get_dep_component!(@self, PermissionControl);
             assert(
                 permission_control_comp.has_permission(member, Permissions::EXECUTOR),
-                Errors::ERR_NOT_EXECUTOR
+                Errors::ERR_NOT_EXECUTOR,
             );
 
             transaction.tx_status.write(TransactionStatus::EXECUTED);
@@ -727,7 +781,7 @@ pub mod AccountData {
                 .emit(
                     TransactionExecuted {
                         transaction_id: transaction_id, executor: member, date_executed: timestamp,
-                    }
+                    },
                 );
         }
         /// Updates the status of a transaction
@@ -743,7 +797,7 @@ pub mod AccountData {
         fn _update_transaction_status(
             ref self: ComponentState<TContractState>,
             transaction_id: u256,
-            status: TransactionStatus
+            status: TransactionStatus,
         ) {
             self.assert_valid_transaction(transaction_id);
             self.transactions.entry(transaction_id).tx_status.write(status);
@@ -767,13 +821,13 @@ pub mod AccountData {
         /// This function checks if a transaction is in a votable state, meaning it has been
         /// initiated and is not yet executed, approved or rejected.
         fn assert_is_votable_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) {
             self.assert_valid_transaction(transaction_id);
             let transaction = self.transactions.entry(transaction_id);
             assert(
                 transaction.tx_status.read() == TransactionStatus::INITIATED,
-                Errors::ERR_TRANSACTION_NOT_VOTABLE
+                Errors::ERR_TRANSACTION_NOT_VOTABLE,
             );
         }
         /// Asserts that the caller can vote on a transaction
@@ -791,7 +845,7 @@ pub mod AccountData {
         /// It raises an error if the caller does not have the voter permission.
         /// It raises an error if the caller has already voted on the transaction.
         fn assert_caller_can_vote(
-            self: @ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress
+            self: @ComponentState<TContractState>, transaction_id: u256, caller: ContractAddress,
         ) {
             // check for transaction validity
             // check if transaction in range
@@ -803,34 +857,34 @@ pub mod AccountData {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             assert(
                 permission_control_comp.has_permission(caller, Permissions::VOTER),
-                Errors::ERR_NOT_VOTER
+                Errors::ERR_NOT_VOTER,
             );
             // check that member has not voted
             assert(
                 !self.has_voted.entry((transaction_id, caller)).read(),
-                Errors::ERR_CALLER_CANNOT_VOTE
+                Errors::ERR_CALLER_CANNOT_VOTE,
             );
         }
         fn _increment_proposed_count(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let current_count = self.member_proposed_count.entry(member).read();
             self.member_proposed_count.entry(member).write(current_count + 1);
         }
         fn _increment_approved_count(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let current_count = self.member_approved_count.entry(member).read();
             self.member_approved_count.entry(member).write(current_count + 1);
         }
         fn _increment_rejected_count(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let current_count = self.member_rejected_count.entry(member).read();
             self.member_rejected_count.entry(member).write(current_count + 1);
         }
         fn _increment_executed_count(
-            ref self: ComponentState<TContractState>, member: ContractAddress
+            ref self: ComponentState<TContractState>, member: ContractAddress,
         ) {
             let current_count = self.member_executed_count.entry(member).read();
             self.member_executed_count.entry(member).write(current_count + 1);
@@ -838,7 +892,7 @@ pub mod AccountData {
         fn validate_will_conditions(
             self: @ComponentState<TContractState>,
             member: ContractAddress,
-            will_address: ContractAddress
+            will_address: ContractAddress,
         ) {
             // Check if will_address is zero
             assert(!will_address.is_zero(), Errors::ERR_INVALID_WILL_ADDRESS);
@@ -880,7 +934,7 @@ pub mod AccountData {
             // Check that the allowance is enough for the fee
             assert(
                 erc20_dispatcher.allowance(caller, account_address) >= fee,
-                Errors::ERR_INSUFFICIENT_ALLOWANCE
+                Errors::ERR_INSUFFICIENT_ALLOWANCE,
             );
             // Transfer Fee
             erc20_dispatcher.transfer_from(caller, deployer, fee);
@@ -888,7 +942,7 @@ pub mod AccountData {
             deployer_dispatcher.update_fee_collection_statistics(fee_type, fee);
         }
         fn validate_member(
-            self: @ComponentState<TContractState>, caller: ContractAddress
+            self: @ComponentState<TContractState>, caller: ContractAddress,
         ) -> (ContractAddress, ContractAddress) {
             // Validate that the caller is a member or is a smart will address of a member
             if self.is_member(caller) {
@@ -915,6 +969,16 @@ pub mod AccountData {
                 assert(remaining_time == 0, Errors::ERR_WILL_DURATION_NOT_ELAPSED);
                 (member, caller)
             }
+        }
+
+        fn assert_valid_member(self: @ComponentState<TContractState>, member: ContractAddress) {
+            assert(self.is_member(member), Errors::ERR_NOT_MEMBER);
+        }
+
+        fn get_will_wallet(
+            self: @ComponentState<TContractState>, member: ContractAddress,
+        ) -> ContractAddress {
+            self.member_to_smart_will.entry(member).read()
         }
     }
 }
