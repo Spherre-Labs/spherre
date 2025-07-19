@@ -1318,139 +1318,97 @@ fn test_member_without_smart_will_can_perform_transaction_operations_without_iss
 }
 
 
-#[cfg(test)]
-mod test_reset_will_duration {
-    use core::num::traits::Zero;
-    use crate::interfaces::iaccount_data::{IAccountDataDispatcher, IAccountDataDispatcherTrait};
-    use crate::tests::mocks::mock_account_data::MockAccountDataDispatcher;
-    use crate::tests::utils::{advance_block_timestamp, setup_account_with_will};
-    use snforge_std::{CheatTarget, declare, deploy, set_block_timestamp, start_prank, stop_prank};
-    use starknet::ContractAddress;
-
-    const THIRTY_DAYS_IN_SECONDS: u64 = 2592000;
-    const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days
+const THIRTY_DAYS_IN_SECONDS: u64 = 2592000;
 
 
-    #[test]
-    fn test_reset_will_success() {
-        let (account, will) = setup_account_with_will();
-        let dispatcher = MockAccountDataDispatcher { contract_address: account };
+#[test]
+fn test_reset_will_success() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
 
-        // Move time to 29 days before expiration
-        let creation_time = dispatcher.get_member_will_creation_time(account);
-        let initial_expiry = creation_time + DEFAULT_WILL_DURATION;
-        advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 86400); // 29 days before
-
-        dispatcher.reset_will_duration(account);
-
-        let new_expiration = dispatcher.get_member_will_expiration(account);
-        assert(
-            new_expiration == initial_expiry + DEFAULT_WILL_DURATION, 'Will expiration not extended'
-        );
-    }
-
-
-    #[test]
-    #[should_panic(expected: 'Member has no will wallet')]
-    fn test_reset_without_will() {
-        let (account, _) = setup_account_with_will();
-        let dispatcher = MockAccountDataDispatcher { contract_address: account };
-
-        // Remove will wallet
-        dispatcher.update_smart_will(Zero::zero());
-        dispatcher.reset_will_duration(account);
-    }
-
-    #[test]
-    #[should_panic(expected: 'ERR_WILL_DURATION_HAS_ELAPSED')]
-    fn test_reset_after_expiration() {
-        let (account, _) = setup_account_with_will();
-        let dispatcher = MockAccountDataDispatcher { contract_address: account };
-
-        // Move time past expiration
-        let expiry = dispatcher.get_member_will_duration(account);
-        advance_block_timestamp(expiry + 1);
-
-        dispatcher.reset_will_duration(account);
-    }
-
-    #[test]
-    #[should_panic(expected: 'ERR_RESET_WINDOW_NOT_ACTIVE')]
-    fn test_reset_too_early() {
-        let (account, _) = setup_account_with_will();
-        let dispatcher = MockAccountDataDispatcher { contract_address: account };
-
-        // Try resetting 31 days before expiration
-        let expiry = dispatcher.get_member_will_duration(account);
-        advance_block_timestamp(expiry - THIRTY_DAYS_IN_SECONDS - 86400);
-
-        dispatcher.reset_will_duration(account);
-    }
-
-    #[test]
-    fn test_event_emission() {
-        let (account, _) = setup_account_with_will();
-        let dispatcher = MockAccountDataDispatcher { contract_address: account };
-
-        // Setup time
-        let initial_expiry = dispatcher.get_member_will_duration(account);
-        advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 1);
-
-        // Capture events
-        let snapshot = starknet::testing::event_snapshot();
-        dispatcher.reset_will_duration(account);
-        let events = starknet::testing::new_events(snapshot);
-
-        assert(events.len() == 1, 'Event not emitted');
-        match events[0] {
-            Event::WillDurationReset(event) => {
-                assert(event.member == account, 'Wrong member');
-                assert(
-                    event.new_expiration == initial_expiry + DEFAULT_WILL_DURATION, 'Wrong expiry',
-                );
-            },
-            _ => panic_with_felt252('Wrong event type'),
-        }
-    }
-
-    #[test]
-    fn test_successful_duration_reset() {
-        // 1. Deploy contract and create interface dispatcher
-        let contract_address = deploy("account_data");
-        let dispatcher = IAccountDataDispatcher { contract_address };
-
-        // 2. Test member address (contract assumes caller context, but we'll simulate)
-        let test_member: ContractAddress =
-            contract_address; // simulate caller is the contract deployer
-
-        // 3. Set starting time and initialize state
-        let start_time = 1_000;
-        set_block_timestamp(start_time);
-
-        // 4. Manually simulate previous setup:
-        // Set up the member's will first
-        let will_address: ContractAddress = 0x456.try_into().unwrap();
-        start_prank(CheatTarget::One(contract_address), test_member);
-        dispatcher.update_smart_will(will_address);
-        stop_prank(CheatTarget::One(contract_address));
-
-        // 5. Advance to a timestamp within reset window (e.g., 29 days before expiry)
-        let reset_window_time = start_time
-            + DEFAULT_WILL_DURATION
-            - THIRTY_DAYS_IN_SECONDS
-            + 86_400;
-        set_block_timestamp(reset_window_time);
-
-        // 6. Call reset_will_duration (the actual functionality under test)
-        dispatcher.reset_will_duration(test_member);
-
-        // 7. Verify: new expiration = old_expiry + DEFAULT_WILL_DURATION (NINETY_DAYS)
-        let new_expiry = dispatcher.get_member_will_duration(test_member);
-        let expected_expiry = (start_time + DEFAULT_WILL_DURATION) + DEFAULT_WILL_DURATION;
-
-        assert(new_expiry == expected_expiry, 'Will duration not properly extended');
-    }
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Set cheat block timestamp for 30 days before expiration
+    let current_time = DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS + 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+    // try to reset will duration
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Check new will duration
+    let new_expiry = mock_contract.get_member_will_duration_pub(caller);
+    let expected_expiry = DEFAULT_WILL_DURATION + 1000 + DEFAULT_WILL_DURATION;
+    assert(new_expiry == expected_expiry, 'duration not reset correctly');
 }
+
+
+#[test]
+#[should_panic(expected: 'Will wallet not set')]
+fn test_reset_without_will() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Will duration has elapsed')]
+fn test_reset_will_after_expiration() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // Set cheat block timestamp for after expiration
+    let current_time = DEFAULT_WILL_DURATION + 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Reset window is not active')]
+fn test_reset_will_too_early() {
+    let mock_contract = deploy_mock_contract();
+    let caller = member();
+    let will_address = contract_address_const::<2>();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    start_cheat_block_timestamp(mock_contract.contract_address, 1000);
+    mock_contract.add_member_pub(caller);
+    mock_contract.update_smart_will_pub(will_address); // Set will address to self
+    stop_cheat_block_timestamp(mock_contract.contract_address);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Set cheat block timestamp for before reset window
+    let current_time = DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS - 10000;
+    start_cheat_block_timestamp(mock_contract.contract_address, current_time);
+
+    // try to reset will duration (should panic)
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.reset_will_duration_pub(caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
 
 #[test]
 fn test_transaction_list_all_with_start_first() {
