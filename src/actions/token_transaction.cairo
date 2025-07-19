@@ -10,14 +10,14 @@ pub mod TokenTransaction {
     use core::num::traits::Zero;
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
-    use spherre::account_data;
     use spherre::account_data::AccountData::InternalImpl;
     use spherre::account_data::AccountData::InternalTrait;
+    use spherre::account_data;
     use spherre::components::permission_control;
-    use spherre::components::treasury_handler;
     use spherre::components::treasury_handler::TreasuryHandler::InternalImpl as TreasuryHandlerInternalImpl;
     use spherre::components::treasury_handler::TreasuryHandler::InternalTrait as TreasuryHandlerInternalTrait;
     use spherre::components::treasury_handler::TreasuryHandler::TreasuryHandlerImpl;
+    use spherre::components::treasury_handler;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
 
@@ -124,11 +124,12 @@ pub mod TokenTransaction {
         ) -> Array<TokenTransactionData> {
             let mut array: Array<TokenTransactionData> = array![];
             let range_stop = self.token_transaction_ids.len();
-            for index in 0..range_stop {
-                let id = self.token_transaction_ids.at(index).read();
-                let tx = self.token_transactions.entry(id).read();
-                array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.token_transaction_ids.at(index).read();
+                    let tx = self.token_transactions.entry(id).read();
+                    array.append(tx);
+                };
             array
         }
         fn execute_token_transaction(ref self: ComponentState<TContractState>, id: u256) {

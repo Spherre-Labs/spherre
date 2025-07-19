@@ -236,11 +236,12 @@ pub mod SpherreAccount {
         self.name.write(name);
         self.description.write(description);
         let len_member = members.len();
-        for index in 0..len_member {
-            let member = *members.at(index);
-            self.account_data._add_member(member);
-            self.permission_control.assign_all_permissions(member);
-        };
+        for index in 0
+            ..len_member {
+                let member = *members.at(index);
+                self.account_data._add_member(member);
+                self.permission_control.assign_all_permissions(member);
+            };
         self.account_data.set_threshold(threshold);
 
         // Record deployer

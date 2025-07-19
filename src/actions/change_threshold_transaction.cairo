@@ -9,10 +9,10 @@
 #[starknet::component]
 pub mod ChangeThresholdTransaction {
     use core::num::traits::Zero;
-    use openzeppelin::security::PausableComponent;
     use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
-    use spherre::account_data::AccountData;
+    use openzeppelin::security::PausableComponent;
     use spherre::account_data::AccountData::{AccountDataImpl, InternalImpl, InternalTrait};
+    use spherre::account_data::AccountData;
     use spherre::components::permission_control::PermissionControl;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
@@ -106,11 +106,12 @@ pub mod ChangeThresholdTransaction {
         ) -> Array<ThresholdChangeData> {
             let mut array: Array<ThresholdChangeData> = array![];
             let range_stop = self.threshold_change_transaction_ids.len();
-            for index in 0..range_stop {
-                let id = self.threshold_change_transaction_ids.at(index).read();
-                let tx = self.threshold_change_transactions.entry(id).read();
-                array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.threshold_change_transaction_ids.at(index).read();
+                    let tx = self.threshold_change_transactions.entry(id).read();
+                    array.append(tx);
+                };
             array
         }
         fn execute_threshold_change_transaction(

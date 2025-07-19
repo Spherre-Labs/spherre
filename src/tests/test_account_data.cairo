@@ -1331,14 +1331,13 @@ mod test_reset_will_duration {
     const DEFAULT_WILL_DURATION: u64 = 7776000; // 90 days
 
 
-
     #[test]
     fn test_reset_will_success() {
         let (account, will) = setup_account_with_will();
         let dispatcher = MockAccountDataDispatcher { contract_address: account };
 
         // Move time to 29 days before expiration
-         let creation_time = dispatcher.get_member_will_creation_time(account);
+        let creation_time = dispatcher.get_member_will_creation_time(account);
         let initial_expiry = creation_time + DEFAULT_WILL_DURATION;
         advance_block_timestamp(initial_expiry - THIRTY_DAYS_IN_SECONDS + 86400); // 29 days before
 
@@ -1346,11 +1345,10 @@ mod test_reset_will_duration {
 
         let new_expiration = dispatcher.get_member_will_expiration(account);
         assert(
-            new_expiration == initial_expiry + DEFAULT_WILL_DURATION,
-            'Will expiration not extended'
+            new_expiration == initial_expiry + DEFAULT_WILL_DURATION, 'Will expiration not extended'
         );
     }
-    
+
 
     #[test]
     #[should_panic(expected: 'Member has no will wallet')]
@@ -1437,7 +1435,10 @@ mod test_reset_will_duration {
         stop_prank(CheatTarget::One(contract_address));
 
         // 5. Advance to a timestamp within reset window (e.g., 29 days before expiry)
-        let reset_window_time = start_time + DEFAULT_WILL_DURATION - THIRTY_DAYS_IN_SECONDS + 86_400;
+        let reset_window_time = start_time
+            + DEFAULT_WILL_DURATION
+            - THIRTY_DAYS_IN_SECONDS
+            + 86_400;
         set_block_timestamp(reset_window_time);
 
         // 6. Call reset_will_duration (the actual functionality under test)

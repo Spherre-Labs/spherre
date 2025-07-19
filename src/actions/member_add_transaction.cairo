@@ -9,11 +9,11 @@ pub mod MemberAddTransaction {
     use core::num::traits::Zero;
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
-    use spherre::account_data;
     use spherre::account_data::AccountData::InternalImpl;
     use spherre::account_data::AccountData::InternalTrait;
-    use spherre::components::permission_control;
+    use spherre::account_data;
     use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
+    use spherre::components::permission_control;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
 
@@ -114,11 +114,12 @@ pub mod MemberAddTransaction {
             let mut array: Array<MemberAddData> = array![];
             let range_stop = self.member_add_transaction_ids.len();
 
-            for index in 0..range_stop {
-                let id = self.member_add_transaction_ids.at(index).read();
-                let tx = self.member_add_transactions.entry(id).read();
-                array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.member_add_transaction_ids.at(index).read();
+                    let tx = self.member_add_transactions.entry(id).read();
+                    array.append(tx);
+                };
             array
         }
         fn execute_member_add_transaction(

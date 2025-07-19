@@ -251,36 +251,39 @@ pub mod AccountData {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::VOTER) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::VOTER) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
         fn get_number_of_proposers(self: @ComponentState<TContractState>) -> u64 {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::PROPOSER) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::PROPOSER) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
         fn get_number_of_executors(self: @ComponentState<TContractState>) -> u64 {
             let permission_control_comp = get_dep_component!(self, PermissionControl);
             let mut counter: u64 = 0;
             let no_of_members = self.members_count.read();
-            for index in 0..no_of_members {
-                let member = self.members.entry(index).read();
-                if permission_control_comp.has_permission(member, Permissions::EXECUTOR) {
-                    counter = counter + 1;
-                }
-            };
+            for index in 0
+                ..no_of_members {
+                    let member = self.members.entry(index).read();
+                    if permission_control_comp.has_permission(member, Permissions::EXECUTOR) {
+                        counter = counter + 1;
+                    }
+                };
             counter
         }
         fn approve_transaction(ref self: ComponentState<TContractState>, tx_id: u256) {

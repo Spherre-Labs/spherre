@@ -3,9 +3,9 @@ pub mod SmartTokenLockTransactionComponent {
     use core::num::traits::Zero;
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
-    use spherre::account_data;
     use spherre::account_data::AccountData::InternalImpl;
     use spherre::account_data::AccountData::InternalTrait;
+    use spherre::account_data;
     use spherre::components::treasury_handler::TreasuryHandler::{
         InternalImpl as TreasuryHandlerInternalImpl, TreasuryHandlerImpl,
     };
@@ -114,11 +114,12 @@ pub mod SmartTokenLockTransactionComponent {
             let mut smart_lock_tx_array = array![];
             let range_stop = self.smart_token_lock_transaction_ids.len();
 
-            for index in 0..range_stop {
-                let id = self.smart_token_lock_transaction_ids.at(index).read();
-                let tx = self.smart_token_lock_transactions.entry(id).read();
-                smart_lock_tx_array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.smart_token_lock_transaction_ids.at(index).read();
+                    let tx = self.smart_token_lock_transactions.entry(id).read();
+                    smart_lock_tx_array.append(tx);
+                };
 
             smart_lock_tx_array
         }

@@ -112,12 +112,12 @@ pub mod MockContract {
     use spherre::components::permission_control::{PermissionControl};
     use spherre::components::treasury_handler::{TreasuryHandler};
     use spherre::interfaces::itoken_tx::ITokenTransaction;
-    use spherre::types::{EditPermissionTransaction};
     use spherre::types::{
         FeesType, MemberAddData, MemberDetails, MemberRemoveData, NFTTransactionData,
         SmartTokenLockTransaction, ThresholdChangeData, TokenTransactionData, Transaction,
         TransactionStatus, TransactionType,
     };
+    use spherre::types::{EditPermissionTransaction};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_contract_address};
 

@@ -11,12 +11,12 @@ pub mod MemberPermissionTransaction {
     use core::num::traits::Zero;
     use openzeppelin::security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin::security::pausable::PausableComponent;
-    use spherre::account_data;
     use spherre::account_data::AccountData::AccountDataImpl;
     use spherre::account_data::AccountData::InternalTrait as AccountDataInternalTrait;
     use spherre::account_data::AccountData::{InternalImpl as AccountDataInternalImpl};
-    use spherre::components::permission_control;
+    use spherre::account_data;
     use spherre::components::permission_control::PermissionControl::InternalImpl as PermissionControlInternalImpl;
+    use spherre::components::permission_control;
     use spherre::errors::Errors;
     use spherre::interfaces::iaccount_data::IAccountData;
     use spherre::interfaces::iedit_permission_tx::IEditPermissionTransaction;
@@ -127,11 +127,12 @@ pub mod MemberPermissionTransaction {
             let mut array: Array<EditPermissionTransaction> = array![];
             let range_stop = self.member_permission_transaction_ids.len();
 
-            for index in 0..range_stop {
-                let id = self.member_permission_transaction_ids.at(index).read();
-                let tx = self.member_permission_transactions.entry(id).read();
-                array.append(tx);
-            };
+            for index in 0
+                ..range_stop {
+                    let id = self.member_permission_transaction_ids.at(index).read();
+                    let tx = self.member_permission_transactions.entry(id).read();
+                    array.append(tx);
+                };
             array
         }
 

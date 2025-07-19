@@ -92,10 +92,12 @@ pub mod TreasuryHandler {
             let mut locked_plans = array![];
             let lock_count = self.lock_counter.read();
 
-            for i in 1..lock_count + 1 {
-                let lock_plan = self.smart_token_locks.read(i);
-                locked_plans.append(lock_plan);
-            };
+            for i in 1
+                ..lock_count
+                    + 1 {
+                        let lock_plan = self.smart_token_locks.read(i);
+                        locked_plans.append(lock_plan);
+                    };
 
             locked_plans
         }
