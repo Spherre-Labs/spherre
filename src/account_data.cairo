@@ -13,7 +13,6 @@ pub mod AccountData {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
 
-    use crate::errors::Errors::{ERR_RESET_WINDOW_NOT_ACTIVE, ERR_WILL_DURATION_HAS_ELAPSED};
     use openzeppelin_security::PausableComponent::InternalImpl as PausableInternalImpl;
     use openzeppelin_security::pausable::PausableComponent;
     use spherre::components::permission_control;
@@ -512,25 +511,21 @@ pub mod AccountData {
 
             // Check will wallet exists
             let will_wallet = self.member_to_smart_will.entry(member).read();
-            assert(!will_wallet.is_zero(), 'Member has no will wallet');
-            assert(!will_wallet.is_zero(), Errors::ERR_MEMBER_HAS_NO_WILL_WALLET);
+            assert(will_wallet.is_non_zero(), Errors::ERR_WILL_WALLET_NOT_SET);
 
             // Get current expiration
             let current_expiration = self.member_to_will_duration.entry(member).read();
             let current_time = get_block_timestamp();
 
             // Check will hasn't expired
-            assert(current_expiration > current_time, ERR_WILL_DURATION_HAS_ELAPSED);
+            assert(current_expiration > current_time, Errors::ERR_WILL_DURATION_HAS_ELAPSED);
 
             // Check within reset window (30 days before expiration)
             let reset_window_start = current_expiration - THIRTY_DAYS_IN_SECONDS;
-            assert(current_time >= reset_window_start, ERR_RESET_WINDOW_NOT_ACTIVE);
+            assert(current_time >= reset_window_start, Errors::ERR_RESET_WINDOW_NOT_ACTIVE);
 
             // Calculate new expiration
             let new_expiration = current_expiration + DEFAULT_WILL_DURATION;
-            let new_expiration = current_expiration
-                .checked_add(DEFAULT_WILL_DURATION)
-                .expect('Duration calculation overflow');
 
             // Update storage
             self.member_to_will_duration.entry(member).write(new_expiration);
