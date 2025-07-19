@@ -13,20 +13,20 @@ pub mod SpherreAccount {
     use openzeppelin_upgrades::interface::IUpgradeable;
     use spherre::{
         account_data::AccountData,
-        components::{permission_control::PermissionControl, treasury_handler::TreasuryHandler,},
         actions::{
             change_threshold_transaction::ChangeThresholdTransaction,
-            member_permission_tx::MemberPermissionTransaction,
             member_add_transaction::MemberAddTransaction,
+            member_permission_tx::MemberPermissionTransaction,
             member_remove_transaction::MemberRemoveTransaction, nft_transaction::NFTTransaction,
-            token_transaction::TokenTransaction,
             smart_token_lock_transaction::SmartTokenLockTransactionComponent,
+            token_transaction::TokenTransaction,
         },
-        {errors::Errors}, types::{AccountDetails, TransactionStatus, TransactionType},
-        interfaces::iaccount::IAccount,
+        components::{permission_control::PermissionControl, treasury_handler::TreasuryHandler},
+        interfaces::iaccount::IAccount, types::{AccountDetails, TransactionStatus, TransactionType},
+        {errors::Errors},
     };
     use starknet::{
-        {ContractAddress, get_caller_address, contract_address_const, ClassHash},
+        {ClassHash, ContractAddress, contract_address_const, get_caller_address},
         {storage::{StorableStoragePointerReadAccess, StoragePointerWriteAccess}},
     };
 
@@ -41,12 +41,12 @@ pub mod SpherreAccount {
     component!(
         path: MemberAddTransaction,
         storage: member_add_transaction,
-        event: MemberAddTransactionEvent
+        event: MemberAddTransactionEvent,
     );
     component!(
         path: MemberRemoveTransaction,
         storage: member_remove_transaction,
-        event: MemberRemoveTransactionEvent
+        event: MemberRemoveTransactionEvent,
     );
     component!(
         path: MemberPermissionTransaction,
@@ -56,7 +56,7 @@ pub mod SpherreAccount {
     component!(
         path: SmartTokenLockTransactionComponent,
         storage: smart_token_lock_transaction,
-        event: SmartTokenLockTransactionEvent
+        event: SmartTokenLockTransactionEvent,
     );
     component!(path: NFTTransaction, storage: nft_transaction, event: NFTTransactionEvent);
     component!(path: TokenTransaction, storage: token_transaction, event: TokenTransactionEvent);
@@ -284,12 +284,12 @@ pub mod SpherreAccount {
             assert(caller == deployer, Errors::ERR_NOT_DEPLOYER);
             self.pausable.unpause();
         }
-        fn execute_transaction(ref self: ContractState, transaction_id: u256,) {
+        fn execute_transaction(ref self: ContractState, transaction_id: u256) {
             let transaction = self.account_data.get_transaction(transaction_id);
             // Check if the transaction is executable
             assert(
                 transaction.tx_status == TransactionStatus::APPROVED,
-                Errors::ERR_TRANSACTION_NOT_EXECUTABLE
+                Errors::ERR_TRANSACTION_NOT_EXECUTABLE,
             );
 
             match transaction.tx_type {
@@ -331,7 +331,7 @@ pub mod SpherreAccount {
                 _ => {
                     // If the transaction type is not recognized, raise an error
                     panic(array![Errors::ERR_INVALID_TRANSACTION_TYPE]);
-                }
+                },
             }
         }
     }

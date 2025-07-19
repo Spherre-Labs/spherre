@@ -1,14 +1,14 @@
 use core::array::ArrayTrait;
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait, spy_events, EventSpyAssertionsTrait,
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
 use spherre::actions::change_threshold_transaction::ChangeThresholdTransaction;
 
 use spherre::tests::mocks::mock_account_data::{
-    MockContract, IMockContractDispatcher, IMockContractDispatcherTrait,
+    IMockContractDispatcher, IMockContractDispatcherTrait, MockContract,
 };
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 // test utility functions
@@ -90,12 +90,12 @@ fn test_propose_threshold_change_transaction_successful() {
                     MockContract::Event::ChangeThresholdEvent(
                         ChangeThresholdTransaction::Event::ThresholdChangeProposed(
                             ChangeThresholdTransaction::ThresholdChangeProposed {
-                                id: tx_id, new_threshold
-                            }
-                        )
-                    )
-                )
-            ]
+                                id: tx_id, new_threshold,
+                            },
+                        ),
+                    ),
+                ),
+            ],
         );
 }
 

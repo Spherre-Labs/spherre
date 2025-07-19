@@ -1,15 +1,15 @@
 use core::num::traits::Zero;
 use snforge_std::{
-    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
 };
 
 use spherre::components::treasury_handler::TreasuryHandler::{
-    Event, TokenTransferred, NftTransferred, TokenLocked
+    Event, NftTransferred, TokenLocked, TokenTransferred,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use spherre::interfaces::ierc721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use spherre::interfaces::itreasury_handler::{
-    ITreasuryHandlerDispatcher, ITreasuryHandlerDispatcherTrait
+    ITreasuryHandlerDispatcher, ITreasuryHandlerDispatcherTrait,
 };
 use spherre::tests::mocks::mock_nft::{IMockNFTDispatcher, IMockNFTDispatcherTrait};
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
@@ -21,13 +21,13 @@ use starknet::{contract_address_const};
 #[starknet::interface]
 pub trait IMockTreasuryHandler<TContractState> {
     fn transfer_token(
-        ref self: TContractState, token_address: ContractAddress, to: ContractAddress, amount: u256
+        ref self: TContractState, token_address: ContractAddress, to: ContractAddress, amount: u256,
     );
     fn transfer_nft(
-        ref self: TContractState, nft_address: ContractAddress, to: ContractAddress, token_id: u256
+        ref self: TContractState, nft_address: ContractAddress, to: ContractAddress, token_id: u256,
     );
     fn lock_tokens(
-        ref self: TContractState, token_address: ContractAddress, amount: u256, lock_duration: u64
+        ref self: TContractState, token_address: ContractAddress, amount: u256, lock_duration: u64,
     ) -> u256;
     fn unlock_tokens(ref self: TContractState, lock_id: u256);
 }
@@ -62,7 +62,7 @@ pub mod MockTreasuryHandler {
             ref self: ContractState,
             token_address: ContractAddress,
             to: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {
             self.treasury_handler._transfer_token(token_address, to, amount);
         }
@@ -80,7 +80,7 @@ pub mod MockTreasuryHandler {
             ref self: ContractState,
             token_address: ContractAddress,
             amount: u256,
-            lock_duration: u64
+            lock_duration: u64,
         ) -> u256 {
             self.treasury_handler._lock_tokens(token_address, amount, lock_duration)
         }
@@ -196,7 +196,7 @@ fn test_transfer_token_success() {
 
     // Verify TokenTransferred event emitted
     let expected_event = Event::TokenTransferred(
-        TokenTransferred { token: token_address, to: user, amount: transfer_amount, }
+        TokenTransferred { token: token_address, to: user, amount: transfer_amount },
     );
     spy.assert_emitted(@array![(treasury_address, expected_event)]);
 }
@@ -249,7 +249,7 @@ fn test_transfer_nft_success() {
 
     // Verify NftTransferred event emitted
     let expected_event = Event::NftTransferred(
-        NftTransferred { nft: nft_address, to: user, token_id: token_id, }
+        NftTransferred { nft: nft_address, to: user, token_id: token_id },
     );
     spy.assert_emitted(@array![(treasury_address, expected_event)]);
 }
@@ -344,7 +344,7 @@ fn test_lock_tokens_success() {
 
     // Verify event was emitted
     let expected_event = Event::TokenLocked(
-        TokenLocked { lock_id: 1, token: token_address, amount: lock_amount, lock_duration }
+        TokenLocked { lock_id: 1, token: token_address, amount: lock_amount, lock_duration },
     );
     spy.assert_emitted(@array![(treasury_address, expected_event)]);
 }
@@ -380,7 +380,7 @@ fn test_lock_multiple_tokens() {
     let available_balance = treasury_reader.get_token_balance(token_address);
     assert(
         available_balance == initial_balance - (lock_amount_1 + lock_amount_2),
-        'Available balance incorrect'
+        'Available balance incorrect',
     );
 }
 

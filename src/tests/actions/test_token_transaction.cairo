@@ -1,13 +1,13 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::types::{TransactionType, TransactionStatus};
+use spherre::types::{TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
@@ -89,7 +89,7 @@ fn test_propose_transaction_fail_if_not_proposer() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
@@ -112,7 +112,7 @@ fn test_propose_transaction_fail_if_balance_is_insufficient() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }
@@ -135,7 +135,7 @@ fn test_propose_transaction_fail_if_recipient_is_account() {
     // Propose Transaction
     mock_contract
         .propose_token_transaction_pub(
-            token.contract_address, amount_to_send, receiver
+            token.contract_address, amount_to_send, receiver,
         ); // should panic
     stop_cheat_caller_address(mock_contract.contract_address);
 }

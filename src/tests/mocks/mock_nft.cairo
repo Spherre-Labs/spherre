@@ -26,7 +26,7 @@ pub mod MockNFT {
         #[substorage(v0)]
         erc721: ERC721Component::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage
+        src5: SRC5Component::Storage,
     }
 
     #[event]
@@ -35,11 +35,11 @@ pub mod MockNFT {
         #[flat]
         ERC721Event: ERC721Component::Event,
         #[flat]
-        SRC5Event: SRC5Component::Event
+        SRC5Event: SRC5Component::Event,
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState,) {
+    fn constructor(ref self: ContractState) {
         let name = "MockNFT";
         let symbol = "MNFT";
         let base_uri = "https://api.example.com/v1/";

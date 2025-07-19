@@ -49,7 +49,7 @@ pub impl PermissionEmumImpl of PermissionTrait {
         match self {
             PermissionEnum::PROPOSER => 1_u8, // 1 << 0
             PermissionEnum::VOTER => 2_u8, // 1 << 1
-            PermissionEnum::EXECUTOR => 4_u8, // 1 << 2
+            PermissionEnum::EXECUTOR => 4_u8 // 1 << 2
         }
     }
     fn has_permission_from_mask(self: PermissionEnum, mask: u8) -> bool {
@@ -80,13 +80,13 @@ pub struct Transaction {
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct Member {
     address: ContractAddress,
-    permissions: Span<PermissionEnum>
+    permissions: Span<PermissionEnum>,
 }
 
 #[derive(Drop, Serde, PartialEq)]
 pub struct AccountDetails {
     pub name: ByteArray,
-    pub description: ByteArray
+    pub description: ByteArray,
 }
 
 ///
@@ -96,24 +96,24 @@ pub struct AccountDetails {
 pub struct TokenTransactionData {
     pub token: ContractAddress,
     pub amount: u256,
-    pub recipient: ContractAddress
+    pub recipient: ContractAddress,
 }
 #[derive(Drop, Serde, starknet::Store)]
 pub struct NFTTransactionData {
     pub nft_contract: ContractAddress,
     pub token_id: u256,
-    pub recipient: ContractAddress
+    pub recipient: ContractAddress,
 }
 
 #[derive(Drop, Serde, starknet::Store)]
 pub struct ThresholdChangeData {
-    pub new_threshold: u64
+    pub new_threshold: u64,
 }
 
 #[derive(Drop, Serde)]
 pub struct EditPermissionData {
     pub member: ContractAddress,
-    pub permissions: Array<PermissionEnum>
+    pub permissions: Array<PermissionEnum>,
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -124,7 +124,7 @@ pub struct MemberRemoveData {
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct MemberAddData {
     pub member: ContractAddress,
-    pub permissions: u8
+    pub permissions: u8,
 }
 
 pub mod SpherreAdminRoles {
@@ -151,7 +151,7 @@ pub struct SmartTokenLock {
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct EditPermissionTransaction {
     pub member: ContractAddress,
-    pub new_permissions: u8
+    pub new_permissions: u8,
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store)]

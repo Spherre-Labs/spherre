@@ -6,12 +6,12 @@ use crate::spherre::Spherre::{SpherreImpl};
 use crate::spherre::Spherre;
 use openzeppelin::access::accesscontrol::{AccessControlComponent};
 use snforge_std::{
-    start_cheat_caller_address, stop_cheat_caller_address, declare, ContractClassTrait, spy_events,
-    EventSpyAssertionsTrait, DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
 use spherre::types::{FeesType};
 use starknet::class_hash::class_hash_const;
-use starknet::{ContractAddress, contract_address_const, ClassHash,};
+use starknet::{ClassHash, ContractAddress, contract_address_const};
 
 
 // Define role constants for testing
@@ -72,7 +72,7 @@ fn test_deploy_account() {
     // Test newly deployed spherre contract
     assert(spherre_dispatcher.is_deployed_account(account_address), 'Account not deployed');
     let spherre_account_data_dispatcher = IAccountDataDispatcher {
-        contract_address: account_address
+        contract_address: account_address,
     };
     let spherre_account_dispatcher = IAccountDispatcher { contract_address: account_address };
     // Check member statuss
@@ -202,11 +202,11 @@ fn test_owner_grant_superadmin_role_should_pass() { //Test events indirectly her
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -238,11 +238,11 @@ fn test_non_owner_grant_superadmin_role_should_fail() {
                         AccessControlComponent::RoleGranted {
                             role: selector!("SUPERADMIN"),
                             account: to_be_superadmin,
-                            sender: random_guy
+                            sender: random_guy,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -270,11 +270,11 @@ fn test_owner_revoke_superadmin_role_should_pass() { // also test event indirect
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     start_cheat_caller_address(spherre_contract, owner);
@@ -291,11 +291,11 @@ fn test_owner_revoke_superadmin_role_should_pass() { // also test event indirect
                     spherre_contract,
                     AccessControlComponent::Event::RoleRevoked(
                         AccessControlComponent::RoleRevoked {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -325,11 +325,11 @@ fn test_non_owner_revoke_superadmin_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     start_cheat_caller_address(spherre_contract, random_guy);
@@ -346,11 +346,11 @@ fn test_non_owner_revoke_superadmin_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleRevoked(
                         AccessControlComponent::RoleRevoked {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -408,11 +408,13 @@ fn test_superadmin_grant_staff_role_should_pass() { //test event indirectly here
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"),
+                            account: to_be_staff,
+                            sender: to_be_superadmin,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -450,11 +452,11 @@ fn test_non_superadmin_grant_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("STAFF"), account: to_be_staff, sender: random_guy
+                            role: selector!("STAFF"), account: to_be_staff, sender: random_guy,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -483,11 +485,11 @@ fn test_superadmin_revoke_staff_role_should_pass() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     start_cheat_caller_address(spherre_contract, to_be_superadmin);
@@ -504,11 +506,13 @@ fn test_superadmin_revoke_staff_role_should_pass() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"),
+                            account: to_be_staff,
+                            sender: to_be_superadmin,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     start_cheat_caller_address(spherre_contract, to_be_superadmin);
@@ -525,11 +529,13 @@ fn test_superadmin_revoke_staff_role_should_pass() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleRevoked(
                         AccessControlComponent::RoleRevoked {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"),
+                            account: to_be_staff,
+                            sender: to_be_superadmin,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -559,11 +565,11 @@ fn test_non_superadmin_revoke_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner
+                            role: selector!("SUPERADMIN"), account: to_be_superadmin, sender: owner,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     let to_be_staff = contract_address_const::<'to_be_staff'>();
@@ -582,11 +588,13 @@ fn test_non_superadmin_revoke_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleGranted(
                         AccessControlComponent::RoleGranted {
-                            role: selector!("STAFF"), account: to_be_staff, sender: to_be_superadmin
+                            role: selector!("STAFF"),
+                            account: to_be_staff,
+                            sender: to_be_superadmin,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 
     start_cheat_caller_address(spherre_contract, not_superadmin);
@@ -603,11 +611,11 @@ fn test_non_superadmin_revoke_staff_role_should_fail() {
                     spherre_contract,
                     AccessControlComponent::Event::RoleRevoked(
                         AccessControlComponent::RoleRevoked {
-                            role: selector!("STAFF"), account: to_be_staff, sender: not_superadmin
+                            role: selector!("STAFF"), account: to_be_staff, sender: not_superadmin,
                         },
-                    )
-                )
-            ]
+                    ),
+                ),
+            ],
         );
 }
 
@@ -716,7 +724,7 @@ fn test_update_account_class_hash_emits_event() {
     let expected_event = Spherre::Event::AccountClassHashUpdated(
         Spherre::AccountClassHashUpdated {
             old_class_hash: old_hash, new_class_hash: new_hash, caller: to_be_superadmin,
-        }
+        },
     );
 
     spy.assert_emitted(@array![(spherre_contract, expected_event)]);
@@ -804,7 +812,7 @@ fn test_update_fee_staff_success_emit_event() {
 
     // Check event
     let expected_event = Spherre::Event::FeeUpdated(
-        Spherre::FeeUpdated { fee_type, amount: fee_amount, enabled: true, caller: to_be_staff, }
+        Spherre::FeeUpdated { fee_type, amount: fee_amount, enabled: true, caller: to_be_staff },
     );
     spy.assert_emitted(@array![(spherre_contract, expected_event)]);
 }
@@ -841,7 +849,7 @@ fn test_update_fee_superadmin_success_emit_event() {
     let expected_event = Spherre::Event::FeeUpdated(
         Spherre::FeeUpdated {
             fee_type, amount: fee_amount, enabled: true, caller: to_be_superadmin,
-        }
+        },
     );
     spy.assert_emitted(@array![(spherre_contract, expected_event)]);
 }
@@ -895,7 +903,7 @@ fn test_update_fee_token_superadmin_success_emit_event() {
 
     // Check event
     let expected_event = Spherre::Event::FeeTokenUpdated(
-        Spherre::FeeTokenUpdated { old_token: initial_token, new_token, caller: to_be_superadmin, }
+        Spherre::FeeTokenUpdated { old_token: initial_token, new_token, caller: to_be_superadmin },
     );
     spy.assert_emitted(@array![(spherre_contract, expected_event)]);
 }

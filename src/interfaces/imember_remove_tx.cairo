@@ -19,7 +19,7 @@ pub trait IMemberRemoveTransaction<TContractState> {
     /// This function raises an error if the member address is not a member of the account.
     /// This function raises an error if the member address is the zero address.
     fn propose_remove_member_transaction(
-        ref self: TContractState, member_address: ContractAddress
+        ref self: TContractState, member_address: ContractAddress,
     ) -> u256;
     /// Retrieves a member removal transaction by its ID
     /// This function allows retrieval of a specific member removal transaction
@@ -35,7 +35,7 @@ pub trait IMemberRemoveTransaction<TContractState> {
     /// # Returns
     /// * `MemberRemoveData` The details of the member removal transaction.
     fn get_member_removal_transaction(
-        self: @TContractState, transaction_id: u256
+        self: @TContractState, transaction_id: u256,
     ) -> MemberRemoveData;
     /// Retrieves all member removal transactions
     /// This function returns a list of all member removal transactions that have been created.

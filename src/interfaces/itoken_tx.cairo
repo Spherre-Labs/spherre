@@ -28,7 +28,7 @@ pub trait ITokenTransaction<TContractState> {
     /// # Returns
     /// * `u256` The ID of the proposed token transaction.
     fn propose_token_transaction(
-        ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress
+        ref self: TContractState, token: ContractAddress, amount: u256, recipient: ContractAddress,
     ) -> u256;
     /// Retrieves a token transaction by its ID
     /// This function allows retrieval of a specific token transaction

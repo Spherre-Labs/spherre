@@ -46,5 +46,5 @@ pub trait IAccount<TContractState> {
     /// # Panics
     /// This function raises an error if the transaction is not executable.
     ///
-    fn execute_transaction(ref self: TContractState, transaction_id: u256,);
+    fn execute_transaction(ref self: TContractState, transaction_id: u256);
 }

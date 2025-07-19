@@ -25,7 +25,7 @@ pub trait IMemberAddTransaction<TContractState> {
     /// # Returns
     /// * `u256` The ID of the proposed member addition transaction.
     fn propose_member_add_transaction(
-        ref self: TContractState, member: ContractAddress, permissions: u8
+        ref self: TContractState, member: ContractAddress, permissions: u8,
     ) -> u256;
     /// Retrieves a member addition transaction by its ID.
     /// This function allows retrieval of a specific member addition transaction

@@ -1,6 +1,6 @@
 use crate::account::{SpherreAccount, SpherreAccount::AccountImpl};
 use crate::types::AccountDetails;
-use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address,};
+use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
 use starknet::contract_address_const;
 use starknet::{storage::{StorableStoragePointerReadAccess}};
 
@@ -18,7 +18,7 @@ fn init_contract() -> SpherreAccount::ContractState {
         "TestAccount", // name
         "TestDescription", // description
         array![contract_address_const::<3>()], // members
-        1, // threshold
+        1 // threshold
     );
     state
 }

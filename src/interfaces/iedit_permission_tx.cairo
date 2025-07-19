@@ -14,7 +14,7 @@ pub trait IEditPermissionTransaction<TContractState> {
     /// # Returns
     /// A unique transaction ID (u256) for the proposed edit permission transaction.
     fn propose_edit_permission_transaction(
-        ref self: TContractState, member: ContractAddress, new_permissions: u8
+        ref self: TContractState, member: ContractAddress, new_permissions: u8,
     ) -> u256;
     /// Retrieves the details of a specific edit permission transaction by its ID.
     ///
@@ -24,7 +24,7 @@ pub trait IEditPermissionTransaction<TContractState> {
     /// # Returns
     /// An `EditPermissionTransaction` object containing the details of the transaction.
     fn get_edit_permission_transaction(
-        self: @TContractState, transaction_id: u256
+        self: @TContractState, transaction_id: u256,
     ) -> EditPermissionTransaction;
     /// Retrieves a list of all edit permission transactions.
     ///
@@ -32,7 +32,7 @@ pub trait IEditPermissionTransaction<TContractState> {
     /// An array of `EditPermissionTransaction` objects representing all edit permission
     /// transactions.
     fn get_edit_permission_transaction_list(
-        self: @TContractState
+        self: @TContractState,
     ) -> Array<EditPermissionTransaction>;
     /// Executes an edit permission transaction by its ID.
     ///

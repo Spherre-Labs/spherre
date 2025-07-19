@@ -1,11 +1,11 @@
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
 use spherre::tests::mocks::mock_account_data::{
-    IMockContractDispatcher, IMockContractDispatcherTrait
+    IMockContractDispatcher, IMockContractDispatcherTrait,
 };
-use spherre::types::{TransactionType, Permissions, TransactionStatus};
+use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_mock_contract() -> IMockContractDispatcher {
@@ -42,7 +42,7 @@ fn test_propose_member_permission_transaction_successful() {
 
     let transaction = mock_contract.get_transaction_pub(tx_id);
     assert(
-        transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type'
+        transaction.tx_type == TransactionType::MEMBER_PERMISSION_EDIT, 'Invalid Transaction Type',
     );
 
     let perm_transaction = mock_contract.get_edit_permission_transaction_pub(tx_id);
@@ -176,14 +176,15 @@ fn test_execute_member_permission_transaction_success() {
     // check whether member has permissions
     assert(
         mock_contract.has_permission_pub(member, Permissions::PROPOSER),
-        'should have proposer permission'
+        'should have proposer permission',
     );
     assert(
-        mock_contract.has_permission_pub(member, Permissions::VOTER), 'should have voter permission'
+        mock_contract.has_permission_pub(member, Permissions::VOTER),
+        'should have voter permission',
     );
     assert(
         mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
-        'should have executor permission'
+        'should have executor permission',
     );
 
     // Create a member permission transaction
@@ -212,13 +213,14 @@ fn test_execute_member_permission_transaction_success() {
 
     assert(
         !mock_contract.has_permission_pub(member, Permissions::PROPOSER),
-        'proposer permission found'
+        'proposer permission found',
     );
     assert(
-        mock_contract.has_permission_pub(member, Permissions::VOTER), 'should have voter permission'
+        mock_contract.has_permission_pub(member, Permissions::VOTER),
+        'should have voter permission',
     );
     assert(
         mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
-        'should have executor permission'
+        'should have executor permission',
     );
 }

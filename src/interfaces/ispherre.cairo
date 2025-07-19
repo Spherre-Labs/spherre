@@ -1,5 +1,5 @@
 use spherre::types::FeesType;
-use starknet::{ContractAddress, ClassHash};
+use starknet::{ClassHash, ContractAddress};
 
 /// Interface for the Spherre contract
 /// This interface defines the entrypoints of the Spherre contract.
@@ -93,7 +93,7 @@ pub trait ISpherre<TContractState> {
         name: ByteArray,
         description: ByteArray,
         members: Array<ContractAddress>,
-        threshold: u64
+        threshold: u64,
     ) -> ContractAddress;
     /// Checks if an account is deployed.
     /// This function checks if a given account address corresponds to a deployed SpherreAccount.
@@ -181,7 +181,7 @@ pub trait ISpherre<TContractState> {
     /// * `account` - The account
     ///
     fn get_fees_collected(
-        self: @TContractState, fee_type: FeesType, account: ContractAddress
+        self: @TContractState, fee_type: FeesType, account: ContractAddress,
     ) -> u256;
     /// Whitelist an account.
     ///

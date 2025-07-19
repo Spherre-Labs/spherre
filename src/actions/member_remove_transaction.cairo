@@ -19,10 +19,10 @@ pub mod MemberRemoveTransaction {
     use spherre::interfaces::ipermission_control::IPermissionControl;
     use spherre::types::MemberRemoveData;
     use spherre::types::TransactionType;
-    use spherre::types::{Transaction, Permissions};
+    use spherre::types::{Permissions, Transaction};
     use starknet::storage::{
-        StoragePointerReadAccess, StoragePointerWriteAccess, Map, StoragePathEntry, Vec, VecTrait,
-        MutableVecTrait
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec, VecTrait,
     };
     use starknet::{ContractAddress};
 
@@ -44,14 +44,14 @@ pub mod MemberRemoveTransaction {
         #[key]
         pub transaction_id: u256,
         #[key]
-        pub member: ContractAddress
+        pub member: ContractAddress,
     }
     #[derive(Drop, starknet::Event)]
     pub struct MemberRemovalExecuted {
         #[key]
         pub transaction_id: u256,
         #[key]
-        pub member: ContractAddress
+        pub member: ContractAddress,
     }
 
 
@@ -65,7 +65,7 @@ pub mod MemberRemoveTransaction {
         impl Pausable: PausableComponent::HasComponent<TContractState>,
     > of IMemberRemoveTransaction<ComponentState<TContractState>> {
         fn propose_remove_member_transaction(
-            ref self: ComponentState<TContractState>, member_address: ContractAddress
+            ref self: ComponentState<TContractState>, member_address: ContractAddress,
         ) -> u256 {
             // Get the component states
             let mut account_data_comp = get_dep_component_mut!(ref self, AccountData);
@@ -78,7 +78,7 @@ pub mod MemberRemoveTransaction {
                 .create_transaction(TransactionType::MEMBER_REMOVE);
 
             // Create the member removal transaction
-            let member_removal_transaction = MemberRemoveData { member_address, };
+            let member_removal_transaction = MemberRemoveData { member_address };
 
             // Store the transaction
             self
@@ -95,21 +95,21 @@ pub mod MemberRemoveTransaction {
         }
 
         fn get_member_removal_transaction(
-            self: @ComponentState<TContractState>, transaction_id: u256
+            self: @ComponentState<TContractState>, transaction_id: u256,
         ) -> MemberRemoveData {
             let account_data_comp = get_dep_component!(self, AccountData);
             let transaction: Transaction = account_data_comp.get_transaction(transaction_id);
 
             assert(
                 transaction.tx_type == TransactionType::MEMBER_REMOVE,
-                Errors::INVALID_MEMBER_REMOVE_TRANSACTION
+                Errors::INVALID_MEMBER_REMOVE_TRANSACTION,
             );
 
             self.member_removal_transactions.entry(transaction_id).read()
         }
 
         fn member_removal_transaction_list(
-            self: @ComponentState<TContractState>
+            self: @ComponentState<TContractState>,
         ) -> Array<MemberRemoveData> {
             let mut array: Array<MemberRemoveData> = array![];
             let range_stop = self.member_transaction_ids.len();
@@ -123,7 +123,7 @@ pub mod MemberRemoveTransaction {
             array
         }
         fn execute_remove_member_transaction(
-            ref self: ComponentState<TContractState>, transaction_id: u256
+            ref self: ComponentState<TContractState>, transaction_id: u256,
         ) {
             // Get the transaction (error is thrown if it does not exist or is not a member removal)
             let member_removal_data = self.get_member_removal_transaction(transaction_id);
@@ -149,7 +149,7 @@ pub mod MemberRemoveTransaction {
                 .emit(
                     MemberRemovalExecuted {
                         transaction_id, member: member_removal_data.member_address,
-                    }
+                    },
                 );
         }
     }
@@ -172,7 +172,7 @@ pub mod MemberRemoveTransaction {
         /// This function raises an error if removing the member would violate the threshold
         /// requirements (e.g., removing the last voter, proposer, or executor).
         fn assert_can_remove_member(
-            self: @ComponentState<TContractState>, member: ContractAddress
+            self: @ComponentState<TContractState>, member: ContractAddress,
         ) {
             let account_data_comp = get_dep_component!(self, AccountData);
             assert(account_data_comp.is_member(member), Errors::ERR_NOT_MEMBER);
@@ -199,7 +199,7 @@ pub mod MemberRemoveTransaction {
             let (threshold, _) = account_data_comp.get_threshold();
             assert(
                 threshold < voters_count || !is_voter,
-                Errors::ERR_CANNOT_REMOVE_MEMBER_WITH_THRESHOLD
+                Errors::ERR_CANNOT_REMOVE_MEMBER_WITH_THRESHOLD,
             );
         }
     }
