@@ -612,8 +612,8 @@ pub mod Spherre {
             let spherre_contract = get_contract_address();
 
             // Stop execution if fee is zero or fee token is zero
-            assert(fee.is_non_zero(), Errors::ERR_TOKEN_NOT_SET);
-            assert(fee_token.is_non_zero(), Errors::ERR_FEE_NOT_SET);
+            assert(fee.is_non_zero(), Errors::ERR_FEE_NOT_SET);
+            assert(fee_token.is_non_zero(), Errors::ERR_TOKEN_NOT_SET);
 
             // Calculate shares
             let account_share = (fee * percentage.into()) / 10000_u256;
