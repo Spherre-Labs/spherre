@@ -13,6 +13,16 @@ use snforge_std::{
 use spherre::types::{FeesType};
 use starknet::class_hash::class_hash_const;
 use starknet::{ClassHash, ContractAddress, contract_address_const};
+use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
+use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+
+
+fn deploy_mock_token() -> IERC20Dispatcher {
+    let contract_class = declare("MockToken").unwrap().contract_class();
+    let mut calldata: Array<felt252> = array![];
+    let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+    IERC20Dispatcher { contract_address }
+}
 
 
 // Define role constants for testing
@@ -1549,4 +1559,62 @@ fn test_get_whitelist_time_with_timestamp() {
     assert(ts_account == new_timestamp, 'Wrong account timestamp');
 
     stop_cheat_block_timestamp(spherre_contract);
+}
+
+#[test]
+fn test_deployment_fee_success() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let fee_token = deploy_mock_token();
+    let fee: u256 = 10000;
+    let percentage: u64 = 2500; // 25%
+    let amount_to_mint: u256 = 20000;
+
+    // Set classhash, fee token, fee, and percentage
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.update_fee_token(fee_token.contract_address);
+    spherre_dispatcher.update_fee(FeesType::DEPLOYMENT_FEE, fee);
+    spherre_dispatcher.set_deployment_fee_percentage(percentage);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Mint and approve fee
+    start_cheat_caller_address(fee_token.contract_address, owner);
+    IMockTokenDispatcher { contract_address: fee_token.contract_address }
+        .mint(owner, amount_to_mint);
+    fee_token.approve(spherre_contract, fee);
+    stop_cheat_caller_address(fee_token.contract_address);
+
+    // Deploy account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, owner);
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+
+    // Check balances
+    let account_share = (fee * percentage.into()) / 10000_u256;
+    let spherre_share = fee - account_share;
+    assert(fee_token.balance_of(owner) == amount_to_mint - fee, 'Fee not deducted');
+    assert(fee_token.balance_of(spherre_contract) == spherre_share, 'Spherre share incorrect');
+    assert(fee_token.balance_of(account_address) == account_share, 'Account share incorrect');
+
+    // Check event
+    let expected_event = Spherre::Event::DeploymentFeeCollected(
+        Spherre::DeploymentFeeCollected {
+            sender: owner,
+            amount: fee,
+            spherre_share,
+            account_share,
+            fee_token: fee_token.contract_address,
+            timestamp: 0, // timestamp is not checked here
+        }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
 }
