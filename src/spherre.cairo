@@ -11,9 +11,9 @@ pub mod Spherre {
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
     use spherre::errors::Errors;
+    use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::{FeesType, SpherreAdminRoles};
-    use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::storage::{
         Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
         Vec,
@@ -304,7 +304,7 @@ pub mod Spherre {
                 let allowance = erc20.allowance(deployer, deployer_contract);
                 assert(allowance >= fee, Errors::ERR_INSUFFICIENT_ALLOWANCE);
                 let account_share = self.collect_deployment_fees(deployer);
-                
+
                 // Transfer a percentage to newly deployed account
                 erc20.transfer(account_address, account_share);
             }
@@ -619,22 +619,24 @@ pub mod Spherre {
             let account_share = (fee * percentage.into()) / 10000_u256;
             let spherre_share = fee - account_share;
 
-
             // Transfer spherre_share to the contract
             // After deployment, transfer account_share to the new account
             let transfer_success = IERC20Dispatcher { contract_address: fee_token }
-            .transfer_from(deployer, spherre_contract, fee);
+                .transfer_from(deployer, spherre_contract, fee);
             assert(transfer_success, Errors::ERR_ERC20_TRANSFER_FAILED);
 
             // Emit event (account_share will be routed to the new account after deployment)
-            self.emit(DeploymentFeeCollected {
-                sender: deployer,
-                amount: fee,
-                spherre_share,
-                account_share,
-                fee_token,
-                timestamp: get_block_timestamp(),
-            });
+            self
+                .emit(
+                    DeploymentFeeCollected {
+                        sender: deployer,
+                        amount: fee,
+                        spherre_share,
+                        account_share,
+                        fee_token,
+                        timestamp: get_block_timestamp(),
+                    }
+                );
 
             account_share
         }

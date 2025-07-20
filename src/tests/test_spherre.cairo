@@ -10,11 +10,11 @@ use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address, start_cheat_block_timestamp,
     stop_cheat_block_timestamp,
 };
+use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{FeesType};
 use starknet::class_hash::class_hash_const;
 use starknet::{ClassHash, ContractAddress, contract_address_const};
-use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
-use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 
 
 fn deploy_mock_token() -> IERC20Dispatcher {
@@ -1718,7 +1718,8 @@ fn test_deployment_fee_bypassed_if_not_enabled() {
     let description: ByteArray = "Test Spherre Account Description";
     let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
     let threshold: u64 = 2;
-    let account_address = spherre_dispatcher.deploy_account(owner, name, description, members, threshold);
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
 
     assert!(fee_token.balance_of(owner) == amount_to_mint, "Fee should not be deducted");
     assert!(fee_token.balance_of(spherre_contract) == 0, "Spherre contract should not receive fee");

@@ -108,5 +108,4 @@ pub mod Errors {
 
     pub const ERR_TOKEN_NOT_SET: felt252 = 'Fee token not set';
     pub const ERR_FEE_NOT_SET: felt252 = 'Fee not set';
-    
 }
