@@ -560,7 +560,16 @@ pub mod Spherre {
             }
         }
 
-
+        /// Set the deployment fee percentage (in basis points, e.g., 1000 = 10%)
+        fn set_deployment_fee_percentage(ref self: ContractState, percentage: u64) {
+            self.assert_only_superadmin();
+            assert(percentage <= 10000, Errors::ERR_INVALID_PERCENTAGE); // 10000 = 100%
+            self.deployment_fee_percentage.write(percentage);
+        }
+        /// Get the deployment fee percentage (in basis points).
+        fn get_deployment_fee_percentage(self: @ContractState) -> u64 {
+            self.deployment_fee_percentage.read()
+        }
     }
 
     #[generate_trait]
