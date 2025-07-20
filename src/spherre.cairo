@@ -265,7 +265,6 @@ pub mod Spherre {
             let deployer_contract = get_contract_address();
 
             let fee_type = FeesType::DEPLOYMENT_FEE;
-            let fee_token = self.get_fee_token();
 
             let class_hash = self.account_class_hash.read();
             // Check that the Classhash is set
@@ -294,19 +293,7 @@ pub mod Spherre {
             // Collect deployment fees if enabled
             let fee_enabled = self.is_fee_enabled(fee_type);
             if fee_enabled {
-                let erc20 = IERC20Dispatcher { contract_address: fee_token };
-                let fee = self.get_fee(fee_type, deployer);
-                assert(fee_token.is_non_zero(), Errors::ERR_TOKEN_NOT_SET);
-                // Check deployer's balance and allowance
-                assert(fee.is_non_zero(), Errors::ERR_FEE_NOT_SET);
-                let balance = erc20.balance_of(deployer);
-                assert(balance >= fee, Errors::ERR_INSUFFICIENT_FEE);
-                let allowance = erc20.allowance(deployer, deployer_contract);
-                assert(allowance >= fee, Errors::ERR_INSUFFICIENT_ALLOWANCE);
-                let account_share = self.collect_deployment_fees(deployer);
-
-                // Transfer a percentage to newly deployed account
-                erc20.transfer(account_address, account_share);
+                self.collect_deployment_fees(deployer, account_address);
             }
 
             // Emit AccountDeployed event
@@ -604,26 +591,32 @@ pub mod Spherre {
         }
 
         /// Collects the deployment fee from the deployer, splits it, and emits an event.
-        fn collect_deployment_fees(ref self: ContractState, deployer: ContractAddress) -> u256 {
+        fn collect_deployment_fees(
+            ref self: ContractState, deployer: ContractAddress, account: ContractAddress
+        ) {
             let fee_type = FeesType::DEPLOYMENT_FEE;
             let fee = self.get_fee(fee_type, deployer);
             let fee_token = self.get_fee_token();
             let percentage = self.deployment_fee_percentage.read();
             let spherre_contract = get_contract_address();
+            let erc20 = IERC20Dispatcher { contract_address: fee_token };
 
-            // Stop execution if fee is zero or fee token is zero
-            assert(fee.is_non_zero(), Errors::ERR_FEE_NOT_SET);
-            assert(fee_token.is_non_zero(), Errors::ERR_TOKEN_NOT_SET);
+            // Check deployer's balance and allowance
+            let balance = erc20.balance_of(deployer);
+            assert(balance >= fee, Errors::ERR_INSUFFICIENT_FEE);
+            let allowance = erc20.allowance(deployer, spherre_contract);
+            assert(allowance >= fee, Errors::ERR_INSUFFICIENT_ALLOWANCE);
 
             // Calculate shares
             let account_share = (fee * percentage.into()) / 10000_u256;
             let spherre_share = fee - account_share;
 
-            // Transfer spherre_share to the contract
-            // After deployment, transfer account_share to the new account
-            let transfer_success = IERC20Dispatcher { contract_address: fee_token }
-                .transfer_from(deployer, spherre_contract, fee);
+            // Transfer fee to the contract
+            let transfer_success = erc20.transfer_from(deployer, spherre_contract, fee);
             assert(transfer_success, Errors::ERR_ERC20_TRANSFER_FAILED);
+
+            // Transfer a percentage to newly deployed account
+            erc20.transfer(account, account_share);
 
             // Emit event (account_share will be routed to the new account after deployment)
             self
@@ -637,8 +630,6 @@ pub mod Spherre {
                         timestamp: get_block_timestamp(),
                     }
                 );
-
-            account_share
         }
     }
 }

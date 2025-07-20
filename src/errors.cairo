@@ -105,7 +105,4 @@ pub mod Errors {
     pub const ERR_USER_ADDRESS_IS_ZERO: felt252 = 'User address is zero';
     pub const ERR_ACCOUNT_NOT_WHITELISTED: felt252 = 'Account not whitelisted';
     pub const ERR_USER_NOT_WHITELISTED: felt252 = 'User not whitelisted';
-
-    pub const ERR_TOKEN_NOT_SET: felt252 = 'Fee token not set';
-    pub const ERR_FEE_NOT_SET: felt252 = 'Fee not set';
 }

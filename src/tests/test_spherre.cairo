@@ -1725,37 +1725,3 @@ fn test_deployment_fee_bypassed_if_not_enabled() {
     assert!(fee_token.balance_of(spherre_contract) == 0, "Spherre contract should not receive fee");
     assert!(fee_token.balance_of(account_address) == 0, "Account should not receive fee");
 }
-
-#[test]
-#[should_panic(expected: 'Fee token not set')]
-fn test_deployment_fee_token_not_set() {
-    let owner = OWNER();
-    let spherre_contract = deploy_contract(owner);
-    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
-    let fee: u256 = 10000;
-    let percentage: u64 = 2500; // 25%
-    let amount_to_mint: u256 = 20000;
-
-    // Set classhash and fee, but do not set fee token
-    let classhash: ClassHash = get_spherre_account_class_hash();
-    cheat_set_account_class_hash(spherre_contract, classhash, owner);
-    start_cheat_caller_address(spherre_contract, owner);
-    spherre_dispatcher.update_fee(FeesType::DEPLOYMENT_FEE, fee);
-    spherre_dispatcher.set_deployment_fee_percentage(percentage);
-    stop_cheat_caller_address(spherre_contract);
-
-    // Mint and approve
-    let fee_token = deploy_mock_token();
-    start_cheat_caller_address(fee_token.contract_address, owner);
-    IMockTokenDispatcher { contract_address: fee_token.contract_address }
-        .mint(owner, amount_to_mint);
-    fee_token.approve(spherre_contract, amount_to_mint);
-    stop_cheat_caller_address(fee_token.contract_address);
-
-    // Deploy account (should panic)
-    let name: ByteArray = "Test Spherre Account";
-    let description: ByteArray = "Test Spherre Account Description";
-    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
-    let threshold: u64 = 2;
-    spherre_dispatcher.deploy_account(owner, name, description, members, threshold);
-}
