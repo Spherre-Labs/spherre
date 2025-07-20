@@ -96,4 +96,12 @@ pub mod Errors {
     pub const AUTHORITY_DELEGATED_TO_WILL: felt252 = 'Authority delegated to will';
     pub const ERR_RESET_WINDOW_NOT_ACTIVE: felt252 = 'Reset window is not active';
     pub const ERR_WILL_WALLET_NOT_SET: felt252 = 'Will wallet not set';
+
+    // errors for whitelist management
+    pub const ERR_ACCOUNT_NOT_DEPLOYED: felt252 = 'Account is not deployed';
+    pub const ERR_ACCOUNT_ALREADY_WHITELISTED: felt252 = 'Account already whitelisted';
+    pub const ERR_USER_ALREADY_WHITELISTED: felt252 = 'User already whitelisted';
+    pub const ERR_USER_ADDRESS_IS_ZERO: felt252 = 'User address is zero';
+    pub const ERR_ACCOUNT_NOT_WHITELISTED: felt252 = 'Account not whitelisted';
+    pub const ERR_USER_NOT_WHITELISTED: felt252 = 'User not whitelisted';
 }

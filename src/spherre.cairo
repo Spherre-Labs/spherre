@@ -49,6 +49,34 @@ pub mod Spherre {
         pub amount: u256,
     }
 
+    #[derive(Drop, starknet::Event)]
+    pub struct AccountWhitelisted {
+        pub account: ContractAddress,
+        pub timestamp: u64,
+        pub admin: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct UserWhitelisted {
+        pub user: ContractAddress,
+        pub timestamp: u64,
+        pub admin: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct AccountRemovedFromWhitelist {
+        pub account: ContractAddress,
+        pub timestamp: u64,
+        pub admin: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct UserRemovedFromWhitelist {
+        pub user: ContractAddress,
+        pub timestamp: u64,
+        pub admin: ContractAddress,
+    }
+
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -77,6 +105,13 @@ pub mod Spherre {
         // Fee collection statistics
         // (fees_type, fees_token, account) -> amount collected
         fee_collection_amounts: Map<(FeesType, ContractAddress, ContractAddress), u256>,
+        // Whitelist management
+        whitelisted_accounts: Map<ContractAddress, bool>,
+        whitelisted_users: Map<ContractAddress, bool>,
+        account_whitelist_time: Map<ContractAddress, u64>,
+        user_whitelist_time: Map<ContractAddress, u64>,
+        whitelisted_accounts_count: u256,
+        whitelisted_users_count: u256,
     }
 
     #[event]
@@ -87,6 +122,10 @@ pub mod Spherre {
         FeeUpdated: FeeUpdated,
         FeeTokenUpdated: FeeTokenUpdated,
         FeeCollected: FeeCollected,
+        AccountWhitelisted: AccountWhitelisted,
+        UserWhitelisted: UserWhitelisted,
+        AccountRemovedFromWhitelist: AccountRemovedFromWhitelist,
+        UserRemovedFromWhitelist: UserRemovedFromWhitelist,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -360,6 +399,131 @@ pub mod Spherre {
             let fee_token = self.get_fee_token();
             // Get the statistics map object and read its value
             self.fee_collection_amounts.entry((fee_type, fee_token, account)).read()
+        }
+
+        /// Whitelists an account. Only STAFF_ROLE can call.
+        fn whitelist_account(ref self: ContractState, account: ContractAddress) {
+            // Validate that the account parameter is not zero
+            assert(account.is_non_zero(), Errors::ERR_NON_ZERO_ACCOUNT);
+            // Validate that the caller has the staff role
+            self.assert_only_staff();
+            // Validate that the account parameter is a deployed account
+            assert(self.is_deployed_account(account), Errors::ERR_ACCOUNT_NOT_DEPLOYED);
+            // Check if the account is already whitelisted
+            let is_whitelisted = self.whitelisted_accounts.entry(account).read();
+            assert(!is_whitelisted, Errors::ERR_ACCOUNT_ALREADY_WHITELISTED);
+
+            // Whitelist the account
+            self.whitelisted_accounts.entry(account).write(true);
+            self.whitelisted_accounts_count.write(self.whitelisted_accounts_count.read() + 1);
+
+            // Set the whitelist timestamp
+            let timestamp = get_block_timestamp();
+            self.account_whitelist_time.entry(account).write(timestamp);
+
+            // Emit AccountWhitelisted event
+            let event = AccountWhitelisted { account, timestamp, admin: get_caller_address(), };
+            self.emit(event);
+        }
+
+        /// Whitelists a user. Only STAFF_ROLE can call.
+        fn whitelist_user(ref self: ContractState, user: ContractAddress) {
+            // Validate that the user parameter is not zero
+            assert(user.is_non_zero(), Errors::ERR_USER_ADDRESS_IS_ZERO);
+            // Validate that the caller has the staff role
+            self.assert_only_staff();
+            // Check if the user is already whitelisted
+            let is_whitelisted = self.whitelisted_users.entry(user).read();
+            assert(!is_whitelisted, Errors::ERR_USER_ALREADY_WHITELISTED);
+
+            // Whitelist the user
+            self.whitelisted_users.entry(user).write(true);
+            self.whitelisted_users_count.write(self.whitelisted_users_count.read() + 1);
+
+            // Set the whitelist timestamp
+            let timestamp = get_block_timestamp();
+            self.user_whitelist_time.entry(user).write(timestamp);
+
+            let event = UserWhitelisted { user, timestamp, admin: get_caller_address(), };
+            self.emit(event);
+        }
+
+        /// Remove an account from whitelist. Only STAFF_ROLE can call.
+        fn remove_account_from_whitelist(ref self: ContractState, account: ContractAddress) {
+            self.assert_only_staff();
+            // Validate that the account parameter is not zero
+            assert(account.is_non_zero(), Errors::ERR_NON_ZERO_ACCOUNT);
+            // Check if the account is whitelisted
+            let is_whitelisted = self.whitelisted_accounts.entry(account).read();
+            assert(is_whitelisted, Errors::ERR_ACCOUNT_NOT_WHITELISTED);
+            // Remove the account from the whitelist
+            self.whitelisted_accounts.entry(account).write(false);
+            // Decrement whitelisted accounts count
+            self.whitelisted_accounts_count.write(self.whitelisted_accounts_count.read() - 1);
+
+            // Emit AccountRemovedFromWhitelist event
+            let timestamp = get_block_timestamp();
+            let event = AccountRemovedFromWhitelist {
+                account, timestamp, admin: get_caller_address(),
+            };
+            self.emit(event);
+        }
+
+        /// Remove a user from whitelist. Only STAFF_ROLE can call.
+        fn remove_user_from_whitelist(ref self: ContractState, user: ContractAddress) {
+            self.assert_only_staff();
+            // Validate that the user parameter is not zero
+            assert(user.is_non_zero(), Errors::ERR_USER_ADDRESS_IS_ZERO);
+            // Check if the user is whitelisted
+            let is_whitelisted = self.whitelisted_users.entry(user).read();
+            assert(is_whitelisted, Errors::ERR_USER_NOT_WHITELISTED);
+            // Remove the user from the whitelist
+            self.whitelisted_users.entry(user).write(false);
+            // Decrement whitelisted users count
+            self.whitelisted_users_count.write(self.whitelisted_users_count.read() - 1);
+
+            // Emit UserRemovedFromWhitelist event
+            let timestamp = get_block_timestamp();
+            let event = UserRemovedFromWhitelist { user, timestamp, admin: get_caller_address(), };
+            self.emit(event);
+        }
+
+        /// Check if an account is whitelisted.
+        fn is_whitelisted_account(self: @ContractState, account: ContractAddress) -> bool {
+            if account.is_zero() {
+                return false;
+            }
+            self.whitelisted_accounts.entry(account).read()
+        }
+
+        /// Check if a user is whitelisted.
+        fn is_whitelisted_user(self: @ContractState, user: ContractAddress) -> bool {
+            if user.is_zero() {
+                return false;
+            }
+            self.whitelisted_users.entry(user).read()
+        }
+
+        /// Get the total number of whitelisted accounts.
+        fn get_whitelisted_accounts_count(self: @ContractState) -> u256 {
+            self.whitelisted_accounts_count.read()
+        }
+
+        /// Get the total number of whitelisted users.
+        fn get_whitelisted_users_count(self: @ContractState) -> u256 {
+            self.whitelisted_users_count.read()
+        }
+
+        /// Get the timestamp when an address was whitelisted.
+        /// Returns 0 if the address is not whitelisted or is zero.
+        fn get_whitelist_time(
+            self: @ContractState, address: ContractAddress, is_account: bool
+        ) -> u64 {
+            if is_account {
+                self.account_whitelist_time.entry(address).read()
+            } else {
+                self.user_whitelist_time.entry(address).read()
+            }
         }
     }
 

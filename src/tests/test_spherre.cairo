@@ -7,7 +7,8 @@ use crate::spherre::Spherre;
 use openzeppelin::access::accesscontrol::{AccessControlComponent};
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
-    start_cheat_caller_address, stop_cheat_caller_address,
+    start_cheat_caller_address, stop_cheat_caller_address, start_cheat_block_timestamp,
+    stop_cheat_block_timestamp,
 };
 use spherre::types::{FeesType};
 use starknet::class_hash::class_hash_const;
@@ -984,3 +985,568 @@ fn test_get_not_enabled_fee_returns_zero() {
     assert(!dispatcher.is_fee_enabled(fee_type), 'Fee should not be enabled');
 }
 
+#[test]
+fn test_whitelist_account_success() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Deploy an account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+
+    // Whitelist the account
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check if the account is whitelisted
+    let is_whitelisted = spherre_dispatcher.is_whitelisted_account(account_address);
+    assert(is_whitelisted, 'Account not whitelisted');
+
+    // Check AccountWhitelisted event
+    let expected_event = Spherre::Event::AccountWhitelisted(
+        Spherre::AccountWhitelisted { account: account_address, timestamp: 0, admin: to_be_staff, }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'Account should not be zero')]
+fn test_whitelist_account_zero_address_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Try to whitelist zero address
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    spherre_dispatcher.whitelist_account(zero_address);
+}
+
+
+#[test]
+#[should_panic(expected: 'Caller is not a staff')]
+fn test_whitelist_account_non_staff_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Deploy an account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+
+    // Try to whitelist an account as non-staff
+    let non_staff = contract_address_const::<'non_staff'>();
+    start_cheat_caller_address(spherre_contract, non_staff);
+    spherre_dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Account is not deployed')]
+fn test_whitelist_account_non_deployed_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to whitelist an account that is not deployed
+    let not_deployed_account = contract_address_const::<'not_deployed_account'>();
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_account(not_deployed_account);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Account already whitelisted')]
+fn test_whitelist_account_already_whitelisted_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Deploy an account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+
+    // Whitelist the account
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to whitelist again
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_whitelist_user_success() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+    let user = contract_address_const::<'user'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Whitelist the user
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check if the user is whitelisted
+    let is_whitelisted = spherre_dispatcher.is_whitelisted_user(user);
+    assert(is_whitelisted, 'User not whitelisted');
+
+    // Check UserWhitelisted event
+    let expected_event = Spherre::Event::UserWhitelisted(
+        Spherre::UserWhitelisted { user, timestamp: 0, admin: to_be_staff, }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'User address is zero')]
+fn test_whitelist_user_zero_address_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Try to whitelist zero address
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    spherre_dispatcher.whitelist_user(zero_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a staff')]
+fn test_whitelist_user_non_staff_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+    let user = contract_address_const::<'user'>();
+
+    // Try to whitelist a user as non-staff
+    let non_staff = contract_address_const::<'non_staff'>();
+    start_cheat_caller_address(spherre_contract, non_staff);
+    spherre_dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'User already whitelisted')]
+fn test_whitelist_user_already_whitelisted_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+    let user = contract_address_const::<'user'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Whitelist the user
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to whitelist again
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_remove_account_from_whitelist_success() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Deploy an account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = dispatcher.deploy_account(owner, name, description, members, threshold);
+
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Verify count before removal
+    let before_count = dispatcher.get_whitelisted_accounts_count();
+    assert(before_count == 1_u256, 'Wrong count before');
+
+    // Remove account
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_account_from_whitelist(account_address);
+    stop_cheat_caller_address(spherre_contract);
+
+    let after_count = dispatcher.get_whitelisted_accounts_count();
+    assert(after_count == 0_u256, 'Wrong count after');
+    let is_whitelisted = dispatcher.is_whitelisted_account(account_address);
+    assert(!is_whitelisted, 'Still whitelisted');
+
+    // Check event
+    let expected_event = Spherre::Event::AccountRemovedFromWhitelist(
+        Spherre::AccountRemovedFromWhitelist {
+            account: account_address, timestamp: 0, admin: staff
+        }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'Account should not be zero')]
+fn test_remove_account_from_whitelist_zero_address_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to remove zero address
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_account_from_whitelist(zero_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a staff')]
+fn test_remove_account_from_whitelist_non_staff_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    // Set classhash first
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Deploy account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = dispatcher.deploy_account(owner, name, description, members, threshold);
+
+    // Try remove without staff role
+    let non_staff = contract_address_const::<'non_staff'>();
+    start_cheat_caller_address(spherre_contract, non_staff);
+    dispatcher.remove_account_from_whitelist(account_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Account not whitelisted')]
+fn test_remove_account_from_whitelist_not_whitelisted_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Non-whitelisted account address
+    let some_account = contract_address_const::<'some_account'>();
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_account_from_whitelist(some_account);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_remove_user_from_whitelist_success() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+    let user = contract_address_const::<'user_to_remove'>();
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Whitelist user
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Verify count before removal
+    let before_count = dispatcher.get_whitelisted_users_count();
+    assert(before_count == 1_u256, 'Wrong user count before');
+
+    // Remove user
+    let mut spy = spy_events();
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_user_from_whitelist(user);
+    stop_cheat_caller_address(spherre_contract);
+
+    let after_count = dispatcher.get_whitelisted_users_count();
+    assert(after_count == 0_u256, 'Wrong user count after');
+    let is_whitelisted = dispatcher.is_whitelisted_user(user);
+    assert(!is_whitelisted, 'User still whitelisted');
+
+    // Check event
+    let expected_event = Spherre::Event::UserRemovedFromWhitelist(
+        Spherre::UserRemovedFromWhitelist { user, timestamp: 0, admin: staff }
+    );
+    spy.assert_emitted(@array![(spherre_contract, expected_event)]);
+}
+
+#[test]
+#[should_panic(expected: 'User address is zero')]
+fn test_remove_user_from_whitelist_zero_address_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Try to remove zero address
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_user_from_whitelist(zero_address);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not a staff')]
+fn test_remove_user_from_whitelist_non_staff_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let user = contract_address_const::<'user_to_remove'>();
+    // Try remove without staff role
+    let non_staff = contract_address_const::<'non_staff'>();
+    start_cheat_caller_address(spherre_contract, non_staff);
+    dispatcher.remove_user_from_whitelist(user);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+#[should_panic(expected: 'User not whitelisted')]
+fn test_remove_user_from_whitelist_not_whitelisted_should_fail() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let superadmin = contract_address_const::<'superadmin'>();
+    let staff = contract_address_const::<'staff'>();
+    let user = contract_address_const::<'user_to_remove'>();
+
+    // Grant roles
+    start_cheat_caller_address(spherre_contract, owner);
+    dispatcher.grant_superadmin_role(superadmin);
+    stop_cheat_caller_address(spherre_contract);
+    start_cheat_caller_address(spherre_contract, superadmin);
+    dispatcher.grant_staff_role(staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Attempt removal without prior whitelist
+    start_cheat_caller_address(spherre_contract, staff);
+    dispatcher.remove_user_from_whitelist(user);
+    stop_cheat_caller_address(spherre_contract);
+}
+
+#[test]
+fn test_get_whitelist_time_with_timestamp() {
+    let owner = OWNER();
+    let spherre_contract = deploy_contract(owner);
+    let spherre_dispatcher = ISpherreDispatcher { contract_address: spherre_contract };
+
+    let to_be_superadmin = contract_address_const::<'to_be_superadmin'>();
+    let to_be_staff = contract_address_const::<'to_be_staff'>();
+
+    // Set classhash
+    let classhash: ClassHash = get_spherre_account_class_hash();
+    cheat_set_account_class_hash(spherre_contract, classhash, owner);
+
+    // Grant superadmin role
+    start_cheat_caller_address(spherre_contract, owner);
+    spherre_dispatcher.grant_superadmin_role(to_be_superadmin);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Grant staff role
+    start_cheat_caller_address(spherre_contract, to_be_superadmin);
+    spherre_dispatcher.grant_staff_role(to_be_staff);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Set initial timestamp and whitelist user
+    let initial_timestamp: u64 = 1000;
+    start_cheat_block_timestamp(spherre_contract, initial_timestamp);
+
+    let user = contract_address_const::<'wt_user'>();
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_user(user);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check timestamp for user
+    let ts_user = spherre_dispatcher.get_whitelist_time(user, false);
+    assert(ts_user == initial_timestamp, 'Wrong user timestamp');
+
+    // Set new timestamp and whitelist account
+    let new_timestamp: u64 = 2000;
+    start_cheat_block_timestamp(spherre_contract, new_timestamp);
+
+    // Deploy an account
+    let name: ByteArray = "Test Spherre Account";
+    let description: ByteArray = "Test Spherre Account Description";
+    let members: Array<ContractAddress> = array![owner, MEMBER_ONE(), MEMBER_TWO()];
+    let threshold: u64 = 2;
+    let account_address = spherre_dispatcher
+        .deploy_account(owner, name, description, members, threshold);
+
+    start_cheat_caller_address(spherre_contract, to_be_staff);
+    spherre_dispatcher.whitelist_account(account_address);
+    stop_cheat_caller_address(spherre_contract);
+
+    // Check timestamp for account
+    let ts_account = spherre_dispatcher.get_whitelist_time(account_address, true);
+    assert(ts_account == new_timestamp, 'Wrong account timestamp');
+
+    stop_cheat_block_timestamp(spherre_contract);
+}
