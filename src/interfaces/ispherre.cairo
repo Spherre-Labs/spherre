@@ -237,4 +237,6 @@ pub trait ISpherre<TContractState> {
     ///
     /// # Returns
     fn get_whitelist_time(self: @TContractState, address: ContractAddress, is_account: bool) -> u64;
+    fn set_deployment_fee_percentage(ref self: TContractState, percentage: u64);
+    fn get_deployment_fee_percentage(self: @TContractState) -> u64;
 }

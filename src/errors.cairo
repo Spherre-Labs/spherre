@@ -46,6 +46,7 @@ pub mod Errors {
     pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
     pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
     pub const ERR_ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
+    pub const ERR_INVALID_PERCENTAGE: felt252 = 'Invalid deploy fee percentage';
 
     // Token locking specific errors
     pub const ERR_ZERO_LOCK_AMOUNT: felt252 = 'Lock amount cannot be zero';
@@ -104,4 +105,8 @@ pub mod Errors {
     pub const ERR_USER_ADDRESS_IS_ZERO: felt252 = 'User address is zero';
     pub const ERR_ACCOUNT_NOT_WHITELISTED: felt252 = 'Account not whitelisted';
     pub const ERR_USER_NOT_WHITELISTED: felt252 = 'User not whitelisted';
+
+    pub const ERR_TOKEN_NOT_SET: felt252 = 'Fee token not set';
+    pub const ERR_FEE_NOT_SET: felt252 = 'Fee not set';
+    
 }
