@@ -1608,7 +1608,7 @@ fn test_deployment_fee_success() {
     // Check event
     let expected_event = Spherre::Event::DeploymentFeeCollected(
         Spherre::DeploymentFeeCollected {
-            sender: owner,
+            caller: owner,
             amount: fee,
             spherre_share,
             account_share,

@@ -80,7 +80,7 @@ pub mod Spherre {
 
     #[derive(Drop, starknet::Event)]
     pub struct DeploymentFeeCollected {
-        pub sender: ContractAddress,
+        pub caller: ContractAddress,
         pub amount: u256,
         pub spherre_share: u256,
         pub account_share: u256,
@@ -261,10 +261,9 @@ pub mod Spherre {
         ) -> ContractAddress {
             self.pausable.assert_not_paused();
 
-            let deployer = get_caller_address();
-            let deployer_contract = get_contract_address();
-
+            let caller = get_caller_address();
             let fee_type = FeesType::DEPLOYMENT_FEE;
+            let fee_enabled = self.is_fee_enabled(fee_type);
 
             let class_hash = self.account_class_hash.read();
             // Check that the Classhash is set
@@ -277,7 +276,8 @@ pub mod Spherre {
 
             // Serialize the argument for the deployment
             let mut calldata: Array<felt252> = array![];
-            deployer_contract.serialize(ref calldata);
+            let deployer = get_contract_address();
+            deployer.serialize(ref calldata);
             owner.serialize(ref calldata);
             name.serialize(ref calldata);
             description.serialize(ref calldata);
@@ -291,9 +291,11 @@ pub mod Spherre {
             self.is_account.entry(account_address).write(true);
 
             // Collect deployment fees if enabled
-            let fee_enabled = self.is_fee_enabled(fee_type);
             if fee_enabled {
-                self.collect_deployment_fees(deployer, account_address);
+                let fee = self.get_fee(fee_type, deployer);
+                if fee != 0 {
+                    self.collect_deployment_fees(caller, account_address);
+                }
             }
 
             // Emit AccountDeployed event
@@ -304,7 +306,7 @@ pub mod Spherre {
                 description,
                 members,
                 threshold,
-                deployer: deployer_contract,
+                deployer,
                 date_deployed: get_block_timestamp(),
             };
             self.emit(event);
@@ -590,21 +592,21 @@ pub mod Spherre {
             assert(is_deployed_account, Errors::ERR_CALLER_NOT_DEPLOYED_ACCOUNT);
         }
 
-        /// Collects the deployment fee from the deployer, splits it, and emits an event.
+        /// Collects the deployment fee from the caller, splits it, and emits an event.
         fn collect_deployment_fees(
-            ref self: ContractState, deployer: ContractAddress, account: ContractAddress
+            ref self: ContractState, caller: ContractAddress, account: ContractAddress
         ) {
             let fee_type = FeesType::DEPLOYMENT_FEE;
-            let fee = self.get_fee(fee_type, deployer);
+            let fee = self.get_fee(fee_type, caller);
             let fee_token = self.get_fee_token();
             let percentage = self.deployment_fee_percentage.read();
             let spherre_contract = get_contract_address();
             let erc20 = IERC20Dispatcher { contract_address: fee_token };
 
-            // Check deployer's balance and allowance
-            let balance = erc20.balance_of(deployer);
+            // Check caller's balance and allowance
+            let balance = erc20.balance_of(caller);
             assert(balance >= fee, Errors::ERR_INSUFFICIENT_FEE);
-            let allowance = erc20.allowance(deployer, spherre_contract);
+            let allowance = erc20.allowance(caller, spherre_contract);
             assert(allowance >= fee, Errors::ERR_INSUFFICIENT_ALLOWANCE);
 
             // Calculate shares
@@ -612,17 +614,17 @@ pub mod Spherre {
             let spherre_share = fee - account_share;
 
             // Transfer fee to the contract
-            let transfer_success = erc20.transfer_from(deployer, spherre_contract, fee);
+            let transfer_success = erc20.transfer_from(caller, spherre_contract, fee);
             assert(transfer_success, Errors::ERR_ERC20_TRANSFER_FAILED);
 
             // Transfer a percentage to newly deployed account
             erc20.transfer(account, account_share);
 
-            // Emit event (account_share will be routed to the new account after deployment)
+            // Emit event
             self
                 .emit(
                     DeploymentFeeCollected {
-                        sender: deployer,
+                        caller,
                         amount: fee,
                         spherre_share,
                         account_share,
