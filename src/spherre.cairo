@@ -11,6 +11,7 @@ pub mod Spherre {
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use openzeppelin::upgrades::UpgradeableComponent;
     use spherre::errors::Errors;
+    use spherre::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use spherre::interfaces::ispherre::ISpherre;
     use spherre::types::{FeesType, SpherreAdminRoles};
     use starknet::storage::{
@@ -77,6 +78,16 @@ pub mod Spherre {
         pub admin: ContractAddress,
     }
 
+    #[derive(Drop, starknet::Event)]
+    pub struct DeploymentFeeCollected {
+        pub caller: ContractAddress,
+        pub amount: u256,
+        pub spherre_share: u256,
+        pub account_share: u256,
+        pub fee_token: ContractAddress,
+        pub timestamp: u64,
+    }
+
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -98,10 +109,12 @@ pub mod Spherre {
         pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-        // --- Fee management ---
+        // Fee management
         fee_amounts: Map<FeesType, u256>,
         fee_token_address: ContractAddress,
         fee_enabled: Map<FeesType, bool>,
+        // Deployment fee percentage (in basis points, e.g., 1000 = 10%)
+        deployment_fee_percentage: u64, // 0-10000 (10000 = 100%)
         // Fee collection statistics
         // (fees_type, fees_token, account) -> amount collected
         fee_collection_amounts: Map<(FeesType, ContractAddress, ContractAddress), u256>,
@@ -126,6 +139,7 @@ pub mod Spherre {
         UserWhitelisted: UserWhitelisted,
         AccountRemovedFromWhitelist: AccountRemovedFromWhitelist,
         UserRemovedFromWhitelist: UserRemovedFromWhitelist,
+        DeploymentFeeCollected: DeploymentFeeCollected,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -247,17 +261,18 @@ pub mod Spherre {
         ) -> ContractAddress {
             self.pausable.assert_not_paused();
 
+            let caller = get_caller_address();
+            let fee_type = FeesType::DEPLOYMENT_FEE;
+            let fee_enabled = self.is_fee_enabled(fee_type);
+
             let class_hash = self.account_class_hash.read();
             // Check that the Classhash is set
-
             assert(!class_hash.is_zero(), Errors::ERR_ACCOUNT_CLASSHASH_UNKNOWN);
             // Generate unique salt from blocktimestamp and block number
             let salt = PoseidonTrait::new()
                 .update_with(get_block_timestamp())
                 .update_with(get_block_number())
                 .finalize();
-
-            // TODO: Add the functionality to collect deployment fees
 
             // Serialize the argument for the deployment
             let mut calldata: Array<felt252> = array![];
@@ -274,6 +289,14 @@ pub mod Spherre {
             // Add account to deployed addresses list
             self.accounts.append().write(account_address);
             self.is_account.entry(account_address).write(true);
+
+            // Collect deployment fees if enabled
+            if fee_enabled {
+                let fee = self.get_fee(fee_type, deployer);
+                if fee != 0 {
+                    self.collect_deployment_fees(caller, account_address);
+                }
+            }
 
             // Emit AccountDeployed event
             let event = AccountDeployed {
@@ -525,6 +548,17 @@ pub mod Spherre {
                 self.user_whitelist_time.entry(address).read()
             }
         }
+
+        /// Set the deployment fee percentage (in basis points, e.g., 1000 = 10%)
+        fn set_deployment_fee_percentage(ref self: ContractState, percentage: u64) {
+            self.assert_only_superadmin();
+            assert(percentage <= 10000, Errors::ERR_INVALID_PERCENTAGE); // 10000 = 100%
+            self.deployment_fee_percentage.write(percentage);
+        }
+        /// Get the deployment fee percentage (in basis points).
+        fn get_deployment_fee_percentage(self: @ContractState) -> u64 {
+            self.deployment_fee_percentage.read()
+        }
     }
 
     #[generate_trait]
@@ -556,6 +590,48 @@ pub mod Spherre {
             let caller = get_caller_address();
             let is_deployed_account = self.is_deployed_account(caller);
             assert(is_deployed_account, Errors::ERR_CALLER_NOT_DEPLOYED_ACCOUNT);
+        }
+
+        /// Collects the deployment fee from the caller, splits it, and emits an event.
+        fn collect_deployment_fees(
+            ref self: ContractState, caller: ContractAddress, account: ContractAddress
+        ) {
+            let fee_type = FeesType::DEPLOYMENT_FEE;
+            let fee = self.get_fee(fee_type, caller);
+            let fee_token = self.get_fee_token();
+            let percentage = self.deployment_fee_percentage.read();
+            let spherre_contract = get_contract_address();
+            let erc20 = IERC20Dispatcher { contract_address: fee_token };
+
+            // Check caller's balance and allowance
+            let balance = erc20.balance_of(caller);
+            assert(balance >= fee, Errors::ERR_INSUFFICIENT_FEE);
+            let allowance = erc20.allowance(caller, spherre_contract);
+            assert(allowance >= fee, Errors::ERR_INSUFFICIENT_ALLOWANCE);
+
+            // Calculate shares
+            let account_share = (fee * percentage.into()) / 10000_u256;
+            let spherre_share = fee - account_share;
+
+            // Transfer fee to the contract
+            let transfer_success = erc20.transfer_from(caller, spherre_contract, fee);
+            assert(transfer_success, Errors::ERR_ERC20_TRANSFER_FAILED);
+
+            // Transfer a percentage to newly deployed account
+            erc20.transfer(account, account_share);
+
+            // Emit event
+            self
+                .emit(
+                    DeploymentFeeCollected {
+                        caller,
+                        amount: fee,
+                        spherre_share,
+                        account_share,
+                        fee_token,
+                        timestamp: get_block_timestamp(),
+                    }
+                );
         }
     }
 }
