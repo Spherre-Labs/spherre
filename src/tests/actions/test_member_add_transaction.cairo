@@ -2,13 +2,14 @@ use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
     stop_cheat_caller_address, assert_event_emitted,
 };
+use spherre::account_data::{TransactionApproved, TransactionExecuted};
+use spherre::actions::member_add_transaction::MemberAddTransactionExecuted;
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
-use spherre::errors::Errors;
 fn proposer() -> ContractAddress {
     contract_address_const::<'proposer'>()
 }
@@ -237,7 +238,10 @@ fn test_execute_member_add_transaction_fail_invalid_permission_mask() {
     mock_contract.assign_voter_permission_pub(caller);
     mock_contract.assign_executor_permission_pub(caller);
     mock_contract.set_threshold_pub(1);
-    let tx_id = mock_contract.propose_member_add_transaction_pub(new_member, permissions & 0x7); // Propose with valid mask
+    let tx_id = mock_contract
+        .propose_member_add_transaction_pub(
+            new_member, permissions & 0x7
+        ); // Propose with valid mask
     mock_contract.approve_transaction_pub(tx_id, caller);
     // Tamper with permissions (simulate storage corruption or bug)
     // Not possible via public API, so this is a placeholder for completeness
