@@ -1,10 +1,12 @@
 use snforge_std::{
-    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
-    stop_cheat_caller_address,
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address, EventSpyTrait
 };
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait,
 };
+use spherre::actions::member_permission_tx::{MemberPermissionTransaction, MemberPermissionTransaction::PermissionEditExecuted};
+use spherre::account_data::{AccountData, AccountData::TransactionExecuted};
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
 
@@ -224,3 +226,187 @@ fn test_execute_member_permission_transaction_success() {
         'should have executor permission',
     );
 }
+
+// --- EDGE CASE TESTS FOR EXECUTE EDIT PERMISSION TRANSACTION ---
+
+#[test]
+#[should_panic(expected: 'Transaction is out of range')]
+fn test_execute_edit_permission_transaction_fail_nonexistent() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let nonexistent_id = 999_u256;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.execute_edit_permission_transaction_pub(nonexistent_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Invalid edit permission txn')]
+fn test_execute_edit_permission_transaction_fail_wrong_type() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller); // assign voter permission
+    // Propose a different type of transaction (e.g., threshold change)
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::THRESHOLD_CHANGE);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not an executor')]
+fn test_execute_edit_permission_transaction_fail_not_executor() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller); // FIX: assign voter permission
+    // Propose and approve transaction, but do not assign executor permission to caller
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Member does not exist')]
+fn test_execute_edit_permission_transaction_fail_member_not_exist() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    // Remove member before execution
+    // (Assume a remove_member_pub exists or simulate by not adding member)
+    stop_cheat_caller_address(mock_contract.contract_address);
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    // Try to execute for non-member
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Permission mask is invalid')]
+fn test_execute_edit_permission_transaction_fail_invalid_permission_mask() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let invalid_permissions: u8 = 8; // Invalid mask
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, invalid_permissions);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Transaction is not executable')]
+fn test_execute_edit_permission_transaction_fail_not_approved() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    // Do not approve
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+// --- EVENT EMISSION TESTS ---
+
+// #[test]
+// fn test_event_emitted_transaction_approved() {
+//     let mock_contract = deploy_mock_contract();
+//     let caller = proposer();
+//     let member = member_to_edit();
+//     let new_permissions: u8 = 6;
+//     start_cheat_caller_address(mock_contract.contract_address, caller);
+//     mock_contract.add_member_pub(caller);
+//     mock_contract.add_member_pub(member);
+//     mock_contract.assign_proposer_permission_pub(caller);
+//     let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+//     let mut spy = spy_events();
+//     mock_contract.approve_transaction_pub(tx_id, caller);
+//     stop_cheat_caller_address(mock_contract.contract_address);
+//     let expected_event = spherre::tests::mocks::mock_account_data::Event::AccountDataEvent(
+//         spherre::account_data::Event::TransactionApproved {
+//             transaction_id: tx_id,
+//             date_approved: mock_contract.get_transaction_pub(tx_id).date_approved,
+//         }
+//     );
+//     spy.assert_emitted(@array![(mock_contract.contract_address, expected_event)]);
+// }
+
+#[test]
+fn test_event_emitted_transaction_executed() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller); // FIX: assign voter permission
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    let mut spy = spy_events();
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let transaction_date_executed = mock_contract.get_transaction_pub(tx_id).date_executed;
+    let expected_event = AccountData::Event::TransactionExecuted(
+        TransactionExecuted {
+            transaction_id: tx_id,
+            executor: caller,
+            date_executed: transaction_date_executed,
+        }
+    );
+    spy.assert_emitted(@array![(mock_contract.contract_address, expected_event)]);
+}
+
+#[test]
+fn test_event_emitted_permission_edit_executed() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller); // FIX: assign voter permission
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    let mut spy = spy_events();
+    mock_contract.execute_edit_permission_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    let expected_event = MemberPermissionTransaction::Event::PermissionEditExecuted(
+        PermissionEditExecuted {
+            transaction_id: tx_id,
+            member,
+            new_permissions
+        },
+    );
+    spy.assert_emitted(@array![(mock_contract.contract_address, expected_event)]);
+}
+

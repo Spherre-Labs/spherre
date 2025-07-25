@@ -119,10 +119,10 @@ pub mod AccountData {
     #[derive(Drop, starknet::Event)]
     pub struct TransactionExecuted {
         #[key]
-        transaction_id: u256,
+        pub transaction_id: u256,
         #[key]
-        executor: ContractAddress,
-        date_executed: u64,
+        pub executor: ContractAddress,
+        pub date_executed: u64,
     }
 
     #[derive(Drop, starknet::Event)]
