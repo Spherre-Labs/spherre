@@ -6,9 +6,10 @@ use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::actions::member_permission_tx::{MemberPermissionTransaction, MemberPermissionTransaction::PermissionEditExecuted};
-use spherre::account_data::{AccountData, AccountData::TransactionExecuted};
+use spherre::account_data::{AccountData, AccountData::{TransactionExecuted, TransactionApproved}};
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const};
+use starknet::get_block_timestamp;
 
 fn deploy_mock_contract() -> IMockContractDispatcher {
     let contract_class = declare("MockContract").unwrap().contract_class();
@@ -331,28 +332,31 @@ fn test_execute_edit_permission_transaction_fail_not_approved() {
 }
 // --- EVENT EMISSION TESTS ---
 
-// #[test]
-// fn test_event_emitted_transaction_approved() {
-//     let mock_contract = deploy_mock_contract();
-//     let caller = proposer();
-//     let member = member_to_edit();
-//     let new_permissions: u8 = 6;
-//     start_cheat_caller_address(mock_contract.contract_address, caller);
-//     mock_contract.add_member_pub(caller);
-//     mock_contract.add_member_pub(member);
-//     mock_contract.assign_proposer_permission_pub(caller);
-//     let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
-//     let mut spy = spy_events();
-//     mock_contract.approve_transaction_pub(tx_id, caller);
-//     stop_cheat_caller_address(mock_contract.contract_address);
-//     let expected_event = spherre::tests::mocks::mock_account_data::Event::AccountDataEvent(
-//         spherre::account_data::Event::TransactionApproved {
-//             transaction_id: tx_id,
-//             date_approved: mock_contract.get_transaction_pub(tx_id).date_approved,
-//         }
-//     );
-//     spy.assert_emitted(@array![(mock_contract.contract_address, expected_event)]);
-// }
+#[test]
+fn test_event_emitted_transaction_approved() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_edit();
+    let new_permissions: u8 = 6;
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller); // FIX: assign voter permission
+    let tx_id = mock_contract.propose_edit_permission_transaction_pub(member, new_permissions);
+    let mut spy = spy_events();
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+    // let transaction_date_approved = mock_contract.get_transaction_pub(tx_id).date_approved;
+    let transaction_date_approved = get_block_timestamp();
+    let expected_event = AccountData::Event::TransactionApproved(
+        TransactionApproved {
+            transaction_id: tx_id,
+            date_approved: transaction_date_approved,
+        },
+    );
+    spy.assert_emitted(@array![(mock_contract.contract_address, expected_event)]);
+}
 
 #[test]
 fn test_event_emitted_transaction_executed() {
