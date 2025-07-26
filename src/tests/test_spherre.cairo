@@ -739,7 +739,7 @@ fn test_update_account_class_hash_emits_event() {
     );
 
     spy.assert_emitted(@array![(spherre_contract, expected_event)]);
-}
+} //@note
 
 #[test]
 #[should_panic(expected: 'Invalid class hash')]

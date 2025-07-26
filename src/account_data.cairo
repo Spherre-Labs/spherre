@@ -105,8 +105,8 @@ pub mod AccountData {
     #[derive(Drop, starknet::Event)]
     pub struct TransactionApproved {
         #[key]
-        transaction_id: u256,
-        date_approved: u64,
+        pub transaction_id: u256,
+        pub date_approved: u64,
     }
 
     #[derive(Drop, starknet::Event)]
