@@ -44,7 +44,7 @@ pub mod Errors {
     pub const ERR_INSUFFICIENT_TOKEN_AMOUNT: felt252 = 'Insufficient token amount';
     pub const ERR_RECIPIENT_CANNOT_BE_ACCOUNT: felt252 = 'Recipient cannot be account';
     pub const ERR_INVALID_AMOUNT: felt252 = 'Amount is invalid';
-    pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction';
+    pub const ERR_INVALID_TOKEN_TRANSACTION: felt252 = 'Invalid Token Transaction Type';
     pub const ERR_ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
     pub const ERR_INVALID_PERCENTAGE: felt252 = 'Invalid deploy fee percentage';
 
