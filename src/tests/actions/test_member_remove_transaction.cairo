@@ -9,7 +9,9 @@ use spherre::tests::mocks::mock_account_data::{
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
-use starknet::{ContractAddress, contract_address_const};
+use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
+use spherre::account_data::AccountData;
+use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -498,8 +500,6 @@ fn test_member_remove_transaction_event_emissions() {
     let caller = proposer_and_executor();
     let member = member_to_remove();
 
-    let mut spy = spy_events();
-
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.add_member_pub(member);
@@ -511,7 +511,8 @@ fn test_member_remove_transaction_event_emissions() {
     mock_contract.assign_executor_permission_pub(member);
     mock_contract.set_threshold_pub(1);
 
-    // Propose member removal transaction
+    let mut spy = spy_events();
+
     let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
 
     mock_contract.approve_transaction_pub(tx_id, caller);
@@ -519,11 +520,25 @@ fn test_member_remove_transaction_event_emissions() {
     mock_contract.execute_remove_member_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 
-    // Verify events were emitted
-    // Note: This test validates that events are emitted but doesn't check specific event data
-    // as the mock contract may not emit the exact same events as the real implementation
-    let events = spy.get_events();
-    assert(events.events.len() > 0, 'No events emitted');
+    let all_events = spy.get_events();
+    assert(all_events.events.len() > 0, 'No events emitted');
+
+    // Verify transaction state
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert!(transaction.tx_status == TransactionStatus::EXECUTED, "Transaction not executed");
+    assert!(!mock_contract.is_member_pub(member), "Member not removed");
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::PROPOSER),
+        "Member still has proposer permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::VOTER),
+        "Member still has voter permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
+        "Member still has executor permission"
+    );
 }
 
 #[test]
@@ -550,9 +565,16 @@ fn test_member_remove_transaction_approval_event() {
     mock_contract.approve_transaction_pub(tx_id, caller);
     stop_cheat_caller_address(mock_contract.contract_address);
 
-    // Verify approval event was emitted
-    let events = spy.get_events();
-    assert(events.events.len() > 0, 'No approval events emitted');
+    // Create expected event
+    let expected_event = AccountData::Event::TransactionApproved(
+        AccountData::TransactionApproved { 
+            transaction_id: tx_id,
+            date_approved: get_block_timestamp()
+        }
+    );
+
+    let expected_events = array![(mock_contract.contract_address, expected_event)];
+    spy.assert_emitted(@expected_events);
 }
 
 #[test]
@@ -572,6 +594,7 @@ fn test_member_remove_transaction_execution_events() {
     mock_contract.assign_executor_permission_pub(member);
     mock_contract.set_threshold_pub(1);
 
+
     // Propose and approve member removal transaction
     let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
     mock_contract.approve_transaction_pub(tx_id, caller);
@@ -583,13 +606,53 @@ fn test_member_remove_transaction_execution_events() {
     mock_contract.execute_remove_member_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 
-    // Verify execution events were emitted
-    let events = spy.get_events();
-    assert(events.events.len() > 0, 'No execution events emitted');
+    let account_event = AccountData::Event::TransactionExecuted(
+        AccountData::TransactionExecuted { 
+            transaction_id: tx_id,
+            executor: caller,
+            date_executed: get_block_timestamp()
+        }
+    );
 
-    // Verify the transaction was executed properly
+    let member_event = MemberRemoveTransaction::Event::MemberRemovalExecuted(
+        MemberRemoveTransaction::MemberRemovalExecuted { 
+            transaction_id: tx_id,
+            member: member
+        }
+    );
+
+    let account_events = array![(mock_contract.contract_address, account_event)];
+    spy.assert_emitted(@account_events);
+
+    let member_events = array![(mock_contract.contract_address, member_event)];
+    spy.assert_emitted(@member_events);
+
+    // Verify transaction state
     let transaction = mock_contract.get_transaction_pub(tx_id);
-    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction not executed');
-    assert(!mock_contract.is_member_pub(member), 'Member not removed');
+    assert!(transaction.tx_status == TransactionStatus::EXECUTED, "Transaction not executed");
+    assert!(!mock_contract.is_member_pub(member), "Member not removed");
 }
 
+// Bonus Test: Verify no events on failed proposal
+#[test]
+#[should_panic(expected: ('Caller is not a proposer',))]
+fn test_no_events_on_failed_proposal() {
+    // Deploy mock contract
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_remove();
+
+    // Setup: Add members but don't assign proposer permission
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+
+    let mut spy = spy_events();
+
+    mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify no events were emitted
+    let all_events = spy.get_events();
+    assert!(all_events.events.len() == 0, "Events emitted unexpectedly");
+}
