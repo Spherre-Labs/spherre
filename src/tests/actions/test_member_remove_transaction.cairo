@@ -1,8 +1,10 @@
+use core::array::ArrayTrait;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
     stop_cheat_caller_address, spy_events, EventSpyAssertionsTrait, EventSpyTrait,
 };
-use core::array::ArrayTrait;
+use spherre::account_data::AccountData;
+use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
 use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait,
@@ -10,8 +12,6 @@ use spherre::tests::mocks::mock_account_data::{
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
 use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
-use spherre::account_data::AccountData;
-use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -567,9 +567,8 @@ fn test_member_remove_transaction_approval_event() {
 
     // Create expected event
     let expected_event = AccountData::Event::TransactionApproved(
-        AccountData::TransactionApproved { 
-            transaction_id: tx_id,
-            date_approved: get_block_timestamp()
+        AccountData::TransactionApproved {
+            transaction_id: tx_id, date_approved: get_block_timestamp()
         }
     );
 
@@ -594,7 +593,6 @@ fn test_member_remove_transaction_execution_events() {
     mock_contract.assign_executor_permission_pub(member);
     mock_contract.set_threshold_pub(1);
 
-
     // Propose and approve member removal transaction
     let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
     mock_contract.approve_transaction_pub(tx_id, caller);
@@ -602,23 +600,19 @@ fn test_member_remove_transaction_execution_events() {
     // Setup event spy before execution
     let mut spy = spy_events();
 
-    // Execute the transaction - this should emit TransactionExecuted and MemberRemovalExecuted events
+    // Execute the transaction - this should emit TransactionExecuted and MemberRemovalExecuted
+    // events
     mock_contract.execute_remove_member_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 
     let account_event = AccountData::Event::TransactionExecuted(
-        AccountData::TransactionExecuted { 
-            transaction_id: tx_id,
-            executor: caller,
-            date_executed: get_block_timestamp()
+        AccountData::TransactionExecuted {
+            transaction_id: tx_id, executor: caller, date_executed: get_block_timestamp()
         }
     );
 
     let member_event = MemberRemoveTransaction::Event::MemberRemovalExecuted(
-        MemberRemoveTransaction::MemberRemovalExecuted { 
-            transaction_id: tx_id,
-            member: member
-        }
+        MemberRemoveTransaction::MemberRemovalExecuted { transaction_id: tx_id, member: member }
     );
 
     let account_events = array![(mock_contract.contract_address, account_event)];
