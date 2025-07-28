@@ -54,7 +54,7 @@ fn test_propose_member_add_transaction_successful() {
 }
 
 #[test]
-#[should_panic(expected: 0x5065726d697373696f6e206d61736b20697320696e76616c6964)]
+#[should_panic(expected: 'Permission mask is invalid')]
 fn test_propose_member_add_transaction_fail_with_invalid_permission() {
     let mock_contract = deploy_mock_contract();
 
@@ -90,7 +90,7 @@ fn test_propose_member_add_transaction_fail_with_zero_member() {
 }
 
 #[test]
-#[should_panic(expected: 0x4164647265737320697320616c72656164792061206d656d626572)]
+#[should_panic(expected: 'Address is already a member')]
 fn test_propose_member_add_transaction_fail_with_adding_account_member() {
     let mock_contract = deploy_mock_contract();
 
@@ -172,7 +172,7 @@ fn test_execute_member_add_transaction_successful() {
 }
 
 #[test]
-#[should_panic(expected: 0x5472616e73616374696f6e206973206f7574206f662072616e6765)]
+#[should_panic(expected: 'Transaction is out of range')]
 fn test_execute_member_add_transaction_fail_invalid_tx_id() {
     let mock_contract = deploy_mock_contract();
     let caller: ContractAddress = owner();
@@ -186,7 +186,7 @@ fn test_execute_member_add_transaction_fail_invalid_tx_id() {
 }
 
 #[test]
-#[should_panic(expected: 0x43616c6c6572206973206e6f7420616e206578656375746f72)]
+#[should_panic(expected: 'Caller is not an executor')]
 fn test_execute_member_add_transaction_fail_not_executor() {
     let mock_contract = deploy_mock_contract();
     let caller: ContractAddress = owner();
@@ -205,7 +205,7 @@ fn test_execute_member_add_transaction_fail_not_executor() {
 }
 
 #[test]
-#[should_panic(expected: 0x4164647265737320697320616c72656164792061206d656d626572)]
+#[should_panic(expected: 'Address is already a member')]
 fn test_execute_member_add_transaction_fail_already_member() {
     let mock_contract = deploy_mock_contract();
     let caller: ContractAddress = owner();
@@ -226,7 +226,7 @@ fn test_execute_member_add_transaction_fail_already_member() {
 }
 
 #[test]
-#[should_panic(expected: 0x5065726d697373696f6e206d61736b20697320696e76616c6964)]
+#[should_panic(expected: 'Permission mask is invalid')]
 fn test_execute_member_add_transaction_fail_invalid_permission_mask() {
     let mock_contract = deploy_mock_contract();
     let caller: ContractAddress = owner();
@@ -252,7 +252,7 @@ fn test_execute_member_add_transaction_fail_invalid_permission_mask() {
 }
 
 #[test]
-#[should_panic(expected: 0x5472616e73616374696f6e206973206e6f742065786563757461626c65)]
+#[should_panic(expected: 'Transaction is not executable')]
 fn test_execute_member_add_transaction_fail_not_approved() {
     let mock_contract = deploy_mock_contract();
     let caller: ContractAddress = owner();
