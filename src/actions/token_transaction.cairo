@@ -46,21 +46,21 @@ pub mod TokenTransaction {
 
 
     #[derive(Drop, starknet::Event)]
-    struct TokenTransactionProposed {
+    pub struct TokenTransactionProposed {
         #[key]
-        id: u256,
-        token: ContractAddress,
-        amount: u256,
-        recipient: ContractAddress,
+        pub id: u256,
+        pub token: ContractAddress,
+        pub amount: u256,
+        pub recipient: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct TokenTransactionExecuted {
+    pub struct TokenTransactionExecuted {
         #[key]
-        id: u256,
-        token: ContractAddress,
-        amount: u256,
-        recipient: ContractAddress,
+        pub id: u256,
+        pub token: ContractAddress,
+        pub amount: u256,
+        pub recipient: ContractAddress,
     }
 
 
