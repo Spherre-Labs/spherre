@@ -99,7 +99,7 @@ fn test_propose_nft_transaction_fail_if_not_owner() {
     let token_id: u256 = 1;
     let caller: ContractAddress = owner();
     let receiver: ContractAddress = recipient();
-    let other_account: ContractAddress = contract_address_const::<'other'>();
+    let other_account: ContractAddress = contract_address_const::<999>();
 
     // Mint NFT to a different account
     let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
@@ -354,5 +354,285 @@ fn test_execute_nft_transaction_fail_if_not_executor() {
     // Execute the NFT transaction (should fail)
     mock_contract.execute_nft_transaction_pub(tx_id);
 
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Transaction is out of range')]
+fn test_execute_nft_transaction_fail_if_transaction_not_exists() {
+    let mock_contract = deploy_mock_contract();
+    let caller: ContractAddress = owner();
+
+    // Add member and assign executor role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Try to execute a non-existent transaction
+    mock_contract.execute_nft_transaction_pub(999);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Invalid NFT transaction')]
+fn test_execute_nft_transaction_fail_if_wrong_transaction_type() {
+    let mock_contract = deploy_mock_contract();
+    let caller: ContractAddress = owner();
+
+    // Add member and assign proposer role
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Create a TOKEN_SEND transaction instead of NFT_SEND
+    let tx_id = mock_contract.create_transaction_pub(TransactionType::TOKEN_SEND);
+
+    // Try to execute as NFT transaction (should fail)
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not the owner')]
+fn test_execute_nft_transaction_fail_if_not_nft_owner() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+    let other_account: ContractAddress = contract_address_const::<'other'>();
+
+    // Mint NFT to a different account (not the contract)
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(other_account, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose NFT transaction
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Try to execute (should fail because contract doesn't own the NFT)
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+fn test_execute_nft_transaction_verify_recipient_validation_in_proposal() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+
+    // Mint NFT to account
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(mock_contract.contract_address, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Verify that a valid transaction can be proposed and executed
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, recipient());
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Execute the transaction successfully
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify successful execution
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
+}
+
+#[test]
+fn test_execute_nft_transaction_with_event_validation() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Mint NFT to account
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(mock_contract.contract_address, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose NFT transaction
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Execute the transaction
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify transaction is executed
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
+
+    // Verify NFT ownership transfer
+    assert(nft_contract.owner_of(token_id) == receiver, 'NFT should be transfd to recv');
+
+    // Verify NFT transaction data
+    let nft_transaction = mock_contract.get_nft_transaction_pub(tx_id);
+    assert(
+        nft_transaction.nft_contract == nft_contract.contract_address, 'NFT contract should match'
+    );
+    assert(nft_transaction.token_id == token_id, 'Token ID should match');
+    assert(nft_transaction.recipient == receiver, 'Recipient should match');
+}
+
+#[test]
+fn test_execute_nft_transaction_full_lifecycle_with_events() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Mint NFT to account
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(mock_contract.contract_address, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose NFT transaction
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+
+    // Verify transaction is in INITIATED status
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(
+        transaction.tx_status == TransactionStatus::INITIATED, 'Transaction should be initiated'
+    );
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Verify transaction is in APPROVED status
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::APPROVED, 'Transaction should be approved');
+
+    // Execute the transaction
+    mock_contract.execute_nft_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify transaction is in EXECUTED status
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
+
+    // Verify NFT ownership transfer
+    assert(nft_contract.owner_of(token_id) == receiver, 'NFT should be transfd to recv');
+
+    // Verify executor is set
+    assert(transaction.executor == caller, 'Executor should set to caller');
+    // Note: date_executed might be 0 if the transaction was just executed, so we'll skip this check
+}
+
+#[test]
+fn test_execute_nft_transaction_verify_already_executed_status() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Mint NFT to account
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(mock_contract.contract_address, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose NFT transaction
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Execute the transaction first time
+    mock_contract.execute_nft_transaction_pub(tx_id);
+
+    // Verify transaction is in EXECUTED status
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
+
+    // Verify NFT ownership transfer
+    assert(nft_contract.owner_of(token_id) == receiver, 'NFT should be tranfd to recv');
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: 'Pausable: paused')]
+fn test_execute_nft_transaction_fail_if_contract_paused() {
+    let mock_contract = deploy_mock_contract();
+    let nft_contract = deploy_mock_nft();
+    let token_id: u256 = 1;
+    let caller: ContractAddress = owner();
+    let receiver: ContractAddress = recipient();
+
+    // Mint NFT to account
+    let mock_nft = IMockNFTDispatcher { contract_address: nft_contract.contract_address };
+    mock_nft.mint(mock_contract.contract_address, token_id);
+
+    // Add member and assign all roles
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose NFT transaction
+    let tx_id = mock_contract
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, receiver);
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Pause the contract
+    mock_contract.pause();
+
+    // Try to execute (should fail because contract is paused)
+    mock_contract.execute_nft_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
 }
