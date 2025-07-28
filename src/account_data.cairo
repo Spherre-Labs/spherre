@@ -87,8 +87,8 @@ pub mod AccountData {
 
     #[derive(Drop, starknet::Event)]
     pub struct ThresholdUpdated {
-        threshold: u64,
-        date_updated: u64,
+        pub threshold: u64,
+        pub date_updated: u64,
     }
 
     // TODO: Implement Transaction Proposed Event
@@ -112,8 +112,8 @@ pub mod AccountData {
     #[derive(Drop, starknet::Event)]
     pub struct TransactionRejected {
         #[key]
-        transaction_id: u256,
-        date_approved: u64,
+        pub transaction_id: u256,
+        pub date_approved: u64,
     }
 
     #[derive(Drop, starknet::Event)]
