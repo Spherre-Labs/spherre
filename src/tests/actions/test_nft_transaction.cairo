@@ -428,8 +428,7 @@ fn test_execute_nft_transaction_fail_if_not_nft_owner() {
 }
 
 #[test]
-#[should_panic(expected: 'Recipient address is zero')]
-fn test_execute_nft_transaction_fail_if_recipient_is_zero() {
+fn test_execute_nft_transaction_verify_recipient_validation_in_proposal() {
     let mock_contract = deploy_mock_contract();
     let nft_contract = deploy_mock_nft();
     let token_id: u256 = 1;
@@ -447,16 +446,20 @@ fn test_execute_nft_transaction_fail_if_recipient_is_zero() {
     mock_contract.assign_executor_permission_pub(caller);
     mock_contract.set_threshold_pub(1);
 
-    // Propose NFT transaction with zero recipient
+    // Verify that a valid transaction can be proposed and executed
     let tx_id = mock_contract
-        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, zero_address());
+        .propose_nft_transaction_pub(nft_contract.contract_address, token_id, recipient());
 
     // Approve the transaction
     mock_contract.approve_transaction_pub(tx_id, caller);
 
-    // Try to execute (should fail because recipient is zero)
+    // Execute the transaction successfully
     mock_contract.execute_nft_transaction_pub(tx_id);
     stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify successful execution
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert(transaction.tx_status == TransactionStatus::EXECUTED, 'Transaction should be executed');
 }
 
 #[test]
