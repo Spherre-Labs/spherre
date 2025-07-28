@@ -1,14 +1,17 @@
+use core::array::ArrayTrait;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
-    stop_cheat_caller_address,
+    stop_cheat_caller_address, spy_events, EventSpyAssertionsTrait, EventSpyTrait,
 };
+use spherre::account_data::AccountData;
+use spherre::actions::member_remove_transaction::MemberRemoveTransaction;
 use spherre::interfaces::ierc20::{IERC20Dispatcher};
 use spherre::tests::mocks::mock_account_data::{
     IMockContractDispatcher, IMockContractDispatcherTrait,
 };
 use spherre::tests::mocks::mock_token::{IMockTokenDispatcher, IMockTokenDispatcherTrait};
 use spherre::types::{Permissions, TransactionStatus, TransactionType};
-use starknet::{ContractAddress, contract_address_const};
+use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
 
 fn deploy_mock_token() -> IERC20Dispatcher {
     let contract_class = declare("MockToken").unwrap().contract_class();
@@ -121,6 +124,7 @@ fn test_get_member_removal_transaction_wrong_type() {
     start_cheat_caller_address(mock_contract.contract_address, caller);
     mock_contract.add_member_pub(caller);
     mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
 
     // Create a different type of transaction (not MEMBER_REMOVE)
     let tx_id = mock_contract
@@ -358,3 +362,291 @@ fn test_execute_remove_member_transaction_successful() {
     );
 }
 
+#[test]
+#[should_panic(expected: ('Transaction is out of range',))]
+fn test_execute_member_remove_transaction_nonexistent_transaction() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let nonexistent_tx_id = 999_u256;
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Try to execute nonexistent transaction
+    mock_contract.execute_remove_member_transaction_pub(nonexistent_tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Not member remove proposal',))]
+fn test_execute_member_remove_transaction_wrong_type() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let token = deploy_mock_token();
+    let amount_to_mint: u256 = 10000000;
+    let amount_to_send: u256 = 100000;
+    let receiver = other_member();
+
+    let mock_token = IMockTokenDispatcher { contract_address: token.contract_address };
+    mock_token.mint(mock_contract.contract_address, amount_to_mint);
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+
+    // Create a token transaction (not a member remove transaction)
+    let tx_id = mock_contract
+        .propose_token_transaction_pub(token.contract_address, amount_to_send, receiver);
+
+    // Try to execute as member remove transaction (should panic)
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Caller is not an executor',))]
+fn test_execute_member_remove_transaction_caller_not_executor() {
+    let mock_contract = deploy_mock_contract();
+    let proposer_caller = proposer();
+    let executor_caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    // Setup proposer and executor
+    start_cheat_caller_address(mock_contract.contract_address, proposer_caller);
+    mock_contract.add_member_pub(proposer_caller);
+    mock_contract.add_member_pub(executor_caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(proposer_caller);
+    mock_contract.assign_executor_permission_pub(executor_caller);
+    mock_contract.assign_voter_permission_pub(executor_caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Approve the transaction as executor
+    start_cheat_caller_address(mock_contract.contract_address, executor_caller);
+    mock_contract.approve_transaction_pub(tx_id, executor_caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Try to execute as proposer (who is not an executor) - should panic
+    start_cheat_caller_address(mock_contract.contract_address, proposer_caller);
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Transaction is not executable',))]
+fn test_execute_member_remove_transaction_not_approved() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+
+    // Try to execute without approval - should panic
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+#[test]
+#[should_panic(expected: ('Caller is not a member',))]
+fn test_execute_member_remove_transaction_already_executed() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_proposer_permission_pub(member);
+    mock_contract.assign_voter_permission_pub(member);
+    mock_contract.assign_executor_permission_pub(member);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+
+    // Approve the transaction
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Execute the transaction first time
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+
+    // Try to execute again - should panic
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+}
+
+
+#[test]
+fn test_member_remove_transaction_event_emissions() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_proposer_permission_pub(member);
+    mock_contract.assign_voter_permission_pub(member);
+    mock_contract.assign_executor_permission_pub(member);
+    mock_contract.set_threshold_pub(1);
+
+    let mut spy = spy_events();
+
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let all_events = spy.get_events();
+    assert(all_events.events.len() > 0, 'No events emitted');
+
+    // Verify transaction state
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert!(transaction.tx_status == TransactionStatus::EXECUTED, "Transaction not executed");
+    assert!(!mock_contract.is_member_pub(member), "Member not removed");
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::PROPOSER),
+        "Member still has proposer permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::VOTER),
+        "Member still has voter permission"
+    );
+    assert!(
+        !mock_contract.has_permission_pub(member, Permissions::EXECUTOR),
+        "Member still has executor permission"
+    );
+}
+
+#[test]
+fn test_member_remove_transaction_approval_event() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+
+    // Setup event spy after proposal
+    let mut spy = spy_events();
+
+    // Approve the transaction - this should emit TransactionApproved event
+    mock_contract.approve_transaction_pub(tx_id, caller);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Create expected event
+    let expected_event = AccountData::Event::TransactionApproved(
+        AccountData::TransactionApproved {
+            transaction_id: tx_id, date_approved: get_block_timestamp()
+        }
+    );
+
+    let expected_events = array![(mock_contract.contract_address, expected_event)];
+    spy.assert_emitted(@expected_events);
+}
+
+#[test]
+fn test_member_remove_transaction_execution_events() {
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer_and_executor();
+    let member = member_to_remove();
+
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+    mock_contract.assign_proposer_permission_pub(caller);
+    mock_contract.assign_executor_permission_pub(caller);
+    mock_contract.assign_voter_permission_pub(caller);
+    mock_contract.assign_proposer_permission_pub(member);
+    mock_contract.assign_voter_permission_pub(member);
+    mock_contract.assign_executor_permission_pub(member);
+    mock_contract.set_threshold_pub(1);
+
+    // Propose and approve member removal transaction
+    let tx_id = mock_contract.propose_remove_member_transaction_pub(member);
+    mock_contract.approve_transaction_pub(tx_id, caller);
+
+    // Setup event spy before execution
+    let mut spy = spy_events();
+
+    // Execute the transaction - this should emit TransactionExecuted and MemberRemovalExecuted
+    // events
+    mock_contract.execute_remove_member_transaction_pub(tx_id);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    let account_event = AccountData::Event::TransactionExecuted(
+        AccountData::TransactionExecuted {
+            transaction_id: tx_id, executor: caller, date_executed: get_block_timestamp()
+        }
+    );
+
+    let member_event = MemberRemoveTransaction::Event::MemberRemovalExecuted(
+        MemberRemoveTransaction::MemberRemovalExecuted { transaction_id: tx_id, member: member }
+    );
+
+    let account_events = array![(mock_contract.contract_address, account_event)];
+    spy.assert_emitted(@account_events);
+
+    let member_events = array![(mock_contract.contract_address, member_event)];
+    spy.assert_emitted(@member_events);
+
+    // Verify transaction state
+    let transaction = mock_contract.get_transaction_pub(tx_id);
+    assert!(transaction.tx_status == TransactionStatus::EXECUTED, "Transaction not executed");
+    assert!(!mock_contract.is_member_pub(member), "Member not removed");
+}
+
+// Bonus Test: Verify no events on failed proposal
+#[test]
+#[should_panic(expected: ('Caller is not a proposer',))]
+fn test_no_events_on_failed_proposal() {
+    // Deploy mock contract
+    let mock_contract = deploy_mock_contract();
+    let caller = proposer();
+    let member = member_to_remove();
+
+    // Setup: Add members but don't assign proposer permission
+    start_cheat_caller_address(mock_contract.contract_address, caller);
+    mock_contract.add_member_pub(caller);
+    mock_contract.add_member_pub(member);
+
+    let mut spy = spy_events();
+
+    mock_contract.propose_remove_member_transaction_pub(member);
+    stop_cheat_caller_address(mock_contract.contract_address);
+
+    // Verify no events were emitted
+    let all_events = spy.get_events();
+    assert!(all_events.events.len() == 0, "Events emitted unexpectedly");
+}
